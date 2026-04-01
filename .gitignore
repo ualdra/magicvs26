@@ -1,0 +1,49 @@
+# Java (Spring Boot) boilerplate
+.gradle
+.history
+.idea
+.vscode
+*.class
+*.log
+*.tar
+*.zip
+**/build/
+**/bin/
+**/out/
+**/target/
+build/
+bin/
+out/
+target/
+.classpath
+.project
+.settings/
+.mvn/wrapper/maven-wrapper.jar
+.apt_generated
+.factorypath
+.springBeans
+.sts4-cache
+
+# Node (Angular) boilerplate
+node_modules/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+.env
+.env.*.local
+.DS_Store
+*.map
+package-lock.json (si prefieres no trackearlo, aunque suele ser buena idea trackearlo)
+
+# VS Code/JetBrains configs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS specific files
+Thumbs.db
+Desktop.ini
