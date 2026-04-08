@@ -1,0 +1,72 @@
+<!-- Section Header -->
+<header class="max-w-screen-2xl mx-auto px-6 pt-16 pb-12">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div class="max-w-3xl">
+      <h1 class="text-5xl md:text-7xl font-headline font-bold text-on-surface tracking-tight mb-4">
+        Noticias <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">del Meta</span>
+      </h1>
+      <p class="text-on-surface-variant text-lg md:text-xl font-light leading-relaxed max-w-2xl">
+        Mantente al día con los últimos anuncios, banlists y artículos de Magic: The Gathering. El pulso de la comunidad en un solo lugar.
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <span class="px-4 py-1.5 rounded-full bg-surface-container-high text-xs font-label uppercase tracking-widest text-on-surface-variant border border-outline-variant/10">
+        Actualizado: 12 Mayo
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- News Content Canvas -->
+<section class="max-w-screen-2xl mx-auto px-6 pb-24">
+  <div class="asymmetric-grid">
+    @for (item of news(); track item.id) {
+    <!-- News Card -->
+    <article class="group relative flex flex-col bg-surface-container rounded-xl overflow-hidden border border-outline-variant/10 transition-all duration-300 hover:shadow-2xl hover:shadow-primary-container/10">
+      <div class="relative h-64 overflow-hidden">
+        <img [src]="item.imageUrl" [alt]="item.title" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+        <div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent opacity-60"></div>
+        <div class="absolute top-4 left-4">
+          <span [class]="'px-3 py-1 text-[10px] font-bold uppercase tracking-tighter rounded-sm shadow-lg ' + item.categoryClass">
+            {{ item.category }}
+          </span>
+        </div>
+      </div>
+      <div class="p-6 flex flex-col flex-grow">
+        <span class="text-secondary text-[10px] font-label tracking-widest uppercase mb-2">{{ item.date }}</span>
+        <h3 class="text-2xl font-headline font-bold text-on-surface mb-3 line-clamp-2 leading-snug">
+          {{ item.title }}
+        </h3>
+        <p class="text-on-surface-variant text-sm font-light mb-6 line-clamp-3 leading-relaxed">
+          {{ item.summary }}
+        </p>
+        <div class="mt-auto">
+          <a [href]="item.url" class="inline-flex items-center gap-2 text-secondary hover:text-primary transition-colors text-sm font-bold uppercase tracking-wider">
+            Leer artículo original
+            <span class="material-symbols-outlined text-sm">open_in_new</span>
+          </a>
+        </div>
+      </div>
+    </article>
+    }
+  </div>
+</section>
+
+<!-- Newsletter / CTA Asymmetric Section -->
+<section class="max-w-screen-2xl mx-auto px-6 pb-24">
+  <div class="relative bg-surface-container-low rounded-2xl p-8 md:p-16 overflow-hidden border border-outline-variant/5">
+    <div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+      <img alt="Decorative background" class="w-full h-full object-cover grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGkeWgYNsYGWg6R5maF7tyY_gGjMLEn6oYxnDdGUZ1B0xfKCyUh8ZdN2__9da7h1KEjxe6GhJgNPcC-kKVocWS4cfI1evhFTqi2I-e80T4LVuwCJ3RggRawpE3Ik8t0_dA6NTUSQLjPLc0JxlQefo6glyCnLT5WMdvAO65i7LtzkAbtZ6EpcVaWwBXx0vBd0KOyDTeBJM44hjFfkIXmGBorR-e8rSdXZkiFYDr-EJbe85Lm5Nu3whPOQQ6MokROs-qQMPsa_Edh2Hz">
+    </div>
+    <div class="relative z-10 max-w-xl">
+      <h2 class="text-3xl md:text-4xl font-headline font-bold mb-6">No te pierdas ni un solo <span class="text-primary italic">draw step</span>.</h2>
+      <p class="text-on-surface-variant mb-8 text-lg">Suscríbete a nuestra newsletter semanal para recibir el resumen del meta directamente en tu correo.</p>
+      <form class="flex flex-col sm:flex-row gap-4">
+        <input class="flex-grow bg-surface-container-lowest border-0 border-b border-outline-variant/30 focus:ring-0 focus:border-primary text-on-surface py-4 px-0 transition-all font-body" placeholder="tu@correo.com" type="email">
+        <button class="px-8 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold uppercase tracking-widest text-sm hover:shadow-[0_0_20px_rgba(142,68,173,0.4)] transition-all" type="submit">
+          Suscribirme
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
