@@ -1,12 +1,17 @@
 <!-- TopNavBar -->
 <nav class="fixed top-0 z-50 w-full bg-zinc-900/80 backdrop-blur-xl shadow-2xl shadow-purple-900/20">
   <div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
-    <div class="flex items-center gap-2 text-2xl font-black text-purple-400">
+    <div class="flex items-center gap-2 text-2xl font-black text-purple-400 cursor-pointer" (click)="goHome()" role="button" aria-label="Ir a inicio">
       <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">style</span>
       <span class="font-headline tracking-tighter">MagicVS</span>
     </div>
-    <div class="hidden md:flex items-center gap-8">
-      <a class="text-purple-400 font-bold border-b-2 border-purple-500 pb-1 tracking-wider uppercase Manrope text-sm" routerLink="/" routerLinkActive="text-purple-400 border-purple-500">Explorador</a>
+      <div class="hidden md:flex items-center gap-8 center-nav">
+      <a
+        class="tracking-wider uppercase Manrope text-sm"
+        routerLink="/"
+        [routerLinkActive]="['text-purple-400','border-b-2','border-purple-500','pb-1','font-bold']"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >Explorador</a>
       <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm" routerLink="/decks">Mazos</a>
       <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm" routerLink="/combat">Combate</a>
       <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm" routerLink="/news">Noticias</a>
@@ -28,19 +33,37 @@
           Registro
         </a>
       </ng-container>
-
+      
       <ng-template #loggedInNav>
-        <button
-          class="hidden md:inline-flex items-center px-4 py-2 rounded-full bg-zinc-800/80 text-zinc-200 font-bold tracking-wider uppercase Manrope text-sm hover:bg-zinc-700 transition-colors"
-          (click)="logout()"
-        >
-          Cerrar sesión
-        </button>
-      </ng-template>
+        <div class="hidden md:flex items-center gap-4 logged-in">
+          <button
+            class="inline-flex items-center px-4 py-2 rounded-full bg-zinc-800/80 text-zinc-200 font-bold tracking-wider uppercase Manrope text-sm hover:bg-zinc-700 transition-colors"
+            (click)="logout()"
+          >
+            Cerrar sesión
+          </button>
 
-      <button class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400">
-        <span class="material-symbols-outlined text-2xl">account_circle</span>
-      </button>
+            <div class="user-block flex items-center gap-2">
+              <span class="display-name text-sm font-bold text-zinc-100 leading-4 truncate">{{ displayName }}</span>
+              <span class="friend-tag text-xs text-zinc-500 opacity-80">#{{ friendTag }}</span>
+            </div>
+
+          <button class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400">
+            <span class="material-symbols-outlined text-2xl">account_circle</span>
+          </button>
+        </div>
+        <!-- small screens: logout left, name center, icon right -->
+        <div class="md:hidden flex items-center gap-3 w-full">
+          <button class="px-3 py-1 rounded bg-zinc-800 text-zinc-200" (click)="logout()">Salir</button>
+          <div class="flex-1 text-center">
+            <div class="text-sm font-bold text-zinc-100 truncate">{{ displayName }}</div>
+            <div class="text-xs text-zinc-500 truncate">#{{ friendTag }}</div>
+          </div>
+          <button class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400">
+            <span class="material-symbols-outlined text-2xl">account_circle</span>
+          </button>
+        </div>
+      </ng-template>
     </div>
   </div>
 </nav>

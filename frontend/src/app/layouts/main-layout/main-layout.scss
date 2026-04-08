@@ -1,0 +1,59 @@
+nav > div {
+  /* ensure the header inner container always has the same vertical padding */
+  padding-top: 1rem; /* py-4 */
+  padding-bottom: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: 80px; /* ensure logged and not-logged heights match (measured: 80px) */
+}
+.logged-in, .center-nav, nav > div { align-items: center; }
+
+/* normalize button/anchor vertical padding so children don't increase header height */
+button.inline-flex, a.inline-flex, button.p-2, .p-2 {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  line-height: 1 !important;
+}
+
+/* ensure user-block has no vertical margin or extra padding */
+.user-block { padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; }
+.user-block .display-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;font-size:14px;line-height:1;padding-top:0}
+.logged-in{
+  align-items:center;
+  display:flex;
+  /* configurable outer gap between logout - name - icon */
+  --logged-gap: 16px;
+  gap: var(--logged-gap) !important;
+}
+.user-block{
+  max-width:260px;
+  min-width:120px;
+  flex:0 1 auto;
+  overflow:hidden;
+  margin: 0;
+  display:flex;
+  align-items:center;
+  gap:8px; /* small gap between name and tag */
+}
+.user-block .display-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;font-size:14px;line-height:1;padding-top:0}
+.user-block .friend-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;opacity:0.8;font-size:12px;margin-top:0}
+/* ensure logout and icon keep their natural size and don't shrink */
+.logged-in > button{flex:0 0 auto}
+.logged-in > button.p-2{margin-left:0}
+@media (max-width: 768px){
+  .user-block{max-width:60%;}
+}
+
+/* header height is controlled by --header-height below */
+
+/* helper: change this variable to adjust gap between tag and icon (and name) */
+/* Example: .logged-in { --logged-gap: 12px; } */
+
+/* center nav without shifting layout */
+.center-nav{position:static}
+@media (min-width: 768px){
+  nav > div { position: relative }
+  .center-nav{position:absolute; left:50%; transform:translateX(-50%);} 
+}
+/* header uses its natural padding (py-4 in template) so logged/unlogged heights match */

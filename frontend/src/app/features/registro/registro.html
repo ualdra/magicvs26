@@ -3,20 +3,60 @@
     <h1 class="text-3xl font-headline font-bold text-white mb-6 text-center">Crear cuenta</h1>
     <p class="text-on-surface-variant text-sm mb-8 text-center">Regístrate para jugar combates 1vs1 y gestionar tus mazos.</p>
 
-    <!-- Aquí luego añadiremos el formulario real -->
-    <div class="space-y-4">
-      <div class="h-10 rounded-md bg-surface-container/80 border border-outline-variant/30 flex items-center px-3 text-sm text-zinc-500">
-        Campo username (pendiente)
+    <form class="space-y-4" (ngSubmit)="onSubmit()">
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400">Usuario</label>
+        <input
+          type="text"
+          name="username"
+          [(ngModel)]="username"
+          class="w-full h-10 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          placeholder="Nombre de usuario"
+          required
+        />
       </div>
-      <div class="h-10 rounded-md bg-surface-container/80 border border-outline-variant/30 flex items-center px-3 text-sm text-zinc-500">
-        Campo email (pendiente)
+
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400">Email</label>
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          class="w-full h-10 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          placeholder="tu@email.com"
+          required
+        />
       </div>
-      <div class="h-10 rounded-md bg-surface-container/80 border border-outline-variant/30 flex items-center px-3 text-sm text-zinc-500">
-        Campo contraseña (pendiente)
+
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400">Contraseña</label>
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          class="w-full h-10 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          placeholder="••••••••"
+          required
+        />
       </div>
-      <button class="w-full arcane-gradient py-3 rounded-md font-bold text-on-primary mt-4">
+
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400">Nombre visible (opcional)</label>
+        <input
+          type="text"
+          name="displayName"
+          [(ngModel)]="displayName"
+          class="w-full h-10 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          placeholder="Tu nombre para mostrar"
+        />
+      </div>
+
+      <button type="submit" class="w-full arcane-gradient py-3 rounded-md font-bold text-on-primary mt-4">
         Registrarme
       </button>
-    </div>
+
+      <p *ngIf="message" class="text-emerald-400 text-sm mt-4 text-center">{{ message }}</p>
+      <p *ngIf="error" class="text-red-400 text-sm mt-4 text-center">{{ error }}</p>
+    </form>
   </div>
 </section>

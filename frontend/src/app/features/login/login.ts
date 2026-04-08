@@ -32,7 +32,10 @@ export class Login {
       .subscribe({
         next: (user) => {
           this.message = `Bienvenido, ${user.displayName ?? user.username}!`;
-          // Guardamos el usuario en localStorage y navegamos al Home
+          // Guardamos token y usuario en localStorage y navegamos al Home
+          if (user.token) {
+            localStorage.setItem('token', user.token);
+          }
           localStorage.setItem('user', JSON.stringify(user));
           this.router.navigateByUrl('/');
         },
@@ -53,6 +56,7 @@ interface UserResponse {
   email: string;
   displayName: string | null;
   friendTag: string;
+  token?: string;
   eloRating: number | null;
   friendsCount: number | null;
 }
