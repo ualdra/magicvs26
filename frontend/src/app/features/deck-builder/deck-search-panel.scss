@@ -1,0 +1,79 @@
+.search-panel {
+  display: flex;
+  flex-direction: column;
+
+  /* Scrollbar Styling */
+  .space-y-2 {
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #1f2937;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 3px;
+
+      &:hover {
+        background: #6b7280;
+      }
+    }
+  }
+
+  /* Card Result Buttons */
+  button[class*="hover:bg-gray"] {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+    }
+
+    img {
+      transition: transform 0.2s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Loading Animation */
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  /* Input Field Focus */
+  input:focus {
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .search-panel {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-panel {
+    max-height: 300px;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
+}

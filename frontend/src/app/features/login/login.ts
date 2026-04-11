@@ -35,6 +35,7 @@ export class Login {
           // Guardamos token y usuario en localStorage y navegamos al Home
           if (user.token) {
             localStorage.setItem('token', user.token);
+            localStorage.setItem('authToken', user.token);
           }
           localStorage.setItem('user', JSON.stringify(user));
           this.router.navigateByUrl('/');

@@ -70,6 +70,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.profile.set(null);
     this.decks.set([]);
 
+    if (target === 'me' && !localStorage.getItem('token')) {
+      this.loading.set(false);
+      this.error.set('Necesitas iniciar sesión para ver tu perfil.');
+      return;
+    }
+
     if (target !== 'me' && !/^\d+$/.test(target)) {
       this.loading.set(false);
       this.error.set('El identificador de usuario no es valido. Usa /profile/me/decks o /profile/{id}/decks con un id numerico.');

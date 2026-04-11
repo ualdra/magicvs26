@@ -1,0 +1,191 @@
+<div class="deck-builder-container bg-gray-950 text-white min-h-screen p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold mb-2">Deck Builder</h1>
+      <p class="text-gray-400">Construye tu mazo perfecto de Magic</p>
+    </div>
+
+    <!-- Error Message -->
+    @if (error()) {
+      <div class="mb-6 p-4 bg-red-900 border border-red-700 rounded-lg text-red-200">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Main Container (Three Columns) -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Left Column: Search Panel (1 column) -->
+      <div class="lg:col-span-1">
+        <app-deck-search-panel (cardSelected)="onCardSelected($event)"></app-deck-search-panel>
+      </div>
+
+      <!-- Middle Column: Deck Info (1 column) -->
+      <div class="lg:col-span-1">
+        <div class="bg-gray-900 rounded-lg p-6 border border-gray-800 sticky top-24">
+          <!-- Deck Name -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold mb-2">Nombre del Mazo</label>
+            <input
+              type="text"
+              [value]="deckName()"
+              (input)="onNameChange($any($event.target).value)"
+              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500"
+              placeholder="Mi Nuevo Mazo"
+            />
+          </div>
+
+          <!-- Format Selection -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold mb-2">Formato</label>
+            <select
+              [value]="deckFormat()"
+              (change)="onFormatChange($any($event.target).value)"
+              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500"
+            >
+              @for (format of formats; track format) {
+                <option [value]="format">{{ format }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold mb-2">Descripción</label>
+            <textarea
+              [value]="deckDescription()"
+              (input)="onDescriptionChange($any($event.target).value)"
+              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500 h-24 resize-none"
+              placeholder="Describe tu estrategia..."
+            ></textarea>
+          </div>
+
+          <!-- Public Toggle -->
+          <div class="mb-6 flex items-center">
+            <label class="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                [checked]="deckIsPublic()"
+                (change)="onIsPublicChange($event.target.checked)"
+                class="mr-2 w-4 h-4"
+              />
+              <span class="text-sm">Hacer público</span>
+            </label>
+          </div>
+
+          <!-- Stats -->
+          <div class="bg-gray-800 rounded p-4 mb-6">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-gray-400">Cartas Total:</span>
+              <span class="text-2xl font-bold" [ngClass]="isValidDeck() ? 'text-green-400' : 'text-red-400'">
+                {{ totalCards() }}
+              </span>
+            </div>
+            <div class="text-xs text-gray-400">{{ validationMessage() }}</div>
+          </div>
+
+          <!-- Colors -->
+          @if (deckColors().length > 0) {
+            <div class="mb-6">
+              <div class="text-sm font-semibold mb-2">Colores</div>
+              <div class="flex gap-2 flex-wrap">
+                @for (color of deckColors(); track color) {
+                  <span [ngClass]="getColorClass(color)" class="px-2 py-1 rounded text-xs font-semibold capitalize">
+                    {{ color }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Save Button -->
+          <button
+            (click)="saveDeck()"
+            [disabled]="!isValidDeck() || loading()"
+            class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded font-semibold mb-2 transition"
+          >
+            @if (loading()) {
+              <span>Guardando...</span>
+            } @else {
+              <span>Guardar Mazo</span>
+            }
+          </button>
+
+          <!-- Clear Button -->
+          <button
+            (click)="clearDeck()"
+            class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-semibold transition"
+          >
+            Limpiar Mazo
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column: Deck Composition (2 columns) -->
+      <div class="lg:col-span-2">
+        <div class="bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <h2 class="text-xl font-bold mb-4">Composición del Mazo</h2>
+
+          @if (deckCards().length === 0) {
+            <div class="text-center py-12">
+              <p class="text-gray-400">No hay cartas en el mazo</p>
+              <p class="text-gray-500 text-sm mt-2">Busca y agrega cartas desde el panel izquierdo</p>
+            </div>
+          } @else {
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+              @for (card of deckCards(); track card.cardId) {
+                <div class="flex items-center gap-4 p-3 bg-gray-800 rounded hover:bg-gray-750 transition">
+                  <!-- Card Image -->
+                  <img
+                    [src]="card.cardImage"
+                    [alt]="card.cardName"
+                    class="w-12 h-16 object-cover rounded"
+                  />
+
+                  <!-- Card Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-sm truncate">{{ card.cardName }}</div>
+                    <div class="text-xs text-gray-400">{{ card.cardType }}</div>
+                    <div class="text-xs text-purple-400">{{ card.manaCost }}</div>
+                  </div>
+
+                  <!-- Quantity -->
+                  <div class="flex items-center gap-2">
+                    <button
+                      (click)="onUpdateQuantity(card.cardId, card.quantity - 1)"
+                      class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      [value]="card.quantity"
+                      (change)="onUpdateQuantity(card.cardId, +$any($event.target).value)"
+                      class="w-10 text-center bg-gray-700 rounded text-sm"
+                      min="1"
+                      max="4"
+                    />
+                    <button
+                      (click)="onUpdateQuantity(card.cardId, card.quantity + 1)"
+                      class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <!-- Remove Button -->
+                  <button
+                    (click)="onRemoveCard(card.cardId)"
+                    class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

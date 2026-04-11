@@ -1,6 +1,7 @@
 package com.magicvs.backend.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class UserDeckSummaryDto {
 
@@ -10,19 +11,23 @@ public class UserDeckSummaryDto {
 	private String formatName;
 	private Integer totalCards;
 	private Boolean isPublic;
+	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
+	private List<String> colors;
 
 	public UserDeckSummaryDto() {
 	}
 
-	public UserDeckSummaryDto(Long id, String name, String description, String formatName, Integer totalCards, Boolean isPublic, LocalDateTime updatedAt) {
+	public UserDeckSummaryDto(Long id, String name, String description, String formatName, Integer totalCards, Boolean isPublic, LocalDateTime createdAt, LocalDateTime updatedAt, List<String> colors) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
 		this.formatName = formatName;
 		this.totalCards = totalCards;
 		this.isPublic = isPublic;
+		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
+		this.colors = colors;
 	}
 
 	public Long getId() {
@@ -73,11 +78,27 @@ public class UserDeckSummaryDto {
 		this.isPublic = isPublic;
 	}
 
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
 	public LocalDateTime getUpdatedAt() {
 		return updatedAt;
 	}
 
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
+	}
+
+	public List<String> getColors() {
+		return colors;
+	}
+
+	public void setColors(List<String> colors) {
+		this.colors = colors;
 	}
 }

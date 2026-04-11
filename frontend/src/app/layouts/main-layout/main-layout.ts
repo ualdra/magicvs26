@@ -43,6 +43,7 @@ export class MainLayout {
   logout(): void {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     this.isLoggedIn = false;
     // redirect to public home (not login)
     this.router.navigateByUrl('/');
