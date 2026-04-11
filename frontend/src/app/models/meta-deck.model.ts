@@ -19,6 +19,16 @@ export interface MetaDeck {
   mainboardJson?: string;
   mainboard?: any[];
 
+  creatures?: any[];
+  lands?: any[];
+  spells?: any[];
+  sideboard?: any[];
+
+  creatureCount?: number;
+  landCount?: number;
+  spellCount?: number;
+  sideboardCount?: number;
+
   fullListUrl: string;
   
   // UI State

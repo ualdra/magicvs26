@@ -91,15 +91,28 @@
             <!-- LEFT SIDEBAR -->
             <div class="w-full md:w-[240px] flex-shrink-0 flex flex-col gap-3">
               
-              <!-- Stats Boxes (Con lo que tenemos) -->
-              <div class="flex items-center justify-between px-5 py-4 bg-surface-container-high rounded-lg border border-outline-variant/5 shadow-sm">
-                 <span class="text-on-surface-variant text-sm tracking-wide">Cartas Principales</span>
-                 <span class="text-white font-bold text-lg">60</span>
+              <!-- Stats Boxes DYNAMICS -->
+              <div class="flex flex-col bg-surface-container-high rounded-lg border border-outline-variant/5 shadow-sm">
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/5">
+                   <span class="text-on-surface-variant text-sm tracking-wide">Criaturas</span>
+                   <span class="text-white font-bold">{{deck.creatureCount}}</span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/5">
+                   <span class="text-on-surface-variant text-sm tracking-wide">Hechizos</span>
+                   <span class="text-white font-bold">{{deck.spellCount}}</span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                   <span class="text-on-surface-variant text-sm tracking-wide">Tierras</span>
+                   <span class="text-white font-bold">{{deck.landCount}}</span>
+                </div>
               </div>
-              <div class="flex items-center justify-between px-5 py-4 bg-surface-container-high rounded-lg border border-outline-variant/5 shadow-sm">
-                 <span class="text-on-surface-variant text-sm tracking-wide">Banquillo</span>
-                 <span class="text-white font-bold text-lg">15</span>
-              </div>
+              
+              @if (deck.sideboardCount! > 0) {
+                <div class="flex items-center justify-between px-5 py-3.5 bg-surface-container-highest rounded-lg border border-primary/20 shadow-sm">
+                   <span class="text-primary text-sm tracking-wide font-bold">Banquillo</span>
+                   <span class="text-primary font-bold">{{deck.sideboardCount}}</span>
+                </div>
+              }
 
               <div class="mt-4 flex flex-col gap-3">
                 <!-- Action Toggle Button -->
@@ -132,14 +145,67 @@
             <!-- RIGHT CONTENT AREA -->
             <div class="flex-1">
               @if (deck.showFullList) {
-                <!-- Standard Line-by-Line List View -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-1">
-                  @for (card of deck.mainboard; track card.name) {
-                    <div class="flex items-center gap-3 py-2 border-b border-outline-variant/5 hover:bg-surface-variant/20 transition-colors cursor-default">
-                      <span class="font-mono text-on-surface-variant font-bold w-5 text-right">{{card.quantity}}</span>
-                      <span class="text-[#e2e2e2] text-sm truncate font-body">{{card.name}}</span>
+                <!-- Segregated Categorical List View -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
+                  
+                  <!-- Criaturas Column -->
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between border-b border-[#a96bbd]/30 pb-2 mb-2">
+                       <span class="text-[10px] font-bold text-[#a96bbd] tracking-widest leading-none">CRIATURAS</span>
+                       <span class="text-[10px] font-bold text-[#a96bbd] leading-none">{{deck.creatureCount}}</span>
+                    </div>
+                    @for (card of deck.creatures; track card.name) {
+                      <div class="flex items-center gap-3 py-1.5 hover:bg-surface-variant/20 transition-colors cursor-default rounded px-1">
+                        <span class="font-mono text-on-surface-variant font-bold w-4 text-right">{{card.quantity}}</span>
+                        <span class="text-[#e2e2e2] text-[13px] truncate font-body">{{card.name}}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Hechizos Column -->
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between border-b border-[#6ba6bd]/30 pb-2 mb-2">
+                       <span class="text-[10px] font-bold text-[#6ba6bd] tracking-widest leading-none">HECHIZOS</span>
+                       <span class="text-[10px] font-bold text-[#6ba6bd] leading-none">{{deck.spellCount}}</span>
+                    </div>
+                    @for (card of deck.spells; track card.name) {
+                      <div class="flex items-center gap-3 py-1.5 hover:bg-surface-variant/20 transition-colors cursor-default rounded px-1">
+                        <span class="font-mono text-on-surface-variant font-bold w-4 text-right">{{card.quantity}}</span>
+                        <span class="text-[#e2e2e2] text-[13px] truncate font-body">{{card.name}}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Tierras Column -->
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between border-b border-on-surface-variant/30 pb-2 mb-2">
+                       <span class="text-[10px] font-bold text-on-surface-variant tracking-widest leading-none">TIERRAS</span>
+                       <span class="text-[10px] font-bold text-on-surface-variant leading-none">{{deck.landCount}}</span>
+                    </div>
+                    @for (card of deck.lands; track card.name) {
+                      <div class="flex items-center gap-3 py-1.5 hover:bg-surface-variant/20 transition-colors cursor-default rounded px-1">
+                        <span class="font-mono text-on-surface-variant font-bold w-4 text-right">{{card.quantity}}</span>
+                        <span class="text-[#e2e2e2] text-[13px] truncate font-body">{{card.name}}</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Banquillo Column -->
+                  @if (deck.sideboard && deck.sideboard.length > 0) {
+                    <div class="flex flex-col gap-1">
+                      <div class="flex items-center justify-between border-b border-primary/30 pb-2 mb-2">
+                         <span class="text-[10px] font-bold text-primary tracking-widest leading-none">BANQUILLO</span>
+                         <span class="text-[10px] font-bold text-primary leading-none">{{deck.sideboardCount}}</span>
+                      </div>
+                      @for (card of deck.sideboard; track card.name) {
+                        <div class="flex items-center gap-3 py-1.5 hover:bg-surface-variant/10 transition-colors cursor-default rounded px-1 group opacity-80 hover:opacity-100">
+                          <span class="font-mono text-primary font-bold w-4 text-right">{{card.quantity}}</span>
+                          <span class="text-[#e2e2e2] text-[13px] truncate font-body">{{card.name}}</span>
+                        </div>
+                      }
                     </div>
                   }
+
                 </div>
               } @else {
                 <!-- Gallery View -->

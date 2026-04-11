@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.*;
@@ -154,9 +156,16 @@ public class MetaScrapingService {
                             String rawList = deckInput.attr("value");
                             String[] lines = rawList.split("\n");
                             
+                            boolean isSideboard = false;
+
                             for (String line : lines) {
                                 line = line.trim();
-                                if (line.isEmpty() || line.equalsIgnoreCase("sideboard")) continue;
+                                if (line.isEmpty()) continue;
+                                
+                                if (line.equalsIgnoreCase("sideboard")) {
+                                    isSideboard = true;
+                                    continue;
+                                }
                                 
                                 int spaceIdx = line.indexOf(' ');
                                 if (spaceIdx > 0) {
@@ -168,6 +177,33 @@ public class MetaScrapingService {
                                         Map<String, Object> cardRow = new HashMap<>();
                                         cardRow.put("quantity", qty);
                                         cardRow.put("name", cardName);
+                                        cardRow.put("isSideboard", isSideboard);
+                                        
+                                        // Buscar versión en Español, si no existe caer atrás en la oficial.
+                                        Card dbCard = cardRepository.findFirstByNameIgnoreCaseAndLang(cardName, "es")
+                                                .orElseGet(() -> cardRepository.findFirstByNameIgnoreCase(cardName).orElse(null));
+
+                                        if (dbCard != null) {
+                                            // Si existe dbCard y logramos enganchar el idioma ES, inyectamos su traducción
+                                            if ("es".equals(dbCard.getLang()) && dbCard.getRawJson() != null) {
+                                                try {
+                                                    JsonNode node = objectMapper.readTree(dbCard.getRawJson());
+                                                    if (node.hasNonNull("printed_name")) {
+                                                        cardRow.put("name", node.get("printed_name").asText());
+                                                    }
+                                                } catch (Exception e) {}
+                                            }
+
+                                            // Extraer tipología intacta en Inglés para no romper la división en 3 sacos
+                                            if (dbCard.getTypeLine() != null) {
+                                                cardRow.put("typeLine", dbCard.getTypeLine());
+                                            } else {
+                                                cardRow.put("typeLine", "Spell");
+                                            }
+                                        } else {
+                                            cardRow.put("typeLine", "Spell"); // Fallback
+                                        }
+
                                         mainboard.add(cardRow);
                                     }
                                 }

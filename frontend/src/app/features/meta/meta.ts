@@ -39,6 +39,34 @@ export class MetaComponent implements OnInit {
           
           try {
             deck.mainboard = deck.mainboardJson ? JSON.parse(deck.mainboardJson) : [];
+            deck.creatures = [];
+            deck.lands = [];
+            deck.spells = [];
+            deck.sideboard = [];
+            
+            deck.creatureCount = 0;
+            deck.landCount = 0;
+            deck.spellCount = 0;
+            deck.sideboardCount = 0;
+
+            deck.mainboard?.forEach(card => {
+               if (card.isSideboard) {
+                   deck.sideboard!.push(card);
+                   deck.sideboardCount = (deck.sideboardCount || 0) + card.quantity;
+               } else {
+                   const type = String(card.typeLine || 'spell').toLowerCase();
+                   if (type.includes('creature')) {
+                       deck.creatures!.push(card);
+                       deck.creatureCount = (deck.creatureCount || 0) + card.quantity;
+                   } else if (type.includes('land')) {
+                       deck.lands!.push(card);
+                       deck.landCount = (deck.landCount || 0) + card.quantity;
+                   } else {
+                       deck.spells!.push(card);
+                       deck.spellCount = (deck.spellCount || 0) + card.quantity;
+                   }
+               }
+            });
           } catch(e) { deck.mainboard = []; }
           
           deck.showFullList = false;
