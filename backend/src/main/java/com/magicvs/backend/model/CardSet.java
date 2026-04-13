@@ -37,11 +37,11 @@ public class CardSet {
     @Column(name = "icon_svg_uri", columnDefinition = "TEXT")
     private String iconSvgUri;
 
-    @Lob
     @Column(name = "raw_json", columnDefinition = "TEXT")
     private String rawJson;
 
     @OneToMany(mappedBy = "set", cascade = CascadeType.ALL, orphanRemoval = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Card> cards = new ArrayList<>();
 
     public CardSet() {

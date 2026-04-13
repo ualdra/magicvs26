@@ -20,11 +20,9 @@ public class Ruling {
     @Column(name = "published_at")
     private LocalDate publishedAt;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String comment;
 
-    @Lob
     @Column(name = "raw_json", columnDefinition = "TEXT")
     private String rawJson;
 

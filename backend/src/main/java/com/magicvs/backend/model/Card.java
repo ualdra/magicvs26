@@ -45,7 +45,6 @@ public class Card {
     @Column(name = "type_line")
     private String typeLine;
 
-    @Lob
     @Column(name = "oracle_text", columnDefinition = "TEXT")
     private String oracleText;
 
@@ -59,7 +58,6 @@ public class Card {
 
     private String rarity;
 
-    @Lob
     @Column(name = "flavor_text", columnDefinition = "TEXT")
     private String flavorText;
 
@@ -86,6 +84,24 @@ public class Card {
     @Column(name = "rulings_uri", columnDefinition = "TEXT")
     private String rulingsUri;
 
+    @Column(name = "small_image_uri", columnDefinition = "TEXT")
+    private String smallImageUri;
+
+    @Column(name = "normal_image_uri", columnDefinition = "TEXT")
+    private String normalImageUri;
+
+    @Column(name = "large_image_uri", columnDefinition = "TEXT")
+    private String largeImageUri;
+
+    @Column(name = "png_image_uri", columnDefinition = "TEXT")
+    private String pngImageUri;
+
+    @Column(name = "art_crop_uri", columnDefinition = "TEXT")
+    private String artCropUri;
+
+    @Column(name = "border_crop_uri", columnDefinition = "TEXT")
+    private String borderCropUri;
+
     @Column(name = "arena_id")
     private Integer arenaId;
 
@@ -101,35 +117,27 @@ public class Card {
     @Column(name = "edhrec_rank")
     private Integer edhrecRank;
 
-    @Lob
     @Column(name = "colors_json", columnDefinition = "TEXT")
     private String colorsJson;
 
-    @Lob
     @Column(name = "color_identity_json", columnDefinition = "TEXT")
     private String colorIdentityJson;
 
-    @Lob
     @Column(name = "games_json", columnDefinition = "TEXT")
     private String gamesJson;
 
-    @Lob
     @Column(name = "keywords_json", columnDefinition = "TEXT")
     private String keywordsJson;
 
-    @Lob
     @Column(name = "produced_mana_json", columnDefinition = "TEXT")
     private String producedManaJson;
 
-    @Lob
     @Column(name = "purchase_uris_json", columnDefinition = "TEXT")
     private String purchaseUrisJson;
 
-    @Lob
     @Column(name = "related_uris_json", columnDefinition = "TEXT")
     private String relatedUrisJson;
 
-    @Lob
     @Column(name = "raw_json", columnDefinition = "TEXT")
     private String rawJson;
 
@@ -137,16 +145,22 @@ public class Card {
     private LocalDateTime syncedAt;
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<CardFace> faces = new ArrayList<>();
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<CardLegality> legalities = new ArrayList<>();
 
     @OneToOne(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private CardPrice price;
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Ruling> rulings = new ArrayList<>();
+
+
 
     public Card() {
     }
@@ -393,6 +407,54 @@ public class Card {
 
     public void setRulingsUri(String rulingsUri) {
         this.rulingsUri = rulingsUri;
+    }
+
+    public String getSmallImageUri() {
+        return smallImageUri;
+    }
+
+    public void setSmallImageUri(String smallImageUri) {
+        this.smallImageUri = smallImageUri;
+    }
+
+    public String getNormalImageUri() {
+        return normalImageUri;
+    }
+
+    public void setNormalImageUri(String normalImageUri) {
+        this.normalImageUri = normalImageUri;
+    }
+
+    public String getLargeImageUri() {
+        return largeImageUri;
+    }
+
+    public void setLargeImageUri(String largeImageUri) {
+        this.largeImageUri = largeImageUri;
+    }
+
+    public String getPngImageUri() {
+        return pngImageUri;
+    }
+
+    public void setPngImageUri(String pngImageUri) {
+        this.pngImageUri = pngImageUri;
+    }
+
+    public String getArtCropUri() {
+        return artCropUri;
+    }
+
+    public void setArtCropUri(String artCropUri) {
+        this.artCropUri = artCropUri;
+    }
+
+    public String getBorderCropUri() {
+        return borderCropUri;
+    }
+
+    public void setBorderCropUri(String borderCropUri) {
+        this.borderCropUri = borderCropUri;
     }
 
     public Integer getArenaId() {
