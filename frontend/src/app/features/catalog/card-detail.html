@@ -1,175 +1,149 @@
-@if (isLoading) {
-  <div class="max-w-[1400px] mx-auto px-6 py-8 flex items-center justify-center min-h-[60vh]">
-    <div class="text-primary text-2xl font-headline animate-pulse">Consultando el Archivo Arcano...</div>
-  </div>
-} @else if (card) {
-  <main class="max-w-[1400px] mx-auto px-6 py-8">
-    <!-- Navigation Header -->
-    <nav class="mb-12">
-      <a (click)="goBack()"
-        class="inline-flex items-center gap-2 text-secondary hover:text-primary-fixed-dim transition-all group font-label tracking-wide uppercase text-xs font-bold cursor-pointer">
-        <span class="material-symbols-outlined text-sm group-hover:-translate-x-1 duration-300">arrow_back</span>
-        Volver al catálogo
-      </a>
-    </nav>
+@if (card$ | async; as card) {
+<main class="max-w-[1400px] mx-auto px-6 py-8">
+  <!-- Navigation Header -->
+  <nav class="mb-12">
+    <a (click)="goBack()"
+      class="inline-flex items-center gap-2 text-secondary hover:text-primary-fixed-dim transition-all group font-label tracking-wide uppercase text-xs font-bold cursor-pointer">
+      <span class="material-symbols-outlined text-sm group-hover:-translate-x-1 duration-300">arrow_back</span>
+      Volver al catálogo
+    </a>
+  </nav>
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-16 items-start">
-      <!-- Left Column: Card Image -->
-      <div class="md:col-span-5 flex justify-center sticky top-8">
-        <div class="relative group">
-          <div class="absolute -inset-4 bg-primary-container/20 blur-3xl opacity-50 rounded-full"></div>
-          <img class="relative w-full max-w-[480px] rounded-[2.5rem] shadow-2xl card-glow border border-white/10"
-            [src]="card.imageUrl" [alt]="card.name" />
-          <div
-            class="absolute inset-0 rounded-[2.5rem] bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none">
-          </div>
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-16 items-start">
+    <!-- Left Column: Card Image -->
+    <div class="md:col-span-5 flex justify-center sticky top-8">
+      <div class="relative group">
+        <div class="absolute -inset-4 bg-primary-container/20 blur-3xl opacity-50 rounded-full"></div>
+        <img class="relative w-full max-w-[480px] rounded-[2.5rem] shadow-2xl card-glow border border-white/10"
+          [src]="card.imageUrl" [alt]="card.name" />
+        <div
+          class="absolute inset-0 rounded-[2.5rem] bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none">
         </div>
-      </div>
-
-      <!-- Right Column: Card Details -->
-      <div class="md:col-span-7 space-y-10">
-        <!-- Header Info -->
-        <header class="space-y-4">
-          <div class="flex justify-between items-start">
-            <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter text-on-surface">
-              {{ card.name }}
-            </h1>
-            <div class="flex gap-2">
-              @for (mana of card.manaCost; track $index) {
-                <div [ngClass]="{
-                  'bg-white text-black': mana === 'W',
-                  'bg-blue-600 text-white': mana === 'U',
-                  'bg-purple-900 text-white': mana === 'B',
-                  'bg-red-600 text-white': mana === 'R',
-                  'bg-green-600 text-white': mana === 'G',
-                  'bg-surface-container-high text-on-surface': !['W','U','B','R','G'].includes(mana)
-                }" class="w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/5">
-                  {{ mana }}
-                </div>
-              }
-            </div>
-          </div>
-          <div class="flex items-center gap-4 py-2 border-y border-white/5">
-            <span class="text-lg font-medium text-on-surface-variant">{{ card.type }}</span>
-            <div class="h-4 w-px bg-white/10"></div>
-            <span class="material-symbols-outlined text-tertiary" title="Rareza">{{ card.rarity === 'Mythic Rare' ? 'diamond' : 'pentagon' }}</span>
-          </div>
-        </header>
-
-        <!-- Oracle Text Panel -->
-        <section class="glass-panel p-8 rounded-xl relative overflow-hidden">
-          <div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
-          <div class="space-y-6 text-lg leading-relaxed text-on-surface/90 whitespace-pre-line">
-            {{ card.oracleText }}
-          </div>
-          <!-- P/T -->
-          @if (card.powerToughness) {
-            <div class="absolute bottom-4 right-6 bg-surface-container-highest px-4 py-2 rounded-lg border border-white/10">
-              <span class="font-headline font-bold text-2xl tracking-tight">{{ card.powerToughness }}</span>
-            </div>
-          }
-        </section>
-
-        <!-- Flavor Text -->
-        @if (card.flavorText) {
-          <section class="pl-4 italic text-on-surface-variant/60 border-l-2 border-white/5">
-            "{{ card.flavorText }}"
-          </section>
-        }
-
-        <!-- Formats Legality Grid -->
-        <section class="space-y-4">
-          <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Legality</h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="bg-surface-container p-3 rounded-lg flex flex-col gap-1 border border-white/5">
-              <span class="text-[10px] text-white/50 uppercase font-bold">Standard</span>
-              <span [ngClass]="card.legalities.standard === 'legal' ? 'text-green-400' : 'text-red-400'"
-                class="text-sm font-semibold flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">
-                  {{ card.legalities.standard === 'legal' ? 'check_circle' : 'cancel' }}
-                </span> 
-                {{ card.legalities.standard === 'legal' ? 'Legal' : 'Banned' }}
-              </span>
-            </div>
-            <div class="bg-surface-container p-3 rounded-lg flex flex-col gap-1 border border-white/5">
-              <span class="text-[10px] text-white/50 uppercase font-bold">Pioneer</span>
-              <span [ngClass]="card.legalities.pioneer === 'legal' ? 'text-green-400' : 'text-red-400'"
-                class="text-sm font-semibold flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">
-                  {{ card.legalities.pioneer === 'legal' ? 'check_circle' : 'cancel' }}
-                </span> 
-                {{ card.legalities.pioneer === 'legal' ? 'Legal' : 'Banned' }}
-              </span>
-            </div>
-            <div class="bg-surface-container p-3 rounded-lg flex flex-col gap-1 border border-white/5">
-              <span class="text-[10px] text-white/50 uppercase font-bold">Modern</span>
-              <span [ngClass]="card.legalities.modern === 'legal' ? 'text-green-400' : 'text-red-400'"
-                class="text-sm font-semibold flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">
-                  {{ card.legalities.modern === 'legal' ? 'check_circle' : 'cancel' }}
-                </span> 
-                {{ card.legalities.modern === 'legal' ? 'Legal' : 'Banned' }}
-              </span>
-            </div>
-            <div class="bg-surface-container p-3 rounded-lg flex flex-col gap-1 border border-white/5">
-              <span class="text-[10px] text-white/50 uppercase font-bold">Commander</span>
-              <span [ngClass]="card.legalities.commander === 'legal' ? 'text-green-400' : 'text-red-400'"
-                class="text-sm font-semibold flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">
-                  {{ card.legalities.commander === 'legal' ? 'check_circle' : 'cancel' }}
-                </span> 
-                {{ card.legalities.commander === 'legal' ? 'Legal' : 'Banned' }}
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Actions CTA -->
-        <footer class="pt-6 flex gap-4">
-          <button
-            class="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-4 rounded-xl shadow-lg shadow-primary-container/20 hover:shadow-primary-container/40 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-            <span class="material-symbols-outlined">add_circle</span>
-            + Añadir al mazo actual
-          </button>
-          <button
-            class="w-16 h-full flex items-center justify-center glass-panel rounded-xl hover:bg-white/10 transition-colors">
-            <span class="material-symbols-outlined text-secondary">favorite</span>
-          </button>
-        </footer>
       </div>
     </div>
 
-    <!-- Secondary Info (Deck Insights) -->
-    <section class="mt-24 pt-12 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex items-center gap-3 mb-4 text-tertiary">
-          <span class="material-symbols-outlined">trending_up</span>
-          <h4 class="font-bold">Market Price</h4>
+    <!-- Right Column: Card Details -->
+    <div class="md:col-span-7 space-y-10">
+      <!-- Header Info -->
+      <header class="space-y-4">
+        <div class="flex justify-between items-start">
+          <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter text-on-surface">
+            {{ card.name }}
+          </h1>
+          <div class="flex gap-2">
+            @for (cost of card.manaCost; track $index) {
+              <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/5"
+                   [ngClass]="{
+                     'bg-surface-container-high text-on-surface': !['W','U','B','R','G'].includes(cost),
+                     'bg-white text-black': cost === 'W',
+                     'bg-[#0E68AB] text-white': cost === 'U',
+                     'bg-[#150B00] text-white border-white/20': cost === 'B',
+                     'bg-[#D3202A] text-white': cost === 'R',
+                     'bg-[#00733E] text-white': cost === 'G'
+                   }">
+                {{ cost }}
+              </div>
+            }
+          </div>
         </div>
-        <div class="text-3xl font-headline font-bold">${{ card.price }}</div>
-        <div class="text-xs text-green-400 mt-1">+2.4% para tu colección</div>
-      </div>
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex items-center gap-3 mb-4 text-secondary">
-          <span class="material-symbols-outlined">auto_fix_high</span>
-          <h4 class="font-bold">Synergy Score</h4>
+        <div class="flex items-center gap-4 py-2 border-y border-white/5">
+          <span class="text-lg font-medium text-on-surface-variant">{{ card.type }}</span>
+          <div class="h-4 w-px bg-white/10"></div>
+          <span class="material-symbols-outlined text-tertiary" title="Expansion Symbol">diamond</span>
         </div>
-        <div class="text-3xl font-headline font-bold">94/100</div>
-        <div class="text-xs text-on-surface-variant mt-1">High combo potential</div>
-      </div>
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex items-center gap-3 mb-4 text-primary">
-          <span class="material-symbols-outlined">analytics</span>
-          <h4 class="font-bold">Usage Rate</h4>
+      </header>
+
+      <!-- Oracle Text Panel -->
+      <section class="glass-panel p-8 rounded-xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+        <div class="space-y-6 text-lg leading-relaxed text-on-surface/90 whitespace-pre-line">
+          {{ card.oracleText }}
         </div>
-        <div class="text-3xl font-headline font-bold">12.5%</div>
-        <div class="text-xs text-on-surface-variant mt-1">In competitive decks</div>
+        <!-- P/T -->
+        @if (card.powerToughness) {
+          <div class="absolute bottom-4 right-6 bg-surface-container-highest px-4 py-2 rounded-lg border border-white/10">
+            <span class="font-headline font-bold text-2xl tracking-tight">{{ card.powerToughness }}</span>
+          </div>
+        }
+      </section>
+
+      <!-- Flavor Text -->
+      @if (card.flavorText) {
+        <section class="pl-4 italic text-gray-400 border-l-2 border-white/5">
+          "{{ card.flavorText }}"
+        </section>
+      }
+
+      <!-- Formats Legality Grid -->
+      <section class="space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Legality</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          @for (fmt of ['standard', 'pioneer', 'modern', 'commander']; track fmt) {
+            @let legality = card.legalities[fmt === 'standard' ? 'standard' : fmt === 'pioneer' ? 'pioneer' : fmt === 'modern' ? 'modern' : 'commander'];
+            <div class="bg-surface-container p-3 rounded-lg flex flex-col gap-1 border border-white/5">
+              <span class="text-[10px] text-white/50 uppercase font-bold">{{ fmt }}</span>
+              <span class="text-sm font-semibold flex items-center gap-1"
+                    [ngClass]="{
+                      'text-green-400': legality === 'Legal',
+                      'text-red-400': legality === 'Banned',
+                      'text-gray-400': legality === 'Not Legal'
+                    }">
+                <span class="material-symbols-outlined text-[16px]">
+                  {{ legality === 'Legal' ? 'check_circle' : 'cancel' }}
+                </span>
+                {{ legality }}
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Actions CTA -->
+      <footer class="pt-6 flex gap-4">
+        <button
+          class="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-4 rounded-xl shadow-lg shadow-primary-container/20 hover:shadow-primary-container/40 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+          <span class="material-symbols-outlined">add_circle</span>
+          + Añadir al mazo actual
+        </button>
+        <button
+          class="w-16 h-full flex items-center justify-center glass-panel rounded-xl hover:bg-white/10 transition-colors">
+          <span class="material-symbols-outlined text-secondary">favorite</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Secondary Info (Deck Insights) -->
+  <section class="mt-24 pt-12 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="glass-panel p-6 rounded-2xl">
+      <div class="flex items-center gap-3 mb-4 text-tertiary">
+        <span class="material-symbols-outlined">trending_up</span>
+        <h4 class="font-bold">Market Price</h4>
       </div>
-    </section>
-  </main>
+      <div class="text-3xl font-headline font-bold">${{ card.price }}</div>
+      <div class="text-xs text-green-400 mt-1">+2.4% para tu colección</div>
+    </div>
+    <div class="glass-panel p-6 rounded-2xl">
+      <div class="flex items-center gap-3 mb-4 text-secondary">
+        <span class="material-symbols-outlined">auto_fix_high</span>
+        <h4 class="font-bold">Synergy Score</h4>
+      </div>
+      <div class="text-3xl font-headline font-bold">94/100</div>
+      <div class="text-xs text-on-surface-variant mt-1">High combo potential</div>
+    </div>
+    <div class="glass-panel p-6 rounded-2xl">
+      <div class="flex items-center gap-3 mb-4 text-primary">
+        <span class="material-symbols-outlined">analytics</span>
+        <h4 class="font-bold">Usage Rate</h4>
+      </div>
+      <div class="text-3xl font-headline font-bold">12.5%</div>
+      <div class="text-xs text-on-surface-variant mt-1">In competitive decks</div>
+    </div>
+  </section>
+</main>
 } @else {
   <div class="max-w-[1400px] mx-auto px-6 py-8 flex flex-col items-center justify-center min-h-[60vh] gap-4">
     <div class="text-error text-2xl font-headline">Carta no encontrada en los Archivos Arcanos</div>
-    <button (click)="goBack()" class="text-primary hover:underline">Volver al catálogo</button>
+    <button (click)="goBack()" class="text-primary hover:underline cursor-pointer">Volver al catálogo</button>
   </div>
 }

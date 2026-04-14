@@ -3,6 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { CardService } from '../../core/services/card.service';
 import { Card } from '../../models/card.model';
+import { Observable, map, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-card-detail',
@@ -16,31 +17,25 @@ export class CardDetailComponent implements OnInit {
   private cardService = inject(CardService);
   private location = inject(Location);
 
-  card?: Card;
-  isLoading = true;
+  card$!: Observable<Card | undefined>;
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loadCard(id);
-    }
-  }
-
-  loadCard(id: string): void {
-    this.isLoading = true;
-    this.cardService.getCardById(id).subscribe({
-      next: (data) => {
-        this.card = data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading card:', err);
-        this.isLoading = false;
-      }
-    });
+    this.card$ = this.route.paramMap.pipe(
+      map(params => params.get('id')),
+      switchMap(id => {
+        if (id) {
+          return this.cardService.getCardById(id);
+        }
+        return new Observable<undefined>(subscriber => subscriber.next(undefined));
+      })
+    );
   }
 
   goBack(): void {
     this.location.back();
+  }
+
+  isNaN(val: any): boolean {
+    return isNaN(Number(val));
   }
 }

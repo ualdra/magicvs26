@@ -19,10 +19,10 @@ export class CardService {
       flavorText: '"The Great Synthesis is nearly complete. My children are the gears, and I am the heart that drives them."',
       powerToughness: '4/5',
       legalities: {
-        standard: 'legal',
-        pioneer: 'legal',
-        modern: 'banned',
-        commander: 'legal'
+        standard: 'Legal',
+        pioneer: 'Legal',
+        modern: 'Banned',
+        commander: 'Legal'
       },
       price: 24.95
     },
@@ -35,10 +35,10 @@ export class CardService {
       rarity: 'Mythic Rare',
       oracleText: 'Flying\n\nWhenever Lord of the Void deals combat damage to a player, exile the top seven cards of that player\'s library, then put a creature card from among them onto the battlefield under your control.',
       legalities: {
-        standard: 'not_legal',
-        pioneer: 'legal',
-        modern: 'legal',
-        commander: 'legal'
+        standard: 'Not Legal',
+        pioneer: 'Legal',
+        modern: 'Legal',
+        commander: 'Legal'
       },
       price: 12.50
     },
@@ -51,10 +51,10 @@ export class CardService {
       rarity: 'Uncommon',
       oracleText: 'Kicker—Sacrifice a creature.\n\nSearch your library for a basic land card, put it onto the battlefield, then shuffle. If this spell was kicked, search your library for two basic land cards instead of one, put them onto the battlefield, then shuffle.',
       legalities: {
-        standard: 'not_legal',
-        pioneer: 'legal',
-        modern: 'legal',
-        commander: 'legal'
+        standard: 'Not Legal',
+        pioneer: 'Legal',
+        modern: 'Legal',
+        commander: 'Legal'
       },
       price: 0.25
     }

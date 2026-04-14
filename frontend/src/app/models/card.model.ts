@@ -9,10 +9,10 @@ export interface Card {
   flavorText?: string;
   powerToughness?: string;
   legalities: {
-    standard: 'legal' | 'not_legal' | 'banned';
-    pioneer: 'legal' | 'not_legal' | 'banned';
-    modern: 'legal' | 'not_legal' | 'banned';
-    commander: 'legal' | 'not_legal' | 'banned';
+    standard: 'Legal' | 'Banned' | 'Not Legal';
+    pioneer: 'Legal' | 'Banned' | 'Not Legal';
+    modern: 'Legal' | 'Banned' | 'Not Legal';
+    commander: 'Legal' | 'Banned' | 'Not Legal';
   };
   price: number;
 }
