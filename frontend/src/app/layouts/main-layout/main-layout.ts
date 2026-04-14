@@ -57,8 +57,15 @@ export class MainLayout {
     }
     try {
       const u = JSON.parse(raw) as StoredUser;
-      this.displayName = u.displayName ?? u.username;
-      this.friendTag = u.friendTag ?? null;
+      // normalize and trim displayName to avoid accidental trailing spaces
+      const rawName = (u.displayName ?? u.username) as string | undefined;
+      if (rawName) {
+        const cleaned = rawName.replace(/\u00A0/g, ' ').trim();
+        this.displayName = cleaned || (u.username ?? null);
+      } else {
+        this.displayName = u.username ?? null;
+      }
+      this.friendTag = (u.friendTag ?? null)?.toString() ?? null;
     } catch {
       this.displayName = null;
       this.friendTag = null;

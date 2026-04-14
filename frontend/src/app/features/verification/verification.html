@@ -1,0 +1,65 @@
+<section class="relative pt-32 pb-20 min-h-[600px] flex items-center justify-center">
+  <div class="max-w-md w-full bg-surface-container-high/60 border border-outline-variant/20 rounded-2xl p-8 shadow-2xl shadow-purple-900/30 backdrop-blur-xl">
+    
+    <div class="flex flex-col items-center mb-6">
+      <div class="p-3 rounded-full bg-purple-500/20 text-purple-400 mb-4">
+        <span class="material-symbols-outlined text-3xl">mail_lock</span>
+      </div>
+      <h1 class="text-3xl font-headline font-bold text-white text-center">Verifica tu correo</h1>
+    </div>
+
+    <p class="text-zinc-400 text-sm mb-8 text-center">
+      Hemos enviado un código a tu email. Por favor, introdúcelo a continuación para activar tu cuenta.
+    </p>
+
+    <div class="space-y-6">
+      <!-- CODE INPUT -->
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400 text-center">
+          Código de verificación
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="code"
+          (input)="error = null"
+          class="w-full h-14 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-2xl text-center tracking-[0.5em] font-bold text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 placeholder:text-zinc-700 placeholder:tracking-normal"
+          placeholder="000000"
+          maxlength="6"
+        />
+      </div>
+
+      <!-- BUTTON -->
+      <button
+        (click)="submit()"
+        [disabled]="loading"
+        class="w-full py-3 rounded-md bg-purple-600/80 text-white font-bold tracking-wider uppercase Manrope text-sm shadow-lg shadow-purple-900/40 hover:bg-purple-500 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        @if (!loading) {
+          <span>Verificar y Acceder</span>
+        } @else {
+          <div class="flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+            <span>Verificando...</span>
+          </div>
+        }
+      </button>
+
+      <!-- ERROR MESSAGE -->
+      @if (error) {
+        <div
+          id="verificationError"
+          style="background: transparent; color: #ff6b6b; padding: 0; margin-top: 8px; margin-bottom: 8px; border-radius: 0; text-align: center; font-size: 14px; font-weight: 500;"
+        >
+          {{ error }}
+        </div>
+      }
+
+      <div class="pt-4 text-center border-t border-outline-variant/20">
+        <p class="text-xs text-zinc-500">
+          ¿No has recibido el código? Revisa tu carpeta de spam o intenta registrarte de nuevo.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>

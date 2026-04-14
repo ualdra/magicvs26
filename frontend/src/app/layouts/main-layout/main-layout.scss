@@ -32,12 +32,12 @@ button.inline-flex, a.inline-flex, button.p-2, .p-2 {
   flex:0 1 auto;
   overflow:hidden;
   margin: 0;
-  display:flex;
-  align-items:center;
-  gap:8px; /* small gap between name and tag */
+  display:inline-flex !important;
+  align-items:baseline;
+  gap:0 !important; /* remove gap between name and tag */
 }
-.user-block .display-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;font-size:14px;line-height:1;padding-top:0}
-.user-block .friend-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;opacity:0.8;font-size:12px;margin-top:0}
+.user-block .display-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;font-size:14px;line-height:1;padding-top:0;margin:0}
+.user-block .friend-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;opacity:0.8;font-size:12px;margin:0;padding-left:6px}
 /* ensure logout and icon keep their natural size and don't shrink */
 .logged-in > button{flex:0 0 auto}
 .logged-in > button.p-2{margin-left:0}

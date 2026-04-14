@@ -3,16 +3,16 @@
     <h1 class="text-3xl font-headline font-bold text-white mb-6 text-center">Iniciar sesión</h1>
     <p class="text-on-surface-variant text-sm mb-8 text-center">Accede a tus mazos, historial de partidas y amigos.</p>
 
-    <form class="space-y-4" (ngSubmit)="onSubmit()">
+    <div class="space-y-4">
       <div class="space-y-2">
-        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400">Usuario o email</label>
+        <label class="block text-xs font-semibold tracking-wider uppercase text-zinc-400">EMAIL</label>
         <input
           type="text"
           name="usernameOrEmail"
           [(ngModel)]="usernameOrEmail"
+          (ngModelChange)="onInputChange()"
           class="w-full h-10 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-          placeholder="juan o juan@example.com"
-          required
+          placeholder="magicvs@gmail.com"
         />
       </div>
 
@@ -22,18 +22,42 @@
           type="password"
           name="password"
           [(ngModel)]="password"
+          (ngModelChange)="onInputChange()"
           class="w-full h-10 rounded-md bg-surface-container/80 border border-outline-variant/40 px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
           placeholder="••••••••"
-          required
         />
       </div>
 
-      <button type="submit" class="w-full arcane-gradient py-3 rounded-md font-bold text-on-primary mt-4">
-        Entrar
+      @if (error) {
+        <div
+          id="loginError"
+          style="background: transparent; color: #ff6b6b; padding: 0; margin-top: 8px; margin-bottom: 8px; border-radius: 0; text-align: center; font-size: 14px; font-weight: 500;"
+        >
+          {{ error }}
+        </div>
+      }
+
+      <button
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="loading"
+        class="w-full py-3 rounded-md bg-purple-600/80 text-white font-bold tracking-wider uppercase Manrope text-sm shadow-lg shadow-purple-900/40 hover:bg-purple-500 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+      >
+        @if (!loading) {
+          <span>Entrar</span>
+        } @else {
+          <div class="flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+            <span>Entrando...</span>
+          </div>
+        }
       </button>
 
-      <p *ngIf="message" class="text-emerald-400 text-sm mt-4 text-center">{{ message }}</p>
-      <p *ngIf="error" class="text-red-400 text-sm mt-4 text-center">{{ error }}</p>
-    </form>
+      @if (message) {
+        <p class="text-emerald-400 text-sm mt-4 text-center">
+          {{ message }}
+        </p>
+      }
+    </div>
   </div>
 </section>

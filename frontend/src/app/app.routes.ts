@@ -7,6 +7,7 @@ import { Login } from './features/login/login';
 import { Registro } from './features/registro/registro';
 import { CatalogComponent } from './features/catalog/catalog';
 import { CardDetailComponent } from './features/catalog/card-detail';
+import { Verification } from './features/verification/verification';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 
 export const routes: Routes = [
@@ -21,6 +22,7 @@ export const routes: Routes = [
       { path: 'registro', component: Registro },
       { path: 'cartas', component: CatalogComponent },
       { path: 'cartas/:id', component: CardDetailComponent },
+      { path: 'verify/:pendingId', component: Verification },
       { path: 'profile', pathMatch: 'full', redirectTo: 'profile/me' },
       { path: 'profile/:userId/decks', component: ProfilePageComponent },
       { path: 'profile/:userId', component: ProfilePageComponent }

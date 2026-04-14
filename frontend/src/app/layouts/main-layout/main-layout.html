@@ -1,75 +1,107 @@
 <!-- TopNavBar -->
 <nav class="fixed top-0 z-50 w-full bg-zinc-900/80 backdrop-blur-xl shadow-2xl shadow-purple-900/20">
   <div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
-    <div class="flex items-center gap-2 text-2xl font-black text-purple-400 cursor-pointer" (click)="goHome()" role="button" aria-label="Ir a inicio">
+
+    <!-- LOGO -->
+    <div class="flex items-center gap-2 text-2xl font-black text-purple-400 cursor-pointer" (click)="goHome()"
+      role="button" aria-label="Ir a inicio">
       <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">style</span>
       <span class="font-headline tracking-tighter">MagicVS</span>
     </div>
+
+    <!-- NAV LINKS -->
     <div class="hidden md:flex items-center gap-8">
-      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
-         routerLink="/cartas" 
-         routerLinkActive="text-purple-400 border-purple-500 font-bold">Explorador</a>
-      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
-         routerLink="/noticias" 
-         routerLinkActive="text-purple-400 border-purple-500 font-bold">Noticias</a>
-      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
-         routerLink="/decks" 
-         routerLinkActive="text-purple-400 border-purple-500 font-bold">Mazos</a>
-      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
-         routerLink="/combat" 
-         routerLinkActive="text-purple-400 border-purple-500 font-bold">Combate</a>
-      <a *ngIf="isLoggedIn" class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
-        routerLink="/profile/me" 
-        routerLinkActive="text-purple-400 border-purple-500 font-bold">Perfil</a>
+      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2"
+        routerLink="/" [routerLinkActiveOptions]="{exact: true}"
+        routerLinkActive="text-purple-400 border-purple-500 font-bold">
+        Explorador
+      </a>
+      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2"
+        routerLink="/noticias" routerLinkActive="text-purple-400 border-purple-500 font-bold">
+        Noticias
+      </a>
+
+      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2"
+        routerLink="/decks" routerLinkActive="text-purple-400 border-purple-500 font-bold">
+        Mazos
+      </a>
+
+      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2"
+        routerLink="/combat" routerLinkActive="text-purple-400 border-purple-500 font-bold">
+        Combate
+      </a>
+
+      @if (isLoggedIn) {
+      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2"
+        routerLink="/profile/me" routerLinkActive="text-purple-400 border-purple-500 font-bold">
+        Perfil
+      </a>
+      }
     </div>
+
+    <!-- RIGHT SIDE -->
     <div class="flex items-center gap-4">
-      <ng-container *ngIf="!isLoggedIn; else loggedInNav">
-        <a
-          class="hidden md:inline-flex items-center px-4 py-2 rounded-full border border-purple-500/60 bg-zinc-900/60 text-purple-400 font-bold tracking-wider uppercase Manrope text-sm hover:bg-purple-500/10 hover:text-purple-200 transition-colors"
-          routerLink="/login"
-          routerLinkActive="bg-purple-500/20 text-purple-100 border-purple-500"
-        >
-          Login
-        </a>
-        <a
-          class="hidden md:inline-flex items-center px-4 py-2 rounded-full bg-purple-600/80 text-white font-bold tracking-wider uppercase Manrope text-sm shadow-lg shadow-purple-900/40 hover:bg-purple-500 transition-colors"
-          routerLink="/registro"
-          routerLinkActive="bg-purple-500 shadow-purple-900/60"
-        >
-          Registro
-        </a>
-      </ng-container>
-      
-      <ng-template #loggedInNav>
-        <div class="hidden md:flex items-center gap-4 logged-in">
-          <button
-            class="inline-flex items-center px-4 py-2 rounded-full bg-zinc-800/80 text-zinc-200 font-bold tracking-wider uppercase Manrope text-sm hover:bg-zinc-700 transition-colors"
-            (click)="logout()"
-          >
-            Cerrar sesión
-          </button>
 
-            <div class="user-block flex items-center gap-2">
-              <span class="display-name text-sm font-bold text-zinc-100 leading-4 truncate">{{ displayName }}</span>
-              <span class="friend-tag text-xs text-zinc-500 opacity-80">#{{ friendTag }}</span>
-            </div>
+      @if (!isLoggedIn) {
 
-          <a class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400" routerLink="/profile/me" aria-label="Ir al perfil">
-            <span class="material-symbols-outlined text-2xl">account_circle</span>
-          </a>
+      <!-- LOGIN / REGISTER -->
+      <a class="hidden md:inline-flex items-center px-4 py-2 rounded-full border border-purple-500/60 bg-zinc-900/60 text-purple-400 font-bold tracking-wider uppercase Manrope text-sm hover:bg-purple-500/10 hover:text-purple-200 transition-colors"
+        routerLink="/login" routerLinkActive="bg-purple-500/20 text-purple-100 border-purple-500">
+        Login
+      </a>
+
+      <a class="hidden md:inline-flex items-center px-4 py-2 rounded-full bg-purple-600/80 text-white font-bold tracking-wider uppercase Manrope text-sm shadow-lg shadow-purple-900/40 hover:bg-purple-500 transition-colors"
+        routerLink="/registro" routerLinkActive="bg-purple-500 shadow-purple-900/60">
+        Registro
+      </a>
+
+      } @else {
+
+      <!-- DESKTOP -->
+      <div class="hidden md:flex items-center gap-4 logged-in">
+        <button
+          class="inline-flex items-center px-4 py-2 rounded-full bg-zinc-800/80 text-zinc-200 font-bold tracking-wider uppercase Manrope text-sm hover:bg-zinc-700 transition-colors"
+          (click)="logout()">
+          Cerrar sesión
+        </button>
+
+        <div class="user-block inline-flex items-baseline gap-0">
+          <span class="display-name text-sm font-bold text-zinc-100 leading-4 truncate">
+            {{ displayName }}
+          </span>
+          <span class="friend-tag text-xs text-zinc-500 opacity-80">
+            #{{ friendTag }}
+          </span>
         </div>
-        <!-- small screens: logout left, name center, icon right -->
-        <div class="md:hidden flex items-center gap-3 w-full">
-          <button class="px-3 py-1 rounded bg-zinc-800 text-zinc-200" (click)="logout()">Salir</button>
-          <div class="flex-1 text-center">
-            <div class="text-sm font-bold text-zinc-100 truncate">{{ displayName }}</div>
-            <div class="text-xs text-zinc-500 truncate">#{{ friendTag }}</div>
-          </div>
-          <a class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400" routerLink="/profile/me" aria-label="Ir al perfil">
-            <span class="material-symbols-outlined text-2xl">account_circle</span>
-          </a>
+
+        <a class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400"
+          routerLink="/profile/me">
+          <span class="material-symbols-outlined text-2xl">account_circle</span>
+        </a>
+      </div>
+
+      <!-- MOBILE -->
+      <div class="md:hidden flex items-center gap-3 w-full">
+        <button class="px-3 py-1 rounded bg-zinc-800 text-zinc-200" (click)="logout()">
+          Salir
+        </button>
+
+        <div class="flex-1 text-center">
+          <span class="text-sm font-bold text-zinc-100">
+            {{ displayName }}
+          </span>
+          <span class="text-xs text-zinc-500">
+            #{{ friendTag }}
+          </span>
         </div>
-      </ng-template>
+
+        <a class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400"
+          routerLink="/profile/me">
+          <span class="material-symbols-outlined text-2xl">account_circle</span>
+        </a>
+      </div>
+
+      }
     </div>
   </div>
 </nav>
@@ -84,9 +116,12 @@
     <p class="font-light Manrope text-xs tracking-tight text-zinc-500 mb-4 md:mb-0">
       Proyecto universitario (DRA)
     </p>
+
     <div class="flex items-center gap-6">
-      <a class="text-zinc-500 hover:text-zinc-200 transition-colors font-light Manrope text-xs tracking-tight flex items-center gap-2" href="https://github.com/ualdra/magicvs26.git" target="_blank">
-        <span class="material-symbols-outlined text-sm">code</span> GitHub
+      <a class="text-zinc-500 hover:text-zinc-200 transition-colors font-light Manrope text-xs tracking-tight flex items-center gap-2"
+        href="https://github.com/ualdra/magicvs26.git" target="_blank">
+        <span class="material-symbols-outlined text-sm">code</span>
+        GitHub
       </a>
     </div>
   </div>
