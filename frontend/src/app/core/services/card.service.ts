@@ -4,6 +4,14 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Card } from '../../models/card.model';
 
+export interface CardPage {
+  cards: Card[];
+  totalPages: number;
+  totalElements: number;
+  currentPage: number;
+  size: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CardService {
 
@@ -63,9 +71,9 @@ export class CardService {
   private apiUrl = 'http://localhost:8080/api/cards';
   constructor(private http: HttpClient) {}
 
-  getCards(page = 0, size = 20): Observable<Card[]> {
+  getCards(page = 0, size = 20): Observable<CardPage> {
     return this.http.get<any>(`${this.apiUrl}/list?page=${page}&size=${size}`).pipe(
-      map(response => this.mapPageToCards(response))
+      map(response => this.mapResponseToCardPage(response, page, size))
     );
   }
 
@@ -77,6 +85,17 @@ export class CardService {
 
   getStats(): Observable<{ totalCards: number; totalSets: number }> {
     return this.http.get<{ totalCards: number; totalSets: number }>(`${this.apiUrl}/stats`);
+  }
+
+  private mapResponseToCardPage(response: any, currentPage: number, size: number): CardPage {
+    const cards = this.mapPageToCards(response);
+    return {
+      cards,
+      totalPages: response.totalPages || 0,
+      totalElements: response.totalElements || 0,
+      currentPage,
+      size
+    };
   }
 
   private mapPageToCards(response: any): Card[] {

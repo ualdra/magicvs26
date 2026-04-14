@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CardService } from '../../core/services/card.service';
+import { CardService, CardPage } from '../../core/services/card.service';
 import { Card } from '../../models/card.model';
 
 @Component({
@@ -16,8 +16,12 @@ export class CatalogComponent implements OnInit {
   private cardService = inject(CardService);
   
   // Data Signals
-  cards = signal<Card[]>([]);
+  cardPage = signal<CardPage | null>(null);
   isLoading = signal(true);
+
+  // Pagination signals
+  currentPage = signal(0);
+  totalPages = signal(0);
 
   // Filter signals
   activeMana = signal<string | null>(null);
@@ -63,11 +67,13 @@ export class CatalogComponent implements OnInit {
     this.searchQuery.set('');
   }
 
-  loadCards(): void {
+  loadCards(page = 0): void {
     this.isLoading.set(true);
-    this.cardService.getCards().subscribe({
+    this.cardService.getCards(page).subscribe({
       next: (data) => {
-        this.cards.set(data);
+        this.cardPage.set(data);
+        this.currentPage.set(data.currentPage);
+        this.totalPages.set(data.totalPages);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -75,6 +81,28 @@ export class CatalogComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  nextPage(): void {
+    const next = this.currentPage() + 1;
+    if (next < this.totalPages()) {
+      this.loadCards(next);
+    }
+  }
+
+  prevPage(): void {
+    const prev = this.currentPage() - 1;
+    if (prev >= 0) {
+      this.loadCards(prev);
+    }
+  }
+
+  goToPage(page: number | string): void {
+    const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
+    if (isNaN(pageNum) || pageNum < 0 || pageNum >= this.totalPages()) {
+      return;
+    }
+    this.loadCards(pageNum);
   }
 
   getManaCostString(manaCost: string[]): string {
