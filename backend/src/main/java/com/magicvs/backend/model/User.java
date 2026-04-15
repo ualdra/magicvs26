@@ -68,7 +68,7 @@ public class User {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         if (this.eloRating == null) {
-            this.eloRating = 1200; // Elo inicial típico
+            this.eloRating = 1200; 
         }
         if (this.gamesPlayed == null) {
             this.gamesPlayed = 0;

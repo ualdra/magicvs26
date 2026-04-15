@@ -1,12 +1,20 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Card } from '../../models/card.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface CardPage {
+  cards: Card[];
+  totalPages: number;
+  totalElements: number;
+  currentPage: number;
+  size: number;
+}
+
+@Injectable({ providedIn: 'root' })
 export class CardService {
+
   private cards: Card[] = [
     {
       id: 'elesh-norn',
@@ -60,12 +68,108 @@ export class CardService {
     }
   ];
 
-  getCards(): Observable<Card[]> {
-    return of(this.cards).pipe(delay(500)); // Simulating API delay
+  private apiUrl = 'http://localhost:8080/api/cards';
+  constructor(private http: HttpClient) {}
+
+  getCards(page = 0, size = 20): Observable<CardPage> {
+    return this.http.get<any>(`${this.apiUrl}/list?page=${page}&size=${size}`).pipe(
+      map(response => this.mapResponseToCardPage(response, page, size))
+    );
   }
 
-  getCardById(id: string): Observable<Card | undefined> {
-    const card = this.cards.find(c => c.id === id);
-    return of(card).pipe(delay(200));
+  getCardById(id: string): Observable<Card> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(card => this.mapBackendCardToCard(card))
+    );
+  }
+
+  getStats(): Observable<{ totalCards: number; totalSets: number }> {
+    return this.http.get<{ totalCards: number; totalSets: number }>(`${this.apiUrl}/stats`);
+  }
+
+  private mapResponseToCardPage(response: any, currentPage: number, size: number): CardPage {
+    const cards = this.mapPageToCards(response);
+    return {
+      cards,
+      totalPages: response.totalPages || 0,
+      totalElements: response.totalElements || 0,
+      currentPage,
+      size
+    };
+  }
+
+  private mapPageToCards(response: any): Card[] {
+    if (!response || !Array.isArray(response.content)) {
+      return [];
+    }
+    return response.content.map((card: any) => this.mapBackendCardToCard(card));
+  }
+
+  private mapBackendCardToCard(card: any): Card {
+    return {
+      id: String(card.id),
+      name: card.name || '',
+      imageUrl: card.normalImageUri || card.smallImageUri || card.largeImageUri || card.pngImageUri || '',
+      manaCost: this.parseManaCost(card.manaCost),
+      type: card.typeLine || card.layout || '',
+      rarity: this.capitalize(card.rarity) || '',
+      oracleText: card.oracleText || '',
+      flavorText: card.flavorText || '',
+      powerToughness: card.power && card.toughness ? `${card.power}/${card.toughness}` : undefined,
+      legalities: this.normalizeLegalities(card.legalities),
+      price: this.normalizePrice(card.price)
+    };
+  }
+
+  private parseManaCost(manaCost?: string): string[] {
+    if (!manaCost) {
+      return [];
+    }
+    const matches = manaCost.match(/\{([^}]+)\}/g);
+    if (!matches) {
+      return [manaCost];
+    }
+    return matches.map(symbol => symbol.slice(1, -1));
+  }
+
+  private normalizeLegalities(legalities: any): Card['legalities'] {
+    const defaultLegalities: Card['legalities'] = {
+      standard: 'Not Legal',
+      pioneer: 'Not Legal',
+      modern: 'Not Legal',
+      commander: 'Not Legal'
+    };
+
+    if (!Array.isArray(legalities)) {
+      return defaultLegalities;
+    }
+
+    return legalities.reduce((result: Card['legalities'], entry: any) => {
+      const format = entry.formatName?.toLowerCase();
+      
+      let status: "Legal" | "Banned" | "Not Legal" = 'Not Legal';
+      
+      if (entry.legalityStatus === 'legal' || entry.legalityStatus === 'Legal') status = 'Legal';
+      if (entry.legalityStatus === 'banned' || entry.legalityStatus === 'Banned') status = 'Banned';
+
+      if (format in result) {
+        (result as any)[format] = status;
+      }
+      return result;
+    }, { ...defaultLegalities });
+  }
+
+  private normalizePrice(price: any): number {
+    if (!price) {
+      return 0;
+    }
+    return Number(price.usd || 0);
+  }
+
+  private capitalize(value?: string): string {
+    if (!value) {
+      return '';
+    }
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 }
