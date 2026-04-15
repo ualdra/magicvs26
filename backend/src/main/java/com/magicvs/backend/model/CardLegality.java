@@ -12,7 +12,6 @@ public class CardLegality {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id", nullable = false)
-    @com.fasterxml.jackson.annotation.JsonIgnore
     private Card card;
 
     @Column(name = "format_name", nullable = false)

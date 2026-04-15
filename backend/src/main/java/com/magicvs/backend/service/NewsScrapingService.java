@@ -30,6 +30,7 @@ public class NewsScrapingService {
         try {
             log.info("Starting scrape from {}", MTG_GOLDFISH_URL);
             
+            // Bypass SSL for MTGGoldfish scrape (PKIX path building failed workaround)
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() { return null; }
@@ -58,10 +59,12 @@ public class NewsScrapingService {
                     String url = titleLink.absUrl("href");
                     String summary = article.select(".article-tile-abstract").text();
                     
+                    // Improved image extraction targeting the img tag
                     Element img = article.selectFirst(".article-tile-image img");
                     String imageUrl = img != null ? img.absUrl("src") : "";
 
                     if (imageUrl.isEmpty()) {
+                        // Fallback to background-image if necessary
                         String style = article.select(".article-tile-image").attr("style");
                         if (style.contains("url(")) {
                             imageUrl = style.substring(style.indexOf("url(") + 4, style.lastIndexOf(")"));
@@ -69,6 +72,7 @@ public class NewsScrapingService {
                         }
                     }
 
+                    // Extract and parse date
                     String dateStr = article.select(".article-tile-author strong").text();
                     LocalDateTime publishDate = parseDate(dateStr);
 
@@ -91,6 +95,8 @@ public class NewsScrapingService {
 
     private LocalDateTime parseDate(String dateStr) {
         try {
+            // MTGGoldfish format on articles page is "Apr 08"
+            // We append the current year (2026) to make it a full date
             String dateWithYear = dateStr + ", " + Year.now().getValue();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
             return LocalDateTime.parse(dateWithYear + " 00:00", 

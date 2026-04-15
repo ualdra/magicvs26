@@ -1,4 +1,4 @@
-<main class="min-h-screen pt-32 pb-24 px-4 sm:px-6 max-w-screen-2xl mx-auto">
+<main class="min-h-screen pt-32 pb-24 px-6 max-w-screen-2xl mx-auto">
   <header class="mb-16 space-y-8">
     <div class="flex flex-col items-center text-center space-y-4">
       <h1 class="font-headline text-5xl md:text-7xl font-bold tracking-tighter text-primary">
@@ -107,7 +107,7 @@
     </div>
   </section>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0 sm:gap-1 md:gap-2">
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
     <!-- State: Loading -->
     @if (isLoading()) {
       @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
@@ -121,7 +121,7 @@
       }
     } @else {
       <!-- State: Loaded -->
-      @for (card of cardPage()?.cards; track card.id) {
+      @for (card of cards(); track card.id) {
         <div [routerLink]="['/cartas', card.id]" 
              class="group relative aspect-[2.5/3.5] bg-surface-container rounded-xl overflow-hidden hover:scale-[1.02] transition-all duration-300 shadow-xl hover:shadow-primary/10 cursor-pointer">
           <img class="w-full h-full object-cover" [src]="card.imageUrl" [alt]="card.name" />
@@ -136,37 +136,4 @@
       }
     }
   </div>
-
-  <!-- Pagination -->
-  @if (cardPage() && totalPages() > 1) {
-    <div class="flex justify-center items-center gap-4 mt-12">
-      <button 
-        (click)="prevPage()" 
-        [disabled]="currentPage() === 0"
-        class="glass-panel border border-outline-variant rounded-xl px-4 py-2.5 flex items-center gap-2 transition-all hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed">
-        <span class="material-symbols-outlined text-lg">chevron_left</span>
-        Anterior
-      </button>
-
-      <div class="flex items-center gap-2">
-        <span class="text-sm text-on-surface-variant">Página</span>
-        <input 
-          type="number" 
-          [value]="currentPage() + 1" 
-          (input)="goToPage($any($event.target).value - 1)"
-          class="w-16 text-center glass-panel border border-outline-variant rounded-lg px-2 py-1 focus:border-primary focus:outline-none"
-          min="1" 
-          [max]="totalPages()" />
-        <span class="text-sm text-on-surface-variant">de {{ totalPages() }}</span>
-      </div>
-
-      <button 
-        (click)="nextPage()" 
-        [disabled]="currentPage() === totalPages() - 1"
-        class="glass-panel border border-outline-variant rounded-xl px-4 py-2.5 flex items-center gap-2 transition-all hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed">
-        Siguiente
-        <span class="material-symbols-outlined text-lg">chevron_right</span>
-      </button>
-    </div>
-  }
 </main>

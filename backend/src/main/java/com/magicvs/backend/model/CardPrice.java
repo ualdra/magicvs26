@@ -14,7 +14,6 @@ public class CardPrice {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id", nullable = false, unique = true)
-    @com.fasterxml.jackson.annotation.JsonIgnore
     private Card card;
 
     private BigDecimal usd;

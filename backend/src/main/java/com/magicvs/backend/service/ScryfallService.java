@@ -178,7 +178,7 @@ public class ScryfallService {
             card.setBorderCropUri(images.has("border_crop") ? images.get("border_crop").asText() : null);
         }
 
-        // Datos JSON
+        // Datos JSON complejos
         card.setColorsJson(node.has("colors") ? node.get("colors").toString() : "[]");
         card.setColorIdentityJson(node.has("color_identity") ? node.get("color_identity").toString() : "[]");
         card.setGamesJson(node.has("games") ? node.get("games").toString() : "[]");
@@ -194,7 +194,7 @@ public class ScryfallService {
         CardSet cardSet = cardSetRepository.findByCode(setCode).orElseGet(() -> createNewSet(node));
         card.setSet(cardSet);
 
-        // Guardar ID para nueva carta
+        // Guardar primero la carta para tener ID si es nueva
         card = cardRepository.save(card);
 
         // Legalidades
@@ -227,7 +227,7 @@ public class ScryfallService {
     }
 
     private void updateLegalities(Card card, JsonNode legalitiesNode) {
-        // Eliminar existentes para esta carta
+        // Eliminar existentes para este card
         cardLegalityRepository.deleteByCard(card);
         
         Iterator<Map.Entry<String, JsonNode>> fields = legalitiesNode.properties().iterator();
@@ -255,6 +255,7 @@ public class ScryfallService {
     }
 
     private void updateFaces(Card card, JsonNode facesNode) {
+        // En una implementación real, podríamos querer ser más cuidadosos al borrar y recrear
         cardFaceRepository.deleteByCard(card);
         int order = 0;
         for (JsonNode faceNode : facesNode) {

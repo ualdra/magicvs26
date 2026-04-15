@@ -32,7 +32,8 @@ public class NewsService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-       newsRepository.deleteAll();
+        // Clearing existing news once to fix the date issue as requested by the user
+        newsRepository.deleteAll();
         fetchAndSaveNews();
     }
 
