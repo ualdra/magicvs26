@@ -10,8 +10,8 @@ public final class ValidationUtils {
     private static final Pattern USERNAME = Pattern.compile("^[A-Za-z_-]{3,16}$");
     private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern PASSWORD = Pattern.compile("^(?=.{8,12}$)(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).*$");
-    // display names: unicode letters, underscore and hyphen, 1-16 chars (no spaces, no digits)
-    private static final Pattern DISPLAYNAME = Pattern.compile("^[\\p{L}_-]{1,16}$");
+    // display names: unicode letters, numbers, underscore and hyphen, 1-16 chars
+    private static final Pattern DISPLAYNAME = Pattern.compile("^[\\p{L}\\p{N}_-]{1,16}$");
 
     public static boolean isValidUsername(String username) {
         if (username == null) return false;
@@ -41,8 +41,8 @@ public final class ValidationUtils {
         if (input == null) return null;
         // Remove HTML tags
         String stripped = input.replaceAll("<.*?>", "");
-        // Allow unicode letters, underscore and hyphen only; remove spaces/digits/specials
-        String cleaned = stripped.replaceAll("[^\\p{L}_\\-]", "");
+        // Allow unicode letters, numbers, underscore and hyphen only; remove or replace others
+        String cleaned = stripped.replaceAll("[^\\p{L}\\p{N}_-]", "");
         // Trim and limit length to 16
         if (cleaned.length() > 16) {
             cleaned = cleaned.substring(0, 16);

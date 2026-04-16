@@ -11,6 +11,7 @@ import { Verification } from './features/verification/verification';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 import { DeckBuilderPageComponent } from './features/deck-builder/deck-builder-page.component';
 import { OAuthConfirm } from './features/oauth-confirm/oauth-confirm';
+import { ResetPassword } from './features/reset-password/reset-password';
 
 export const routes: Routes = [
   {
@@ -30,7 +31,8 @@ export const routes: Routes = [
       { path: 'profile/:userId/decks', component: ProfilePageComponent },
       { path: 'profile/:userId', component: ProfilePageComponent },
       { path: 'decks/create', component: DeckBuilderPageComponent },
-      { path: 'decks/:deckId/edit', component: DeckBuilderPageComponent }
+      { path: 'decks/:deckId/edit', component: DeckBuilderPageComponent },
+      { path: 'reset-password/:token', component: ResetPassword }
     ]
   }
 ];
