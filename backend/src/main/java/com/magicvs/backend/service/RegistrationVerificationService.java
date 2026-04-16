@@ -88,7 +88,7 @@ public class RegistrationVerificationService {
             helper.setFrom(fromAddress);
             helper.setSubject("⚔️ ¡Ya casi estás! Tu código de activación para MagicVS");
 
-            String formattedCode = code.substring(0, 3) + "-" + code.substring(3);
+            String formattedCode = code;
 
             String htmlContent = "<!DOCTYPE html><html><head>" +
                     "<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>" +

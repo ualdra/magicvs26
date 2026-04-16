@@ -23,6 +23,13 @@ export class Login implements OnInit {
   error: string | null = null;
   loading = false;
   
+  // Password Recovery
+  showForgotModal = false;
+  forgotEmail = '';
+  forgotLoading = false;
+  forgotMessage: string | null = null;
+  forgotError: string | null = null;
+
   // Google Registration Prompt
   showRegisterModal = false;
   googleDataForPrompt: any = null;
@@ -83,6 +90,55 @@ export class Login implements OnInit {
   cancelRegisterPrompt() {
     this.showRegisterModal = false;
     this.googleDataForPrompt = null;
+  }
+
+  // Password Recovery Methods
+  openForgotModal() {
+    this.showForgotModal = true;
+    this.forgotEmail = this.usernameOrEmail.includes('@') ? this.usernameOrEmail : '';
+    this.forgotError = null;
+    this.forgotMessage = null;
+  }
+
+  closeForgotModal() {
+    this.showForgotModal = false;
+  }
+
+  sendForgotEmail() {
+    this.forgotMessage = null;
+    this.forgotError = null;
+
+    if (!this.forgotEmail || !isValidEmail(this.forgotEmail.trim())) {
+      this.forgotError = 'Introduce un email válido.';
+      return;
+    }
+
+    this.forgotLoading = true;
+    this.http.post<any>('http://localhost:8080/api/password/forgot', { email: this.forgotEmail.trim() })
+      .pipe(
+        timeout(10000),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.forgotLoading = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            this.forgotMessage = res.message;
+            this.cdr.detectChanges();
+            setTimeout(() => this.closeForgotModal(), 4000);
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.forgotError = err.error?.message || 'Error al enviar el email. Intenta más tarde.';
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 
   onSubmit(): void {
