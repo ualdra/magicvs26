@@ -5,55 +5,234 @@
   </div>
 
   <div class="relative z-10 grid gap-8 px-6 py-8 md:px-10 md:py-10 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">
-    <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-6">
-      <div class="profile-avatar shrink-0 flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-purple-500 via-fuchsia-500 to-orange-300 text-3xl font-black text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-        @if (profile.avatarUrl) {
-          <img [src]="profile.avatarUrl" [alt]="profile.username" class="h-full w-full object-cover">
-        } @else {
-          {{ initials(profile.displayName || profile.username) }}
-        }
-      </div>
-
-      <div class="min-w-0 flex-1">
-        <div class="mb-3 flex flex-wrap items-center gap-2">
-          <span class="inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] text-purple-200">
-            {{ isOwnProfile ? 'Tu perfil' : 'Perfil de usuario' }}
-          </span>
-          <span class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-300">
-            {{ profile.friendTag || 'Sin friendTag' }}
-          </span>
+    
+    @if (!isEditing()) {
+      <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-6">
+        <div class="mana-glow avatar-md shrink-0 shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+             [style.border-color]="'#' + manaColorFromUrl().color"
+             [style.--mana-color]="'#' + manaColorFromUrl().color">
+          @if (profile.avatarUrl) {
+            <img [src]="profile.avatarUrl" [alt]="profile.username" class="h-full w-full object-cover rounded-[1.25rem]">
+            <div class="avatar-sheen rounded-[1.25rem]"></div>
+          } @else {
+            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-500 via-fuchsia-500 to-orange-300 text-3xl font-black text-white rounded-[1.25rem]">
+                {{ initials(profile.displayName || profile.username) }}
+            </div>
+          }
         </div>
 
-        <h1 class="truncate text-4xl font-black tracking-tight text-white md:text-5xl">
-          {{ profile.displayName || profile.username }}
-        </h1>
-        <p class="mt-2 text-sm font-medium uppercase tracking-[0.35em] text-zinc-400">@{{ profile.username }}</p>
+        <div class="min-w-0 flex-1">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] text-purple-200">
+                {{ isOwnProfile ? 'Tu perfil' : 'Perfil de usuario' }}
+                </span>
+                <span class="inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-300">
+                #{{ profile.friendTag || 'Sin friendTag' }}
+                </span>
+            </div>
 
-        <p class="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 md:text-base">
-          {{ profile.bio || 'Todavía no hay biografía disponible para este usuario.' }}
-        </p>
-      </div>
-    </div>
+            @if (isOwnProfile) {
+              <div class="flex flex-wrap items-center gap-2">
+                <button (click)="toggleEdit()" class="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300 transition-all hover:bg-purple-600/20 hover:text-white">
+                  <span class="material-symbols-outlined text-sm">edit</span>
+                  Editar Perfil
+                </button>
+                <button (click)="togglePasswordModal()" class="flex items-center gap-2 rounded-xl border border-zinc-500/30 bg-zinc-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 transition-all hover:bg-zinc-600/20 hover:text-white">
+                  <span class="material-symbols-outlined text-sm">lock_reset</span>
+                  Cambiar Contraseña
+                </button>
+                <button (click)="toggleDeleteModal()" class="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-red-300 transition-all hover:bg-red-600/20 hover:text-white">
+                  <span class="material-symbols-outlined text-sm">delete_forever</span>
+                  Eliminar Cuenta
+                </button>
+              </div>
+            }
+          </div>
 
-    <div class="grid gap-3 sm:grid-cols-2">
-      <div class="info-pill">
-        <span class="label">Email</span>
-        <span class="value">{{ email || 'No disponible' }}</span>
+          <h1 class="truncate text-4xl font-black tracking-tight text-white md:text-5xl">
+            {{ profile.displayName || profile.username }}
+          </h1>
+          <p class="mt-2 text-sm font-medium tracking-tight text-zinc-400">@{{ profile.username }}</p>
+
+          <p class="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 md:text-base">
+            {{ profile.bio || 'Todavía no hay biografía disponible para este usuario.' }}
+          </p>
+        </div>
       </div>
-      <div class="info-pill">
-        <span class="label">Registro</span>
-        <span class="value">{{ formatDate(registrationDate) }}</span>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="info-pill">
+          <span class="label">Email</span>
+          <span class="value">{{ email || 'No disponible' }}</span>
+        </div>
+        <div class="info-pill">
+          <span class="label">Registro</span>
+          <span class="value">{{ formatDate(registrationDate) }}</span>
+        </div>
+        <div class="info-pill">
+          <span class="label">País</span>
+          <span class="value flex items-center gap-2">
+            @if (profileCountryFlag()) {
+                <span>{{ profileCountryFlag() }}</span>
+            }
+            {{ profile.country || 'Elige tu país' }}
+          </span>
+        </div>
+        <div class="info-pill">
+          <span class="label">Cuentas Vinculadas</span>
+          <span class="value text-zinc-500 italic">No disponible</span>
+        </div>
       </div>
-      <div class="info-pill">
-        <span class="label">Rol</span>
-        <span class="value">{{ role || 'No disponible' }}</span>
+    } @else {
+      <!-- FORMULARIO DE EDICIÓN REDISEÑADO (4 COLUMNAS) -->
+      <div class="flex flex-col gap-8 2xl:flex-row xl:items-start w-full edit-grid overflow-visible">
+        <!-- COLUMNA 1: PREVIEW Y MANÁ -->
+        <div class="flex flex-col items-center gap-6 min-w-[220px]">
+            <div class="group relative mana-glow avatar-lg shadow-2xl transition-all duration-500"
+                 [style.border-color]="'#' + selectedManaColor().color + '66'"
+                 [style.--mana-color]="'#' + selectedManaColor().color">
+              <img [src]="getPreviewUrl()" class="h-full w-full object-cover rounded-[2.2rem] transition-all duration-300 relative z-0" 
+                   [class.scale-110]="hoveredSeed()" [class.opacity-80]="hoveredSeed()"
+                   onerror="this.src='https://api.dicebear.com/9.x/adventurer/svg?seed=placeholder&backgroundColor=cccccc'">
+              
+              <div class="avatar-sheen rounded-[2.2rem]"></div>
+
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 transition-opacity group-hover:opacity-100 rounded-b-[2.2rem] z-20">
+                <p class="text-[9px] font-black uppercase tracking-widest text-center text-white">Vista Previa</p>
+              </div>
+              @if (hoveredSeed()) {
+                  <div class="absolute top-4 right-4 animate-bounce z-20">
+                      <span class="material-symbols-outlined text-white drop-shadow-md">visibility</span>
+                  </div>
+              }
+            </div>
+            
+            <div class="flex flex-col items-center gap-4">
+                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Afinidad de Maná</span>
+                <div class="flex gap-3">
+                @for (c of manaColors; track c.code) {
+                    <button 
+                        (click)="selectManaColor(c)"
+                        class="h-9 w-9 rounded-full border-2 transition-all duration-300 hover:scale-110 active:scale-95"
+                        [style.background-color]="'#' + c.color"
+                        [class.border-white]="selectedManaColor().code === c.code"
+                        [class.border-transparent]="selectedManaColor().code !== c.code"
+                        [class.shadow-[0_0_20px_rgba(255,255,255,0.3)]]="selectedManaColor().code === c.code"
+                        [title]="c.name">
+                    </button>
+                }
+                </div>
+            </div>
+
+            <button (click)="randomizeAvatar()" class="mt-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-all hover:bg-purple-600/20 hover:text-white">
+                <span class="material-symbols-outlined text-sm">casino</span>
+                Aleatorio
+            </button>
+        </div>
+
+        <!-- COLUMNA 2: GALERÍA DE HÉROES -->
+        <div class="flex flex-col gap-4 min-w-[320px]">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Galería de Héroes</span>
+                <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{{ avatarSeeds.length }} modelos</span>
+            </div>
+            <div class="grid grid-cols-6 gap-4 max-h-[340px] overflow-y-auto pr-3 custom-scrollbar">
+                @for (seed of avatarSeeds; track seed) {
+                    <button 
+                        (click)="selectAvatar(seed)"
+                        (mouseenter)="setHoveredSeed(seed)"
+                        (mouseleave)="setHoveredSeed(null)"
+                        class="relative mana-glow avatar-sm transition-all hover:scale-110 active:scale-95"
+                        [style.border-color]="currentSeed() === seed ? '#' + selectedManaColor().color : 'transparent'"
+                        [class.mana-glow]="currentSeed() === seed"
+                        [style.--mana-color]="'#' + selectedManaColor().color + '44'"
+                        [class.border-white/5]="currentSeed() !== seed">
+                        <img [src]="'/assets/avatars/' + seed + '.webp'" 
+                             class="h-full w-full object-cover rounded-lg" loading="lazy"
+                             onerror="this.src='https://api.dicebear.com/9.x/adventurer/svg?seed=placeholder&backgroundColor=cccccc'">
+                        @if (currentSeed() === seed) {
+                            <div class="avatar-sheen rounded-lg"></div>
+                            <div class="absolute inset-0 bg-white/10 flex items-center justify-center rounded-lg z-20">
+                                <span class="material-symbols-outlined text-white text-lg">check_circle</span>
+                            </div>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- COLUMNA 3: IDENTIDAD -->
+        <div class="flex flex-col gap-6 min-w-[250px]">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Nombre Visible</label>
+                    <input [(ngModel)]="editData().displayName" type="text" placeholder="Tu nombre público..."
+                        class="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-sm font-semibold text-white outline-none ring-purple-500/30 transition-all focus:border-purple-500/50 focus:ring-8">
+                </div>
+                
+                <div class="space-y-2 country-dropdown-container relative">
+                    <label class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">País</label>
+                    <div class="relative">
+                        <input 
+                            [value]="countrySearch() || editData().country || ''"
+                            (input)="onCountrySearchChange($event)"
+                            (focus)="isCountryDropdownOpen.set(true)"
+                            type="text" 
+                            placeholder="Busca tu país..."
+                            class="w-full rounded-2xl border border-white/5 bg-white/5 pl-14 pr-12 py-4 text-sm font-semibold text-white outline-none ring-purple-500/30 transition-all focus:border-purple-500/50 focus:ring-8">
+                        @if (selectedCountryFlag()) {
+                            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-xl pointer-events-none">{{ selectedCountryFlag() }}</span>
+                        } @else {
+                            <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none text-lg">public</span>
+                        }
+                        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">expand_more</span>
+                    </div>
+
+                    @if (isCountryDropdownOpen()) {
+                        <div class="absolute left-0 right-0 top-full z-[100] mt-2 max-h-[220px] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900/95 p-2 backdrop-blur-2xl shadow-2xl shadow-black/60 custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                            @for (country of filteredCountries(); track country.name) {
+                                <button 
+                                    (click)="selectCountry(country)"
+                                    class="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-zinc-300 transition-colors hover:bg-purple-600/20 hover:text-white">
+                                    <span class="text-lg">{{ country.flag }}</span>
+                                    <span>{{ country.name }}</span>
+                                </button>
+                            } @empty {
+                                <div class="px-4 py-3 text-sm text-zinc-500 italic">No se encontraron resultados</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA 4: BIOGRAFÍA Y ACCIONES -->
+        <div class="flex-1 flex flex-col gap-6 min-w-[300px]">
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Biografía (Historia)</label>
+                <textarea [(ngModel)]="editData().bio" rows="6" placeholder="¿Cuál es tu leyenda?..."
+                    class="w-full resize-none rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-sm font-medium text-zinc-100 outline-none ring-purple-500/30 transition-all focus:border-purple-500/50 focus:ring-8 custom-scrollbar"></textarea>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button (click)="saveChanges()" [disabled]="isSaving()"
+                    class="flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-purple-900/40 transition-all hover:scale-[1.02] hover:shadow-purple-700/50 active:scale-[0.98] disabled:opacity-50">
+                    @if (isSaving()) {
+                        <span class="material-symbols-outlined animate-spin text-lg">sync_saved_locally</span>
+                    }
+                    {{ isSaving() ? 'Guardar Cambios' : 'Guardar Perfil' }}
+                </button>
+                <button (click)="cancelEdit()" [disabled]="isSaving()"
+                    class="px-8 py-4 rounded-xl border border-white/10 bg-white/5 text-xs font-black uppercase tracking-[0.2em] text-zinc-300 transition-all hover:bg-white/10 hover:text-white">
+                    Cancelar
+                </button>
+            </div>
+        </div>
       </div>
-      <div class="info-pill">
-        <span class="label">País</span>
-        <span class="value">{{ profile.country || 'No disponible' }}</span>
-      </div>
-    </div>
+    }
   </div>
+
 
   <div class="relative z-10 border-t border-white/5 bg-black/10 px-6 py-5 md:px-10">
     <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -76,3 +255,147 @@
     </div>
   </div>
 </section>
+
+<!-- Modals Layer (Global/Outside restricted containers) -->
+<div class="modals-layer">
+  <!-- Change Password Modal -->
+  @if (isPasswordModalOpen()) {
+    <div class="fixed inset-0 z-[100] flex justify-center p-4 overflow-y-auto pt-28 pb-10">
+      <!-- Backdrop with strong blur -->
+      <div (click)="togglePasswordModal()" class="fixed inset-0 bg-black/80 backdrop-blur-2xl"></div>
+      
+      <!-- Modal Card -->
+      <div class="relative my-auto w-full max-w-md bg-zinc-950/95 border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in duration-300">
+        <div class="mb-8 text-center">
+          <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-purple-600/10 text-purple-400">
+            <span class="material-symbols-outlined text-4xl">lock_reset</span>
+          </div>
+          <h2 class="text-3xl font-black text-white tracking-tight">Cambiar Contraseña</h2>
+          <p class="mt-3 text-zinc-400 text-sm leading-relaxed px-4">Protege tu cuenta actualizando tus credenciales de acceso.</p>
+        </div>
+        
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Contraseña Actual</label>
+            <div class="relative group">
+              <input [type]="showOldPassword() ? 'text' : 'password'" [(ngModel)]="oldPassword" 
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all placeholder:text-zinc-700"
+                placeholder="••••••••">
+              <button (click)="toggleVisibility('old')" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors p-2">
+                <span class="material-symbols-outlined text-xl">{{ showOldPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Nueva Contraseña</label>
+            <div class="relative group">
+              <input [type]="showNewPassword() ? 'text' : 'password'" [(ngModel)]="newPassword" 
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all placeholder:text-zinc-700"
+                placeholder="••••••••">
+              <button (click)="toggleVisibility('new')" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors p-2">
+                <span class="material-symbols-outlined text-xl">{{ showNewPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Confirmar Nueva Contraseña</label>
+            <div class="relative group">
+              <input [type]="showConfirmPassword() ? 'text' : 'password'" [(ngModel)]="confirmPassword" 
+                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all placeholder:text-zinc-700"
+                placeholder="••••••••">
+              <button (click)="toggleVisibility('confirm')" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors p-2">
+                <span class="material-symbols-outlined text-xl">{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+          </div>
+
+          @if (passwordError()) {
+            <div class="flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-red-400 text-xs font-bold border border-red-500/20">
+              <span class="material-symbols-outlined text-lg">warning</span>
+              {{ passwordError() }}
+            </div>
+          }
+
+          <div class="flex flex-col gap-3 pt-6">
+            <button (click)="submitPasswordChange()" [disabled]="isChangingPassword() || !oldPassword() || !newPassword() || !confirmPassword()"
+              class="w-full py-5 rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-600 text-xs font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-purple-900/40 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:grayscale flex items-center justify-center gap-3">
+              @if (isChangingPassword()) {
+                <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+              }
+              {{ isChangingPassword() ? 'Cambiando...' : 'confirmar cambio' }}
+            </button>
+            <button (click)="togglePasswordModal()"
+              class="w-full py-4 rounded-2xl border border-white/5 bg-white/5 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 transition-all hover:bg-white/10 hover:text-white">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Account Modal (Premium Danger Style) -->
+  @if (isDeleteModalOpen()) {
+    <div class="fixed inset-0 z-[110] flex justify-center p-4 overflow-y-auto pt-28 pb-10">
+      <div (click)="toggleDeleteModal()" class="fixed inset-0 bg-red-950/40 backdrop-blur-2xl"></div>
+      
+      <div class="relative my-auto w-full max-w-md bg-zinc-950/95 border border-red-500/30 rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+        <div class="mb-8 text-center">
+          <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-red-600/10 text-red-500 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+            <span class="material-symbols-outlined text-4xl">warning_amber</span>
+          </div>
+          <h2 class="text-3xl font-black text-white tracking-tight">¿Eliminar cuenta?</h2>
+          <p class="mt-4 text-zinc-400 text-sm leading-relaxed px-2">
+            Esta acción es <span class="text-red-400 font-bold uppercase tracking-wider">irreversible</span>. Perderás permanentemente tus mazos, estadísticas y todo tu progreso en MagicVS.
+          </p>
+        </div>
+        
+        <div class="space-y-4">
+          <button (click)="confirmDeleteAccount()" [disabled]="isSaving()"
+            class="w-full py-5 rounded-2xl bg-red-600 text-xs font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-red-900/40 transition-all hover:bg-red-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3">
+            @if (isSaving()) {
+                <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+            }
+            {{ isSaving() ? 'Eliminando...' : 'eliminar definitivamente' }}
+          </button>
+          
+          <button (click)="toggleDeleteModal()" [disabled]="isSaving()"
+            class="w-full py-4 rounded-2xl border border-white/5 bg-white/5 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 transition-all hover:bg-white/10 hover:text-white">
+            Mantener cuenta
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Success Modal (Password Changed) -->
+  @if (isSuccessModalOpen()) {
+    <div class="fixed inset-0 z-[120] flex justify-center p-4 overflow-y-auto pt-28 pb-10">
+      <div (click)="isSuccessModalOpen.set(false)" class="fixed inset-0 bg-emerald-950/40 backdrop-blur-2xl"></div>
+      
+      <div class="relative my-auto w-full max-w-sm bg-zinc-950 border border-emerald-500/30 rounded-[2.5rem] p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+        <div class="mb-8 text-center">
+          <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-600/10 text-emerald-400 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+            <span class="material-symbols-outlined text-4xl">check_circle</span>
+          </div>
+          <h2 class="text-3xl font-black text-white tracking-tight">¡Éxito!</h2>
+          <p class="mt-4 text-zinc-400 text-sm leading-relaxed px-2">
+            Tu contraseña ha sido actualizada correctamente. Ya puedes seguir usando MagicVS con seguridad.
+          </p>
+        </div>
+        
+        <button (click)="isSuccessModalOpen.set(false)"
+          class="w-full py-5 rounded-2xl bg-emerald-600 text-xs font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-emerald-900/40 transition-all hover:bg-emerald-500 hover:scale-[1.02] active:scale-[0.98]">
+          entendido
+        </button>
+
+        <div class="mt-8 text-center">
+            <span class="text-[9px] font-medium uppercase tracking-[0.3em] text-zinc-700">Sistema de Seguridad Actualizado</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

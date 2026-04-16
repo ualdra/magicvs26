@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -90,12 +91,11 @@ public class RegistrationVerificationService {
 
             String htmlContent = "<!DOCTYPE html><html><head>" +
                     "<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
-                    "<style>" +
-                    "  body { background-color: #000000 !important; color: #e5e2e1 !important; font-family: sans-serif; margin: 0; padding: 0; }"
-                    +
-                    "  .card-bg { background-color: #121212 !important; border: 1px solid #222222; border-radius: 24px; padding: 60px 30px; text-align: center; }"
-                    +
-                    "</style></head>" +
+    "<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap' rel='stylesheet'>" +
+    "<style>" +
+    "  body { background-color: #000000 !important; color: #e5e2e1 !important; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }" +
+    "  .card-bg { background-color: #121212 !important; border: 1px solid #222222; border-radius: 24px; padding: 60px 30px; text-align: center; }" +
+    "</style></head>" +
                     "<body>" +
                     "  <table width='100%' border='0' cellspacing='0' cellpadding='0' style='background-color: #000000; padding: 40px 10px;'>"
                     +
@@ -105,27 +105,12 @@ public class RegistrationVerificationService {
                     "          <span style='color: #ffffff !important; font-size: 20px; font-weight: 900; letter-spacing: 5px;'>MAGICVS</span>"
                     +
                     "        </td></tr>" +
-                    "        <tr><td class='card-bg'>" +
-                    "          " +
-                    "          <div style='height: 80px; position: relative; width: 80px; margin: 0 auto 30px auto;'>" +
-                    "            <div style='position: absolute; width: 45px; height: 60px; background-color: #c084fc; border-radius: 6px; top: 12px; left: 5px; transform: rotate(-16deg); opacity: 0.6;'></div>"
-                    +
-                    "            <div style='position: absolute; width: 45px; height: 60px; background-color: #c084fc; border-radius: 6px; top: 8px; left: 15px; transform: rotate(-8deg); opacity: 0.8;'></div>"
-                    +
-                    "            <div style='position: absolute; width: 45px; height: 60px; background-color: #c084fc; border-radius: 6px; top: 4px; left: 25px; display: flex; align-items: center; justify-content: center; border: 1px solid #121212; box-shadow: 0 4px 10px rgba(0,0,0,0.5);'>"
-                    +
-                    "              <div style='width: 7px; height: 7px; background-color: #000000; border-radius: 50%;'></div>"
-                    +
-                    "            </div>" +
-                    "          </div>" +
-                    "          <h2 style='color: #ffffff; font-size: 32px; margin: 0 0 15px 0; font-weight: 800;'>Verifica tu chispa</h2>"
-                    +
-                    "          <p style='color: #a1a1aa; font-size: 15px; line-height: 1.6; margin-bottom: 40px;'>Estás a un paso de dominar el Multiverso. Usa el código para completar tu registro:</p>"
-                    +
-                    "          <div style='background-color: #000000; border: 1px solid #333333; padding: 25px; border-radius: 16px; margin-bottom: 40px;'>"
-                    +
-                    "            <span style='font-size: 42px; font-weight: 800; letter-spacing: 8px; color: #ffffff !important; font-family: monospace;'>"
-                    + formattedCode + "</span>" +
+                    "          <div style='text-align: center; margin-bottom: 30px;'><img src='cid:logo' width='220' alt='MagicVS Logo' style='display: inline-block; border: 0;'></div>" +
+                    "          <h2 style='color: #ffffff; font-size: 32px; margin: 0 0 15px 0; font-weight: 800;'>Verifica tu chispa</h2>" +
+                    "          <p style='color: #a1a1aa; font-size: 15px; line-height: 1.6; margin-bottom: 40px;'>Estás a un paso de dominar el Multiverso. Usa el código para completar tu registro:</p>" +
+                    "          <div style='background-color: #000000; border: 1px solid #333333; padding: 30px 20px; border-radius: 16px; margin-bottom: 40px; text-align: center;'>" +
+                    "            <span style='font-size: 48px; font-weight: 900; letter-spacing: 12px; color: #ffffff !important; font-family: monospace; display: block;'>" + 
+                    formattedCode + "</span>" +
                     "          </div>" +
                     "          <a href='http://localhost:4200/verify/" + saved.getId()
                     + "' style='display: inline-block; background-color: #ecb2ff; color: #2e0040; padding: 18px 45px; border-radius: 12px; text-decoration: none; font-weight: 900; font-size: 13px; text-transform: uppercase;'>Confirmar Registro</a>"
@@ -143,6 +128,7 @@ public class RegistrationVerificationService {
                     "</body></html>";
 
             helper.setText(htmlContent, true);
+            helper.addInline("logo", new ClassPathResource("static/images/icono.webp"));
             mailSender.send(mimeMessage);
 
         } catch (Exception ex) {
@@ -194,17 +180,7 @@ public class RegistrationVerificationService {
             String welcomeHtml = "<!DOCTYPE html><html><body style='background-color: #000000; color: #e5e2e1; font-family: sans-serif; text-align: center;'>"
                     +
                     "<div style='padding: 40px;'>" +
-                    "  <div style='height: 80px; position: relative; width: 80px; margin: 0 auto 30px auto;'>" +
-                    "    <div style='position: absolute; width: 45px; height: 60px; background-color: #c084fc; border-radius: 6px; top: 12px; left: 5px; transform: rotate(-16deg); opacity: 0.6;'></div>"
-                    +
-                    "    <div style='position: absolute; width: 45px; height: 60px; background-color: #c084fc; border-radius: 6px; top: 8px; left: 15px; transform: rotate(-8deg); opacity: 0.8;'></div>"
-                    +
-                    "    <div style='position: absolute; width: 45px; height: 60px; background-color: #c084fc; border-radius: 6px; top: 4px; left: 25px; display: flex; align-items: center; justify-content: center; border: 1px solid #121212;'>"
-                    +
-                    "      <div style='width: 7px; height: 7px; background-color: #000000; border-radius: 50%;'></div>"
-                    +
-                    "    </div>" +
-                    "  </div>" +
+                    "  <div style='text-align: center; margin-bottom: 30px;'><img src='cid:logo' width='220' alt='MagicVS Logo' style='display: inline-block; border: 0;'></div>" +
                     "  <h2 style='color: #ffffff; font-size: 30px;'>¡Bienvenido, Caminante!</h2>" +
                     "  <p>Tu cuenta ha sido activada con éxito. Ya puedes entrar a la Arena.</p>" +
                     "  <br><a href='http://localhost:4200' style='background-color: #ecb2ff; color: #2e0040; padding: 15px 35px; border-radius: 10px; text-decoration: none; font-weight: bold;'>ENTRAR A MAGICVS</a>"
@@ -212,6 +188,7 @@ public class RegistrationVerificationService {
                     "</div></body></html>";
 
             helper.setText(welcomeHtml, true);
+            helper.addInline("logo", new ClassPathResource("static/images/icono.webp"));
             mailSender.send(mimeMessage);
         } catch (Exception e) {
             logger.warn("Error enviando bienvenida a {}", savedUser.getEmail());

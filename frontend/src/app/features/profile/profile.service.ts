@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, Subject, map } from 'rxjs';
 
 export interface ProfileResponse {
   id: number;
@@ -18,7 +18,6 @@ export interface ProfileResponse {
   decksCount: number | null;
   email?: string | null;
   createdAt?: string | null;
-  role?: string | null;
 }
 
 export interface ProfileDeckSummary {
@@ -54,6 +53,13 @@ export class ProfileService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = 'http://localhost:8080/api/profile';
 
+  private profileUpdated = new Subject<ProfileResponse>();
+  profileUpdated$ = this.profileUpdated.asObservable();
+
+  notifyProfileUpdate(profile: ProfileResponse): void {
+    this.profileUpdated.next(profile);
+  }
+
   getProfile(userId: string = 'me'): Observable<ProfileResponse> {
     return this.http
       .get<ProfileResponse>(this.buildUrl(userId), { headers: this.authHeaders() })
@@ -64,6 +70,20 @@ export class ProfileService {
     return this.http
       .get<ApiDeckSummary[]>(`${this.buildUrl(userId)}/decks`, { headers: this.authHeaders() })
       .pipe(map((decks) => decks.map((deck) => this.normalizeDeck(deck))));
+  }
+
+  updateProfile(data: Partial<ProfileResponse>): Observable<ProfileResponse> {
+    return this.http
+      .patch<ProfileResponse>(`${this.apiUrl}/me`, data, { headers: this.authHeaders() })
+      .pipe(map((profile) => this.normalizeProfile(profile)));
+  }
+
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/me`, { headers: this.authHeaders() });
+  }
+
+  changePassword(oldPassword: string, newPassword: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/me/password`, { oldPassword, newPassword }, { headers: this.authHeaders() });
   }
 
   private buildUrl(userId: string): string {

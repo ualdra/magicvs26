@@ -12,4 +12,6 @@ public interface DeckRepository extends JpaRepository<Deck, Long> {
     boolean existsByIdAndUserId(Long deckId, Long userId);
 
     long countByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }

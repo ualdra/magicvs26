@@ -15,13 +15,15 @@ public class ProfileResponseDto {
 	private String friendTag;
 	private Integer friendsCount;
 	private Long decksCount;
+	private String email;
+	private java.time.LocalDateTime createdAt;
 
 	public ProfileResponseDto() {
 	}
 
 	public ProfileResponseDto(Long id, String username, String displayName, String avatarUrl, String country, String bio,
 							  Integer eloRating, Integer gamesPlayed, Integer gamesWon, Integer gamesLost,
-							  String friendTag, Integer friendsCount, Long decksCount) {
+							  String friendTag, Integer friendsCount, Long decksCount, String email, java.time.LocalDateTime createdAt) {
 		this.id = id;
 		this.username = username;
 		this.displayName = displayName;
@@ -35,6 +37,24 @@ public class ProfileResponseDto {
 		this.friendTag = friendTag;
 		this.friendsCount = friendsCount;
 		this.decksCount = decksCount;
+		this.email = email;
+		this.createdAt = createdAt;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public java.time.LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(java.time.LocalDateTime createdAt) {
+		this.createdAt = createdAt;
 	}
 
 	public Long getId() {

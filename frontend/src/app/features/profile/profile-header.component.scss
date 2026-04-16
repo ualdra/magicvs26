@@ -46,3 +46,49 @@
   font-weight: 800;
   color: white;
 }
+
+.edit-grid {
+  display: flex;
+  flex-direction: column;
+  
+  @media (min-width: 1536px) { // 2xl
+    display: grid;
+    grid-template-columns: auto auto 1.2fr 1.8fr;
+    align-items: start;
+    gap: 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(168, 85, 247, 0.4);
+    border-radius: 20px;
+  }
+}
+
+.animate-in {
+  animation: fadeInSlide 0.2s ease-out forwards;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfileDeckListComponent } from './profile-deck-list.component';
@@ -14,8 +14,6 @@ interface StoredUser {
   displayName?: string | null;
   friendTag?: string | null;
   token?: string;
-  createdAt?: string | null;
-  role?: string | null;
 }
 
 @Component({
@@ -26,6 +24,7 @@ interface StoredUser {
   styleUrl: './profile-page.component.scss',
 })
 export class ProfilePageComponent implements OnInit, OnDestroy {
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly profileService = inject(ProfileService);
   private readonly destroyRef = inject(DestroyRef);
@@ -46,8 +45,16 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return currentTarget === 'me';
     }
 
-    return currentTarget === 'me' || storedUser.id === profile.id;
+  return currentTarget === 'me' || storedUser.id === profile.id;
   });
+
+  logout(): void {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
+    // redirect to public home
+    this.router.navigateByUrl('/');
+  }
 
   private activeRequest: Subscription | null = null;
 

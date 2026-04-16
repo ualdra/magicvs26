@@ -8,7 +8,7 @@
     </div>
 
     @if (!loading && !error) {
-      <span class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-300">
+      <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-300">
         {{ decks.length }} mazos
       </span>
     }
@@ -50,7 +50,7 @@
               </p>
             </div>
 
-            <span class="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em]"
+            <span class="rounded-xl px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em]"
                   [class.bg-emerald-500/10]="deck.isPublic"
                   [class.text-emerald-200]="deck.isPublic"
                   [class.border]="true"
@@ -72,7 +72,7 @@
               <div class="mt-2 flex flex-wrap gap-2">
                 @if (deckColors(deck).length > 0) {
                   @for (color of deckColors(deck); track color) {
-                    <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-zinc-100">
+                    <span class="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-zinc-100">
                       {{ color }}
                     </span>
                   }

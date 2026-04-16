@@ -18,14 +18,14 @@
          routerLink="/noticias" 
          routerLinkActive="text-purple-400 border-purple-500 font-bold">Noticias</a>
       <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
+         routerLink="/meta" 
+         routerLinkActive="text-purple-400 border-purple-500 font-bold">Meta</a>
+      <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
          routerLink="/decks/create" 
          routerLinkActive="text-purple-400 border-purple-500 font-bold">Mazos</a>
       <a class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
          routerLink="/combat" 
          routerLinkActive="text-purple-400 border-purple-500 font-bold">Combate</a>
-      <a *ngIf="isLoggedIn" class="text-zinc-400 hover:text-zinc-100 transition-colors tracking-wider uppercase Manrope text-sm pb-1 border-b-2" 
-        routerLink="/profile/me" 
-        routerLinkActive="text-purple-400 border-purple-500 font-bold">Perfil</a>
     </div>
 
     <!-- RIGHT SIDE -->
@@ -34,59 +34,51 @@
       @if (!isLoggedIn) {
 
       <!-- LOGIN / REGISTER -->
-      <a class="hidden md:inline-flex items-center px-4 py-2 rounded-full border border-purple-500/60 bg-zinc-900/60 text-purple-400 font-bold tracking-wider uppercase Manrope text-sm hover:bg-purple-500/10 hover:text-purple-200 transition-colors"
+      <a class="hidden md:inline-flex items-center px-5 py-2 rounded-xl border border-purple-500/30 bg-purple-500/10 text-purple-400 font-bold tracking-wider uppercase Manrope text-xs hover:bg-purple-500/20 hover:text-purple-200 transition-all duration-300"
         routerLink="/login" routerLinkActive="bg-purple-500/20 text-purple-100 border-purple-500">
-        Login
+        Iniciar sesión
       </a>
 
-      <a class="hidden md:inline-flex items-center px-4 py-2 rounded-full bg-purple-600/80 text-white font-bold tracking-wider uppercase Manrope text-sm shadow-lg shadow-purple-900/40 hover:bg-purple-500 transition-colors"
+      <a class="hidden md:inline-flex items-center px-5 py-2 rounded-xl bg-purple-600 text-white font-bold tracking-wider uppercase Manrope text-xs shadow-lg shadow-purple-900/40 hover:bg-purple-500 hover:-translate-y-0.5 transition-all duration-300"
         routerLink="/registro" routerLinkActive="bg-purple-500 shadow-purple-900/60">
         Registro
       </a>
 
       } @else {
 
-      <!-- DESKTOP -->
       <div class="hidden md:flex items-center gap-4 logged-in">
-        <button
-          class="inline-flex items-center px-4 py-2 rounded-full bg-zinc-800/80 text-zinc-200 font-bold tracking-wider uppercase Manrope text-sm hover:bg-zinc-700 transition-colors"
-          (click)="logout()">
-          Cerrar sesión
-        </button>
-
-        <div class="user-block inline-flex items-baseline gap-0">
-          <span class="display-name text-sm font-bold text-zinc-100 leading-4 truncate">
+        <div class="user-data flex items-baseline gap-1.5 leading-none mr-3">
+          <span class="text-[12px] font-black tracking-normal text-white">
             {{ displayName }}
           </span>
-          <span class="friend-tag text-xs text-zinc-500 opacity-80">
+          <span class="text-[12px] font-bold text-zinc-500 tracking-normal opacity-70">
             #{{ friendTag }}
           </span>
         </div>
 
-        <a class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400"
-          routerLink="/profile/me">
-          <span class="material-symbols-outlined text-2xl">account_circle</span>
+        <a class="group p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300" 
+           routerLink="/profile/me">
+          <div class="h-9 w-9 flex items-center justify-center rounded-lg bg-zinc-900 shadow-inner group-hover:scale-95 transition-transform">
+            <span class="material-symbols-outlined text-zinc-400 text-xl group-hover:text-purple-400 transition-colors">person</span>
+          </div>
         </a>
       </div>
 
       <!-- MOBILE -->
-      <div class="md:hidden flex items-center gap-3 w-full">
-        <button class="px-3 py-1 rounded bg-zinc-800 text-zinc-200" (click)="logout()">
-          Salir
-        </button>
-
-        <div class="flex-1 text-center">
-          <span class="text-sm font-bold text-zinc-100">
+      <div class="md:hidden flex items-center gap-4">
+        <div class="flex items-baseline gap-1.5 leading-none mr-3">
+          <span class="text-[12px] font-black tracking-normal text-white">
             {{ displayName }}
           </span>
-          <span class="text-xs text-zinc-500">
+          <span class="text-[12px] font-bold text-zinc-500 tracking-normal opacity-70">
             #{{ friendTag }}
           </span>
         </div>
 
-        <a class="p-2 rounded-full hover:bg-zinc-800/50 transition-all duration-300 text-zinc-400 hover:text-purple-400"
-          routerLink="/profile/me">
-          <span class="material-symbols-outlined text-2xl">account_circle</span>
+        <a class="p-0.5 rounded-xl border border-white/10" routerLink="/profile/me">
+          <div class="h-8 w-8 flex items-center justify-center rounded-lg bg-zinc-900">
+            <span class="material-symbols-outlined text-zinc-400 text-lg">person</span>
+          </div>
         </a>
       </div>
 

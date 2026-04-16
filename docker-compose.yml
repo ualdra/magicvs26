@@ -20,9 +20,9 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       DECK_MIN_CARDS: 60
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-noreplymagicvs@gmail.com}
+      SMTP_USER: "noreplymagicvs@gmail.com"
+      SMTP_PASS: "qhxmzwbsoozavefg"
+      SMTP_FROM: "noreplymagicvs@gmail.com"
     ports:
       - "8080:8080"
     depends_on:
