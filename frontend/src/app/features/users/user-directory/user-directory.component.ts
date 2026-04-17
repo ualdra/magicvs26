@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
+import { FriendshipService } from '../../../core/services/friendship.service';
 import { PublicUser } from '../../../models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 
@@ -14,6 +15,7 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
 })
 export class UserDirectoryComponent implements OnInit {
   private userService = inject(UserService);
+  private friendshipService = inject(FriendshipService);
 
   users = signal<PublicUser[]>([]);
   isLoading = signal(true);
@@ -25,9 +27,6 @@ export class UserDirectoryComponent implements OnInit {
   sortBy = signal<'username' | 'elo'>('elo');
   sortOrder = signal<'asc' | 'desc'>('desc');
   
-  // Mock Friendship state (Visual only)
-  followedUsers = signal<Set<number>>(new Set());
-
   filteredUsers = computed(() => {
     let list = [...this.users()];
     const search = this.searchTerm().toLowerCase().trim();
@@ -111,18 +110,11 @@ export class UserDirectoryComponent implements OnInit {
   }
 
   toggleFollow(userId: number): void {
-    this.followedUsers.update(set => {
-      const newSet = new Set(set);
-      if (newSet.has(userId)) {
-        newSet.delete(userId);
-      } else {
-        newSet.add(userId);
-      }
-      return newSet;
-    });
+    if (userId === this.currentUserId()) return;
+    this.friendshipService.toggleFollow(userId);
   }
 
   isFollowing(userId: number): boolean {
-    return this.followedUsers().has(userId);
+    return this.friendshipService.isFollowing(userId);
   }
 }
