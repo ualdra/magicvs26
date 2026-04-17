@@ -18,6 +18,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         String getName();
         String getManaCost();
         String getTypeLine();
+        String getNormalImageUri();
+        String getSmallImageUri();
+        String getColorsJson();
+        String getRawJson();
     }
 
     Optional<Card> findByScryfallId(UUID scryfallId);
@@ -27,9 +31,17 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     Page<Card> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     @Query("""
-        SELECT c.id AS id, c.name AS name, c.manaCost AS manaCost, c.typeLine AS typeLine
+        SELECT c.id AS id,
+               c.name AS name,
+               c.manaCost AS manaCost,
+               c.typeLine AS typeLine,
+               c.normalImageUri AS normalImageUri,
+               c.smallImageUri AS smallImageUri,
+             c.colorsJson AS colorsJson,
+             c.rawJson AS rawJson
         FROM Card c
-        WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
+         WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
+            OR LOWER(c.rawJson) LIKE LOWER(CONCAT('%', :name, '%'))
         """)
     Page<CardSearchProjection> searchProjectedByName(@Param("name") String name, Pageable pageable);
 

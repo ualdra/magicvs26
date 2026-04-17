@@ -2,11 +2,16 @@ package com.magicvs.backend.dto;
 
 import com.magicvs.backend.model.Deck;
 import com.magicvs.backend.model.DeckCard;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class DeckResponseDTO {
+
+    private static final String IMAGE_FALLBACK = "https://placehold.co/488x680/111827/e5e7eb?text=MagicVS";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private Long id;
     private String name;
@@ -98,7 +103,7 @@ public class DeckResponseDTO {
         dto.setId(deck.getId());
         dto.setName(deck.getName());
         dto.setDescription(deck.getDescription());
-        dto.setFormat(deck.getFormat().name());
+        dto.setFormat(deck.getFormat() != null ? deck.getFormat().name() : "STANDARD");
         dto.setTotalCards(deck.getTotalCards());
         dto.setIsPublic(deck.getPublic());
         dto.setCreatedAt(deck.getCreatedAt());
@@ -106,16 +111,17 @@ public class DeckResponseDTO {
         
         List<DeckCardResponseDTO> cardDtos = deck.getCards().stream()
             .map(deckCard -> {
-                String imageUrl = deckCard.getCard().getFaces().isEmpty() 
-                    ? null 
-                    : deckCard.getCard().getFaces().get(0).getNormalImageUri();
+                String imageUrl = resolveDeckCardImage(deckCard);
+                String localizedName = resolveLocalizedText(deckCard.getCard().getRawJson(), "printed_name");
+                String localizedTypeLine = resolveLocalizedText(deckCard.getCard().getRawJson(), "printed_type_line");
+                String localizedManaCost = resolveLocalizedText(deckCard.getCard().getRawJson(), "printed_mana_cost");
                 
                 return new DeckCardResponseDTO(
                     deckCard.getCard().getId(),
-                    deckCard.getCard().getName(),
+                    (localizedName != null && !localizedName.isBlank()) ? localizedName : deckCard.getCard().getName(),
                     imageUrl,
-                    deckCard.getCard().getManaCost(),
-                    deckCard.getCard().getTypeLine(),
+                    (localizedManaCost != null && !localizedManaCost.isBlank()) ? localizedManaCost : deckCard.getCard().getManaCost(),
+                    (localizedTypeLine != null && !localizedTypeLine.isBlank()) ? localizedTypeLine : deckCard.getCard().getTypeLine(),
                     deckCard.getQuantity()
                 );
             })
@@ -123,6 +129,39 @@ public class DeckResponseDTO {
         
         dto.setCards(cardDtos);
         return dto;
+    }
+
+    private static String resolveDeckCardImage(DeckCard deckCard) {
+        if (deckCard.getCard().getNormalImageUri() != null && !deckCard.getCard().getNormalImageUri().isBlank()) {
+            return deckCard.getCard().getNormalImageUri();
+        }
+
+        if (deckCard.getCard().getSmallImageUri() != null && !deckCard.getCard().getSmallImageUri().isBlank()) {
+            return deckCard.getCard().getSmallImageUri();
+        }
+
+        if (!deckCard.getCard().getFaces().isEmpty()) {
+            String faceImage = deckCard.getCard().getFaces().get(0).getNormalImageUri();
+            if (faceImage != null && !faceImage.isBlank()) {
+                return faceImage;
+            }
+        }
+
+        return IMAGE_FALLBACK;
+    }
+
+    private static String resolveLocalizedText(String rawJson, String field) {
+        if (rawJson == null || rawJson.isBlank()) {
+            return null;
+        }
+
+        try {
+            JsonNode node = OBJECT_MAPPER.readTree(rawJson);
+            JsonNode value = node.get(field);
+            return (value != null && value.isTextual()) ? value.asText() : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     public Long getId() {

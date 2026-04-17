@@ -9,5 +9,7 @@ public interface DeckCardRepository extends JpaRepository<DeckCard, Long> {
 
     List<DeckCard> findByDeckId(Long deckId);
 
+    void deleteByDeckId(Long deckId);
+
     void deleteByDeckIdAndCardId(Long deckId, Long cardId);
 }

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ProfileDeckSummary } from './profile.service';
 
 @Component({
   selector: 'app-profile-deck-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './profile-deck-list.component.html',
   styleUrl: './profile-deck-list.component.scss',
 })

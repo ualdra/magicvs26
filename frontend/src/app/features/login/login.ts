@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { finalize, timeout } from 'rxjs/operators';
 import { ChangeDetectorRef, NgZone } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { isValidEmail } from '../../shared/validation';
 import { GoogleAuthService } from '../../core/services/google-auth.service';
 import { OnInit, OnDestroy } from '@angular/core';
@@ -41,6 +41,7 @@ export class Login implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private googleAuth: GoogleAuthService
@@ -193,7 +194,8 @@ export class Login implements OnInit {
           localStorage.setItem('authToken', user.token);
           localStorage.setItem('user', JSON.stringify(user));
 
-          this.ngZone.run(() => this.router.navigateByUrl('/'));
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
+          this.ngZone.run(() => this.router.navigateByUrl(returnUrl));
         },
         error: (err: any) => {
           if (err && err.name === 'TimeoutError') {

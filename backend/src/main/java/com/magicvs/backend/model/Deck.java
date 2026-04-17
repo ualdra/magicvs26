@@ -63,7 +63,7 @@ public class Deck {
     }
 
     public void addCard(Card card, Integer quantity) {
-        DeckCard deckCard = new DeckCard(this, card, Math.min(quantity, 4));
+        DeckCard deckCard = new DeckCard(this, card, quantity);
         cards.add(deckCard);
         recalculateTotalCards();
     }

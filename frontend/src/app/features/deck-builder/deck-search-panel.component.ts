@@ -3,8 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { BehaviorSubject, Subject, Observable } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, switchMap, timeout } from 'rxjs/operators';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 
 interface Card {
   id: number;
@@ -13,6 +13,21 @@ interface Card {
   type: string;
   imageUrl: string;
   colors: string[];
+}
+
+interface CardSearchPageResponse {
+  content: Card[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+interface SearchState {
+  query: string;
+  page: number;
 }
 
 @Component({
@@ -30,9 +45,38 @@ export class DeckSearchPanelComponent {
   private destroyRef = inject(DestroyRef);
 
   searchQuery = '';
+  activeQuery = '';
   searchResults$ = new BehaviorSubject<Card[]>([]);
+  private searchState$ = new BehaviorSubject<SearchState>({ query: '', page: 0 });
+  currentPage = 0;
+  pageSize = 24;
+  totalElements = 0;
+  totalPages = 0;
   loading = false;
   error: string | null = null;
+  selectedColor = 'all';
+  selectedType = 'all';
+  addingCardId: number | null = null;
+
+  readonly colorFilters = [
+    { key: 'all', label: 'Todos' },
+    { key: 'white', label: 'Blanco' },
+    { key: 'blue', label: 'Azul' },
+    { key: 'black', label: 'Negro' },
+    { key: 'red', label: 'Rojo' },
+    { key: 'green', label: 'Verde' }
+  ];
+
+  readonly typeFilters = [
+    { key: 'all', label: 'Todos' },
+    { key: 'creature', label: 'Criaturas' },
+    { key: 'instant', label: 'Instantáneos' },
+    { key: 'sorcery', label: 'Conjuros' },
+    { key: 'artifact', label: 'Artefactos' },
+    { key: 'enchantment', label: 'Encantamientos' },
+    { key: 'planeswalker', label: 'Planeswalker' },
+    { key: 'land', label: 'Tierras' }
+  ];
 
   private searchSubject = new Subject<string>();
 
@@ -41,51 +85,118 @@ export class DeckSearchPanelComponent {
       debounceTime(300),
       distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(query => this.performSearch(query));
+    ).subscribe(query => {
+      this.searchState$.next({ query, page: 0 });
+    });
+
+    this.searchState$.pipe(
+      switchMap(({ query, page }) => this.performSearch(query, page)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((response) => {
+      if (!response) {
+        return;
+      }
+
+      this.searchResults$.next(response.content || []);
+      this.totalElements = response.totalElements || 0;
+      this.totalPages = response.totalPages || 0;
+      this.currentPage = response.page || 0;
+      this.loading = false;
+    });
   }
 
   onSearchChange(query: string): void {
     this.searchQuery = query;
+    this.currentPage = 0;
+    this.loading = false;
     this.searchSubject.next(query);
   }
 
-  private performSearch(query: string): void {
+  onPageChange(page: number): void {
+    if (page < 0 || page >= this.totalPages || page === this.currentPage || this.loading) {
+      return;
+    }
+
+    this.currentPage = page;
+    this.error = null;
+    this.searchState$.next({ query: this.activeQuery || this.searchQuery, page });
+  }
+
+  get visiblePages(): number[] {
+    if (this.totalPages <= 1) {
+      return [0];
+    }
+
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(0, this.currentPage - 2);
+    let end = Math.min(this.totalPages - 1, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(0, end - maxVisible + 1);
+    }
+
+    for (let p = start; p <= end; p++) {
+      pages.push(p);
+    }
+
+    return pages;
+  }
+
+  private performSearch(query: string, page = this.currentPage) {
     if (!query || query.trim().length < 2) {
       this.searchResults$.next([]);
-      return;
+      this.totalElements = 0;
+      this.totalPages = 0;
+      this.currentPage = 0;
+      this.activeQuery = '';
+      this.loading = false;
+      return of(null);
     }
 
     this.loading = true;
     this.error = null;
+    this.activeQuery = query;
+    const requestedPage = Math.max(0, page);
+    this.currentPage = requestedPage;
 
-    // TODO: Reemplazar con la URL real del API
-    const apiUrl = `http://localhost:8080/api/cards/search?name=${encodeURIComponent(query)}`;
+    const apiUrl = `http://localhost:8080/api/cards/search?name=${encodeURIComponent(query)}&page=${requestedPage}&size=${this.pageSize}`;
 
-    this.http.get<Card[]>(apiUrl).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (results) => {
-        this.searchResults$.next(results);
-        this.loading = false;
-      },
-      error: () => {
-        console.error('Search error occurred');
+    return this.http.get<CardSearchPageResponse>(apiUrl).pipe(
+      timeout(15000),
+      catchError(() => {
         this.error = 'Error en la búsqueda de cartas';
+        this.totalElements = 0;
+        this.totalPages = 0;
+        return of(null);
+      }),
+      finalize(() => {
         this.loading = false;
-      }
-    });
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    );
   }
 
   selectCard(card: Card): void {
     this.cardSelected.emit(card);
-    this.searchQuery = '';
-    this.searchResults$.next([]);
+    this.addingCardId = card.id;
+    setTimeout(() => {
+      if (this.addingCardId === card.id) {
+        this.addingCardId = null;
+      }
+    }, 320);
   }
 
   clearSearch(): void {
     this.searchQuery = '';
+    this.activeQuery = '';
     this.searchResults$.next([]);
+    this.currentPage = 0;
+    this.totalElements = 0;
+    this.totalPages = 0;
+    this.loading = false;
     this.error = null;
+    this.searchState$.next({ query: '', page: 0 });
   }
 
   onImageError(event: Event): void {
@@ -95,5 +206,80 @@ export class DeckSearchPanelComponent {
     }
 
     target.src = this.fallbackImage;
+  }
+
+  setColorFilter(color: string): void {
+    this.selectedColor = color;
+  }
+
+  setTypeFilter(type: string): void {
+    this.selectedType = type;
+  }
+
+  getFilteredResults(results: Card[]): Card[] {
+    return results.filter((card) => this.matchesColor(card) && this.matchesType(card));
+  }
+
+  onCardMouseMove(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const halfW = rect.width / 2;
+    const halfH = rect.height / 2;
+    const rotateY = ((x - halfW) / halfW) * 7;
+    const rotateX = ((halfH - y) / halfH) * 7;
+
+    target.style.setProperty('--tilt-x', `${rotateX.toFixed(2)}deg`);
+    target.style.setProperty('--tilt-y', `${rotateY.toFixed(2)}deg`);
+    target.style.setProperty('--glow-x', `${((x / rect.width) * 100).toFixed(2)}%`);
+    target.style.setProperty('--glow-y', `${((y / rect.height) * 100).toFixed(2)}%`);
+  }
+
+  onCardMouseLeave(event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    target.style.setProperty('--tilt-x', '0deg');
+    target.style.setProperty('--tilt-y', '0deg');
+    target.style.setProperty('--glow-x', '50%');
+    target.style.setProperty('--glow-y', '50%');
+  }
+
+  private matchesColor(card: Card): boolean {
+    if (this.selectedColor === 'all') {
+      return true;
+    }
+
+    const colorMap: Record<string, string> = {
+      W: 'white',
+      U: 'blue',
+      B: 'black',
+      R: 'red',
+      G: 'green'
+    };
+
+    const normalizedColors = (card.colors ?? []).map((color) => {
+      const value = String(color || '').trim();
+      const upper = value.toUpperCase();
+      return colorMap[upper] ?? value.toLowerCase();
+    });
+
+    return normalizedColors.includes(this.selectedColor);
+  }
+
+  private matchesType(card: Card): boolean {
+    if (this.selectedType === 'all') {
+      return true;
+    }
+
+    return card.type?.toLowerCase().includes(this.selectedType) ?? false;
   }
 }

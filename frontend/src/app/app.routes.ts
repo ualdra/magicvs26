@@ -10,6 +10,7 @@ import { CardDetailComponent } from './features/catalog/card-detail';
 import { Verification } from './features/verification/verification';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 import { DeckBuilderPageComponent } from './features/deck-builder/deck-builder-page.component';
+import { authGuard } from './core/guards/auth.guard';
 import { UserDirectoryComponent } from './features/users/user-directory/user-directory.component';
 import { UserProfileComponent } from './features/users/user-profile/user-profile.component';
 import { OAuthConfirm } from './features/oauth-confirm/oauth-confirm';
@@ -32,10 +33,10 @@ export const routes: Routes = [
       { path: 'profile', pathMatch: 'full', redirectTo: 'profile/me' },
       { path: 'profile/:userId/decks', component: ProfilePageComponent },
       { path: 'profile/:userId', component: ProfilePageComponent },
+      { path: 'decks/create', component: DeckBuilderPageComponent, canActivate: [authGuard] },
+      { path: 'decks/:deckId/edit', component: DeckBuilderPageComponent, canActivate: [authGuard] },
       { path: 'users', component: UserDirectoryComponent },
       { path: 'users/:id', component: UserProfileComponent },
-      { path: 'decks/create', component: DeckBuilderPageComponent },
-      { path: 'decks/:deckId/edit', component: DeckBuilderPageComponent },
       { path: 'reset-password/:token', component: ResetPassword }
     ]
   }

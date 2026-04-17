@@ -1,191 +1,195 @@
-<div class="deck-builder-container bg-gray-950 text-white min-h-screen p-6">
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold mb-2">Deck Builder</h1>
-      <p class="text-gray-400">Construye tu mazo perfecto de Magic</p>
-    </div>
+<div class="deck-builder-page min-h-screen px-4 pt-28 pb-8 sm:px-6 lg:px-8 lg:pt-32">
+  <div class="mx-auto flex w-full max-w-[1440px] flex-col gap-6">
+    <header class="flex flex-col gap-3 rounded-3xl border border-outline-variant/70 bg-surface-container-high/70 p-6 shadow-2xl shadow-black/20 backdrop-blur-xl md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="font-headline text-xs uppercase tracking-[0.2em] text-secondary/90">Deck Lab</p>
+        <h1 class="mt-2 font-headline text-3xl font-bold text-on-surface sm:text-4xl">{{ pageTitle }}</h1>
+        <p class="mt-2 max-w-2xl text-sm text-on-surface/75 sm:text-base">
+          {{ pageSubtitle }}
+        </p>
+      </div>
 
-    <!-- Error Message -->
+      <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 px-4 py-3 text-right">
+        <div class="text-xs uppercase tracking-[0.16em] text-on-surface/60">Formato</div>
+        <div class="mt-1 font-headline text-lg font-semibold text-primary">{{ deckFormatLabel }}</div>
+        <div class="mt-1 text-[11px] uppercase tracking-[0.16em] text-on-surface/55">{{ modeLabel }}</div>
+      </div>
+    </header>
+
+    @if (notificationMessage) {
+      <div
+        class="rounded-2xl border px-4 py-3 text-sm shadow-lg"
+        [class.border-emerald-400/40]="notificationType === 'success'"
+        [class.bg-emerald-500/10]="notificationType === 'success'"
+        [class.text-emerald-100]="notificationType === 'success'"
+        [class.border-rose-400/40]="notificationType === 'error'"
+        [class.bg-rose-500/10]="notificationType === 'error'"
+        [class.text-rose-100]="notificationType === 'error'"
+        [class.border-sky-400/40]="notificationType === 'info'"
+        [class.bg-sky-500/10]="notificationType === 'info'"
+        [class.text-sky-100]="notificationType === 'info'"
+      >
+        {{ notificationMessage }}
+      </div>
+    }
+
+    @if (loadingDeck) {
+      <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 px-4 py-3 text-sm text-on-surface/75 shadow-lg">
+        Cargando mazo...
+      </div>
+    }
+
     @if (error()) {
-      <div class="mb-6 p-4 bg-red-900 border border-red-700 rounded-lg text-red-200">
+      <div class="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 shadow-lg shadow-rose-500/10">
         {{ error() }}
       </div>
     }
 
-    <!-- Main Container (Three Columns) -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- Left Column: Search Panel (1 column) -->
-      <div class="lg:col-span-1">
-        <app-deck-search-panel (cardSelected)="onCardSelected($event)"></app-deck-search-panel>
-      </div>
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
+      <aside class="summary-column md:sticky md:top-28 md:max-h-[calc(100vh-8.5rem)] md:overflow-hidden">
+        <div class="summary-panel flex h-full flex-col rounded-3xl border border-outline-variant/70 bg-surface-container-high/70 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
+          <div class="space-y-4 border-b border-outline-variant/60 pb-5">
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/65">Nombre del mazo</label>
+              <input
+                type="text"
+                [value]="deckName()"
+                (input)="onNameChange($any($event.target).value)"
+                class="w-full rounded-xl border border-outline-variant bg-surface/80 px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+                placeholder="Mi Nuevo Mazo"
+              />
+            </div>
 
-      <!-- Middle Column: Deck Info (1 column) -->
-      <div class="lg:col-span-1">
-        <div class="bg-gray-900 rounded-lg p-6 border border-gray-800 sticky top-24">
-          <!-- Deck Name -->
-          <div class="mb-6">
-            <label class="block text-sm font-semibold mb-2">Nombre del Mazo</label>
-            <input
-              type="text"
-              [value]="deckName()"
-              (input)="onNameChange($any($event.target).value)"
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500"
-              placeholder="Mi Nuevo Mazo"
-            />
-          </div>
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/65">Descripción</label>
+              <textarea
+                [value]="deckDescription()"
+                (input)="onDescriptionChange($any($event.target).value)"
+                class="h-20 w-full resize-none rounded-xl border border-outline-variant bg-surface/80 px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+                placeholder="Define el plan del mazo..."
+              ></textarea>
+            </div>
 
-          <!-- Format Selection -->
-          <div class="mb-6">
-            <label class="block text-sm font-semibold mb-2">Formato</label>
-            <select
-              [value]="deckFormat()"
-              (change)="onFormatChange($any($event.target).value)"
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500"
-            >
-              @for (format of formats; track format) {
-                <option [value]="format">{{ format }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- Description -->
-          <div class="mb-6">
-            <label class="block text-sm font-semibold mb-2">Descripción</label>
-            <textarea
-              [value]="deckDescription()"
-              (input)="onDescriptionChange($any($event.target).value)"
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-purple-500 h-24 resize-none"
-              placeholder="Describe tu estrategia..."
-            ></textarea>
-          </div>
-
-          <!-- Public Toggle -->
-          <div class="mb-6 flex items-center">
-            <label class="flex items-center cursor-pointer">
+            <label class="inline-flex items-center gap-2 text-sm text-on-surface/80">
               <input
                 type="checkbox"
                 [checked]="deckIsPublic()"
                 (change)="onIsPublicChange($event.target.checked)"
-                class="mr-2 w-4 h-4"
+                class="h-4 w-4 rounded border-outline-variant bg-surface text-primary"
               />
-              <span class="text-sm">Hacer público</span>
+              Hacer público
             </label>
           </div>
 
-          <!-- Stats -->
-          <div class="bg-gray-800 rounded p-4 mb-6">
-            <div class="flex justify-between items-center mb-3">
-              <span class="text-gray-400">Cartas Total:</span>
-              <span class="text-2xl font-bold" [ngClass]="isValidDeck() ? 'text-green-400' : 'text-red-400'">
-                {{ totalCards() }}
-              </span>
+          <div class="space-y-4 py-5">
+            <div>
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-xs uppercase tracking-[0.14em] text-on-surface/65">Progreso del mazo</span>
+                <span class="font-headline text-lg font-bold text-on-surface">{{ totalCards() }}/{{ deckGoal }}</span>
+              </div>
+              <div class="h-2 w-full overflow-hidden rounded-full bg-surface">
+                <div class="h-full rounded-full bg-gradient-to-r from-secondary to-primary transition-all duration-500" [style.width.%]="deckProgressPercent()"></div>
+              </div>
+              <p class="mt-2 text-xs" [ngClass]="isValidDeck() ? 'text-emerald-300' : 'text-amber-200'">{{ validationMessage() }}</p>
             </div>
-            <div class="text-xs text-gray-400">{{ validationMessage() }}</div>
-          </div>
 
-          <!-- Colors -->
-          @if (deckColors().length > 0) {
-            <div class="mb-6">
-              <div class="text-sm font-semibold mb-2">Colores</div>
-              <div class="flex gap-2 flex-wrap">
-                @for (color of deckColors(); track color) {
-                  <span [ngClass]="getColorClass(color)" class="px-2 py-1 rounded text-xs font-semibold capitalize">
-                    {{ color }}
-                  </span>
+            <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 p-3">
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs uppercase tracking-[0.14em] text-on-surface/65">Curva de maná</span>
+                <span class="text-xs text-on-surface/60">CMC</span>
+              </div>
+              <div class="grid grid-cols-8 items-end gap-2">
+                @for (bucket of manaCurve(); track bucket.label) {
+                  <div class="curve-bucket flex flex-col items-center gap-1">
+                    <div class="curve-tooltip">CMC {{ bucket.label }}: {{ bucket.value }} carta(s)</div>
+                    <div class="curve-value text-[10px] text-on-surface/70">{{ bucket.value }}</div>
+                    <div class="curve-bar w-full rounded-t-md bg-gradient-to-t from-primary/85 to-secondary/85" [style.height.px]="getCurveBarHeight(bucket.value)"></div>
+                    <div class="text-[10px] text-on-surface/70">{{ bucket.label }}</div>
+                  </div>
                 }
               </div>
             </div>
-          }
 
-          <!-- Save Button -->
-          <button
-            (click)="saveDeck()"
-            [disabled]="!isValidDeck() || loading()"
-            class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded font-semibold mb-2 transition"
-          >
-            @if (loading()) {
-              <span>Guardando...</span>
-            } @else {
-              <span>Guardar Mazo</span>
-            }
-          </button>
-
-          <!-- Clear Button -->
-          <button
-            (click)="clearDeck()"
-            class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-semibold transition"
-          >
-            Limpiar Mazo
-          </button>
-        </div>
-      </div>
-
-      <!-- Right Column: Deck Composition (2 columns) -->
-      <div class="lg:col-span-2">
-        <div class="bg-gray-900 rounded-lg p-6 border border-gray-800">
-          <h2 class="text-xl font-bold mb-4">Composición del Mazo</h2>
-
-          @if (deckCards().length === 0) {
-            <div class="text-center py-12">
-              <p class="text-gray-400">No hay cartas en el mazo</p>
-              <p class="text-gray-500 text-sm mt-2">Busca y agrega cartas desde el panel izquierdo</p>
-            </div>
-          } @else {
-            <div class="space-y-2 max-h-96 overflow-y-auto">
-              @for (card of deckCards(); track card.cardId) {
-                <div class="flex items-center gap-4 p-3 bg-gray-800 rounded hover:bg-gray-750 transition">
-                  <!-- Card Image -->
-                  <img
-                    [src]="card.cardImage"
-                    [alt]="card.cardName"
-                    class="w-12 h-16 object-cover rounded"
-                  />
-
-                  <!-- Card Info -->
-                  <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-sm truncate">{{ card.cardName }}</div>
-                    <div class="text-xs text-gray-400">{{ card.cardType }}</div>
-                    <div class="text-xs text-purple-400">{{ card.manaCost }}</div>
-                  </div>
-
-                  <!-- Quantity -->
-                  <div class="flex items-center gap-2">
-                    <button
-                      (click)="onUpdateQuantity(card.cardId, card.quantity - 1)"
-                      class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      [value]="card.quantity"
-                      (change)="onUpdateQuantity(card.cardId, +$any($event.target).value)"
-                      class="w-10 text-center bg-gray-700 rounded text-sm"
-                      min="1"
-                      max="4"
-                    />
-                    <button
-                      (click)="onUpdateQuantity(card.cardId, card.quantity + 1)"
-                      class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <!-- Remove Button -->
-                  <button
-                    (click)="onRemoveCard(card.cardId)"
-                    class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
-                  >
-                    ✕
-                  </button>
+            @if (deckColors().length > 0) {
+              <div>
+                <div class="mb-2 text-xs uppercase tracking-[0.14em] text-on-surface/65">Identidad de color</div>
+                <div class="flex flex-wrap gap-2">
+                  @for (color of deckColors(); track color) {
+                    <span [ngClass]="getColorClass(color)" class="rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize">
+                      {{ color }}
+                    </span>
+                  }
                 </div>
+              </div>
+            }
+          </div>
+
+          <div class="deck-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-y border-outline-variant/60 py-4">
+            @if (deckCards().length === 0) {
+              <div class="rounded-2xl border border-dashed border-outline-variant p-5 text-center text-sm text-on-surface/65">
+                Añade cartas desde la colección para comenzar.
+              </div>
+            } @else {
+              <div class="space-y-4">
+                @for (group of groupedDeckCards(); track group.group) {
+                  <section>
+                    <h3 class="mb-2 font-headline text-sm font-semibold text-on-surface/85">{{ group.group }}</h3>
+                    <div class="space-y-2">
+                      @for (card of group.cards; track card.cardId) {
+                        <div class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2">
+                          <img [src]="card.cardImage" [alt]="card.cardName" class="h-12 w-9 rounded-md object-cover" />
+                          <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-semibold text-on-surface">{{ card.cardName }}</p>
+                            <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <button (click)="onUpdateQuantity(card.cardId, card.quantity - 1)" class="qty-btn" aria-label="Reducir cantidad">-</button>
+                            <input
+                              type="number"
+                              [value]="card.quantity"
+                              (change)="onUpdateQuantity(card.cardId, +$any($event.target).value)"
+                              class="qty-input"
+                              min="1"
+                              [attr.max]="getQuantityMax(card.cardType)"
+                            />
+                            <button (click)="onUpdateQuantity(card.cardId, card.quantity + 1)" class="qty-btn" aria-label="Aumentar cantidad">+</button>
+                          </div>
+                          <button (click)="onRemoveCard(card.cardId)" class="remove-btn" aria-label="Eliminar carta">✕</button>
+                        </div>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-2">
+            <button
+              (click)="saveDeck()"
+              [disabled]="!isValidDeck() || loading()"
+              class="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-on-primary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              @if (loading()) {
+                Guardando...
+              } @else {
+                Guardar
               }
-            </div>
-          }
+            </button>
+            <button
+              (click)="clearDeck()"
+              class="rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm font-semibold text-on-surface transition hover:border-rose-400/80 hover:text-rose-200"
+            >
+              Limpiar
+            </button>
+          </div>
         </div>
-      </div>
+      </aside>
+
+      <main class="min-w-0">
+        <!-- Si queréis centralizar glassmorphism, podéis mover estas clases a utilidades globales del design system -->
+        <app-deck-search-panel (cardSelected)="onCardSelected($event)"></app-deck-search-panel>
+      </main>
     </div>
   </div>
 </div>

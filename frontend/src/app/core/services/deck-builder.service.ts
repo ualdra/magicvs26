@@ -35,7 +35,6 @@ export interface Deck {
 })
 export class DeckBuilderService {
   private readonly apiUrl = 'http://localhost:8080/api/decks';
-  // Mínimo 60 para alinearse con la validación del backend.
   private readonly minDeckCards = 60;
 
   // Signals
@@ -74,7 +73,7 @@ export class DeckBuilderService {
   // Computed: Validation status
   readonly isValidDeck = computed(() => {
     const total = this.totalCards();
-    return total >= this.minDeckCards && total <= 250;
+    return total === this.minDeckCards;
   });
 
   // Computed: Validation message
@@ -82,7 +81,7 @@ export class DeckBuilderService {
     const total = this.totalCards();
     if (total === 0) return 'Mazo vacío';
     if (total < this.minDeckCards) return `${total}/${this.minDeckCards} cartas`;
-    if (total > 250) return `${total}/250 cartas`;
+    if (total > this.minDeckCards) return `${total}/${this.minDeckCards} cartas (excedido)`;
     return `${total} cartas`;
   });
 
@@ -130,9 +129,10 @@ export class DeckBuilderService {
    */
   addCard(card: Card, quantity: number = 1): void {
     const existing = this.deckCardsSignal().find(c => c.cardId === card.id);
+    const isBasicLand = this.isBasicLandType(card.type);
     
     if (existing) {
-      if (existing.quantity + quantity > 4) {
+      if (!isBasicLand && existing.quantity + quantity > 4) {
         this.errorSignal.set(`No puedes tener más de 4 copias de "${card.name}"`);
         return;
       }
@@ -173,7 +173,8 @@ export class DeckBuilderService {
       this.removeCard(cardId);
       return;
     }
-    if (quantity > 4) {
+    const card = this.deckCardsSignal().find(c => c.cardId === cardId);
+    if (card && !this.isBasicLandType(card.cardType) && quantity > 4) {
       this.errorSignal.set('Máximo 4 copias por carta');
       return;
     }
@@ -191,6 +192,8 @@ export class DeckBuilderService {
     this.deckCardsSignal.set([]);
     this.deckNameSignal.set('Mi Nuevo Mazo');
     this.deckDescriptionSignal.set('');
+    this.deckFormatSignal.set('STANDARD');
+    this.deckIsPublicSignal.set(false);
     this.errorSignal.set(null);
   }
 
@@ -200,22 +203,23 @@ export class DeckBuilderService {
   loadDeck(deck: Deck): void {
     this.deckNameSignal.set(deck.name);
     this.deckDescriptionSignal.set(deck.description);
-    this.deckFormatSignal.set(deck.format);
+    this.deckFormatSignal.set((deck.format || 'STANDARD').toUpperCase());
     this.deckIsPublicSignal.set(deck.isPublic);
     this.deckCardsSignal.set(deck.cards);
+    this.errorSignal.set(null);
   }
 
   /**
    * Guarda el mazo en el servidor
    */
-  saveDeck(): Observable<any> {
+  saveDeck(deckId?: number): Observable<any> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
     const deckData = {
       name: this.deckNameSignal(),
       description: this.deckDescriptionSignal(),
-      format: this.deckFormatSignal(),
+      format: 'STANDARD',
       isPublic: this.deckIsPublicSignal(),
       cards: this.deckCardsSignal().map(card => ({
         cardId: card.cardId,
@@ -235,8 +239,12 @@ export class DeckBuilderService {
       'Content-Type': 'application/json'
     });
 
+    const request$ = deckId
+      ? this.http.put(`${this.apiUrl}/${deckId}`, deckData, { headers })
+      : this.http.post(this.apiUrl, deckData, { headers });
+
     return new Observable(observer => {
-      this.http.post(this.apiUrl, deckData, { headers }).subscribe({
+      request$.subscribe({
         next: (response) => {
           this.loadingSignal.set(false);
           observer.next(response);
@@ -297,6 +305,15 @@ export class DeckBuilderService {
    * Obtiene un mazo por ID
    */
   getDeckById(deckId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/${deckId}`);
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get(`${this.apiUrl}/${deckId}`, { headers });
+  }
+
+  isBasicLandType(typeLine: string): boolean {
+    return (typeLine || '').toLowerCase().includes('basic land');
   }
 }
