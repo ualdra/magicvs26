@@ -37,6 +37,7 @@ export class DeckBuilderPageComponent {
   notificationMessage: string | null = null;
   notificationType: 'success' | 'error' | 'info' = 'success';
   private notificationTimer?: number;
+  private flippedDeckCardIds = new Set<number>();
 
   readonly deckFormatLabel = 'Standard';
 
@@ -149,6 +150,30 @@ export class DeckBuilderPageComponent {
 
   onUpdateQuantity(cardId: number, quantity: number): void {
     this.deckService.updateCardQuantity(cardId, quantity);
+  }
+
+  toggleDeckCardFace(card: DeckCard, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!this.isDoubleFacedDeckCard(card)) {
+      return;
+    }
+
+    if (this.flippedDeckCardIds.has(card.cardId)) {
+      this.flippedDeckCardIds.delete(card.cardId);
+      return;
+    }
+
+    this.flippedDeckCardIds.add(card.cardId);
+  }
+
+  isDeckCardFlipped(card: DeckCard): boolean {
+    return this.flippedDeckCardIds.has(card.cardId);
+  }
+
+  isDoubleFacedDeckCard(card: DeckCard): boolean {
+    return !!card.doubleFaced && !!card.backCardImage;
   }
 
   saveDeck(): void {

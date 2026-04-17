@@ -136,8 +136,33 @@
                     <h3 class="mb-2 font-headline text-sm font-semibold text-on-surface/85">{{ group.group }}</h3>
                     <div class="space-y-2">
                       @for (card of group.cards; track card.cardId) {
-                        <div class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2">
-                          <img [src]="card.cardImage" [alt]="card.cardName" class="h-12 w-9 rounded-md object-cover" />
+                        <div
+                          class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2"
+                          [class.deck-card-row-double-faced]="isDoubleFacedDeckCard(card)"
+                        >
+                          <div class="deck-card-image-wrap">
+                            @if (isDoubleFacedDeckCard(card)) {
+                              <button
+                                type="button"
+                                class="deck-flip-toggle"
+                                aria-label="Cambiar cara"
+                                (click)="toggleDeckCardFace(card, $event)"
+                              >
+                                ↺
+                              </button>
+                            }
+
+                            <div class="deck-card-flip-scene">
+                              <div class="deck-card-flip-inner" [class.is-flipped]="isDeckCardFlipped(card)">
+                                <img [src]="card.cardImage" [alt]="card.cardName + ' (frontal)'" class="h-12 w-9 rounded-md object-cover deck-card-face-front" />
+
+                                @if (isDoubleFacedDeckCard(card)) {
+                                  <img [src]="card.backCardImage" [alt]="card.cardName + ' (trasera)'" class="h-12 w-9 rounded-md object-cover deck-card-face-back" />
+                                }
+                              </div>
+                            </div>
+                          </div>
+
                           <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-semibold text-on-surface">{{ card.cardName }}</p>
                             <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>

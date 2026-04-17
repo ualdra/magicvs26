@@ -12,6 +12,8 @@ interface Card {
   manaCost: string;
   type: string;
   imageUrl: string;
+  backImageUrl?: string;
+  doubleFaced?: boolean;
   colors: string[];
 }
 
@@ -57,6 +59,7 @@ export class DeckSearchPanelComponent {
   selectedColor = 'all';
   selectedType = 'all';
   addingCardId: number | null = null;
+  private flippedCardIds = new Set<number>();
 
   readonly colorFilters = [
     { key: 'all', label: 'Todos' },
@@ -144,23 +147,17 @@ export class DeckSearchPanelComponent {
   }
 
   private performSearch(query: string, page = this.currentPage) {
-    if (!query || query.trim().length < 2) {
-      this.searchResults$.next([]);
-      this.totalElements = 0;
-      this.totalPages = 0;
-      this.currentPage = 0;
-      this.activeQuery = '';
-      this.loading = false;
-      return of(null);
-    }
+    const normalizedQuery = (query || '').trim();
+    const colorCode = this.mapColorFilterToCode(this.selectedColor);
+    const typeFilter = this.selectedType === 'all' ? '' : this.selectedType;
 
     this.loading = true;
     this.error = null;
-    this.activeQuery = query;
+    this.activeQuery = normalizedQuery;
     const requestedPage = Math.max(0, page);
     this.currentPage = requestedPage;
 
-    const apiUrl = `http://localhost:8080/api/cards/search?name=${encodeURIComponent(query)}&page=${requestedPage}&size=${this.pageSize}`;
+    const apiUrl = `http://localhost:8080/api/cards/search?name=${encodeURIComponent(normalizedQuery)}&color=${encodeURIComponent(colorCode)}&type=${encodeURIComponent(typeFilter)}&page=${requestedPage}&size=${this.pageSize}`;
 
     return this.http.get<CardSearchPageResponse>(apiUrl).pipe(
       timeout(15000),
@@ -187,6 +184,30 @@ export class DeckSearchPanelComponent {
     }, 320);
   }
 
+  toggleCardFace(card: Card, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!this.isDoubleFaced(card)) {
+      return;
+    }
+
+    if (this.flippedCardIds.has(card.id)) {
+      this.flippedCardIds.delete(card.id);
+      return;
+    }
+
+    this.flippedCardIds.add(card.id);
+  }
+
+  isCardFlipped(card: Card): boolean {
+    return this.flippedCardIds.has(card.id);
+  }
+
+  isDoubleFaced(card: Card): boolean {
+    return !!card.doubleFaced && !!card.backImageUrl;
+  }
+
   clearSearch(): void {
     this.searchQuery = '';
     this.activeQuery = '';
@@ -210,14 +231,29 @@ export class DeckSearchPanelComponent {
 
   setColorFilter(color: string): void {
     this.selectedColor = color;
+    this.currentPage = 0;
+    this.searchState$.next({ query: this.activeQuery || this.searchQuery, page: 0 });
   }
 
   setTypeFilter(type: string): void {
     this.selectedType = type;
+    this.currentPage = 0;
+    this.searchState$.next({ query: this.activeQuery || this.searchQuery, page: 0 });
   }
 
   getFilteredResults(results: Card[]): Card[] {
-    return results.filter((card) => this.matchesColor(card) && this.matchesType(card));
+    return results;
+  }
+
+  private mapColorFilterToCode(filter: string): string {
+    const map: Record<string, string> = {
+      white: 'W',
+      blue: 'U',
+      black: 'B',
+      red: 'R',
+      green: 'G'
+    };
+    return map[filter] ?? '';
   }
 
   onCardMouseMove(event: MouseEvent): void {

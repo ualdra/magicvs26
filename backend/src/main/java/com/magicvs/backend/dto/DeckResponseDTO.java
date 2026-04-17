@@ -2,9 +2,11 @@ package com.magicvs.backend.dto;
 
 import com.magicvs.backend.model.Deck;
 import com.magicvs.backend.model.DeckCard;
+import com.magicvs.backend.model.CardFace;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,8 @@ public class DeckResponseDTO {
         private Long cardId;
         private String cardName;
         private String cardImage;
+        private String backCardImage;
+        private Boolean doubleFaced;
         private String manaCost;
         private String cardType;
         private Integer quantity;
@@ -34,10 +38,12 @@ public class DeckResponseDTO {
         public DeckCardResponseDTO() {
         }
 
-        public DeckCardResponseDTO(Long cardId, String cardName, String cardImage, String manaCost, String cardType, Integer quantity) {
+        public DeckCardResponseDTO(Long cardId, String cardName, String cardImage, String backCardImage, Boolean doubleFaced, String manaCost, String cardType, Integer quantity) {
             this.cardId = cardId;
             this.cardName = cardName;
             this.cardImage = cardImage;
+            this.backCardImage = backCardImage;
+            this.doubleFaced = doubleFaced;
             this.manaCost = manaCost;
             this.cardType = cardType;
             this.quantity = quantity;
@@ -65,6 +71,22 @@ public class DeckResponseDTO {
 
         public void setCardImage(String cardImage) {
             this.cardImage = cardImage;
+        }
+
+        public String getBackCardImage() {
+            return backCardImage;
+        }
+
+        public void setBackCardImage(String backCardImage) {
+            this.backCardImage = backCardImage;
+        }
+
+        public Boolean getDoubleFaced() {
+            return doubleFaced;
+        }
+
+        public void setDoubleFaced(Boolean doubleFaced) {
+            this.doubleFaced = doubleFaced;
         }
 
         public String getManaCost() {
@@ -112,6 +134,7 @@ public class DeckResponseDTO {
         List<DeckCardResponseDTO> cardDtos = deck.getCards().stream()
             .map(deckCard -> {
                 String imageUrl = resolveDeckCardImage(deckCard);
+                String backImageUrl = resolveDeckCardBackImage(deckCard);
                 String localizedName = resolveLocalizedText(deckCard.getCard().getRawJson(), "printed_name");
                 String localizedTypeLine = resolveLocalizedText(deckCard.getCard().getRawJson(), "printed_type_line");
                 String localizedManaCost = resolveLocalizedText(deckCard.getCard().getRawJson(), "printed_mana_cost");
@@ -120,6 +143,8 @@ public class DeckResponseDTO {
                     deckCard.getCard().getId(),
                     (localizedName != null && !localizedName.isBlank()) ? localizedName : deckCard.getCard().getName(),
                     imageUrl,
+                    backImageUrl,
+                    isDoubleFacedCard(deckCard, backImageUrl),
                     (localizedManaCost != null && !localizedManaCost.isBlank()) ? localizedManaCost : deckCard.getCard().getManaCost(),
                     (localizedTypeLine != null && !localizedTypeLine.isBlank()) ? localizedTypeLine : deckCard.getCard().getTypeLine(),
                     deckCard.getQuantity()
@@ -140,14 +165,46 @@ public class DeckResponseDTO {
             return deckCard.getCard().getSmallImageUri();
         }
 
-        if (!deckCard.getCard().getFaces().isEmpty()) {
-            String faceImage = deckCard.getCard().getFaces().get(0).getNormalImageUri();
-            if (faceImage != null && !faceImage.isBlank()) {
-                return faceImage;
-            }
+        String faceImage = deckCard.getCard().getFaces().stream()
+            .sorted(Comparator.comparing(face -> face.getFaceOrder() == null ? Integer.MAX_VALUE : face.getFaceOrder()))
+            .map(DeckResponseDTO::resolveFaceImage)
+            .filter(image -> image != null && !image.isBlank())
+            .findFirst()
+            .orElse(null);
+
+        if (faceImage != null) {
+            return faceImage;
         }
 
         return IMAGE_FALLBACK;
+    }
+
+    private static String resolveFaceImage(CardFace face) {
+        if (face.getNormalImageUri() != null && !face.getNormalImageUri().isBlank()) {
+            return face.getNormalImageUri();
+        }
+        if (face.getSmallImageUri() != null && !face.getSmallImageUri().isBlank()) {
+            return face.getSmallImageUri();
+        }
+        return null;
+    }
+
+    private static String resolveDeckCardBackImage(DeckCard deckCard) {
+        return deckCard.getCard().getFaces().stream()
+            .sorted(Comparator.comparing(face -> face.getFaceOrder() == null ? Integer.MAX_VALUE : face.getFaceOrder()))
+            .skip(1)
+            .map(DeckResponseDTO::resolveFaceImage)
+            .filter(image -> image != null && !image.isBlank())
+            .findFirst()
+            .orElse(null);
+    }
+
+    private static boolean isDoubleFacedCard(DeckCard deckCard, String backImageUrl) {
+        String name = deckCard.getCard().getName();
+        return name != null
+            && name.contains(" // ")
+            && backImageUrl != null
+            && !backImageUrl.isBlank();
     }
 
     private static String resolveLocalizedText(String rawJson, String field) {
