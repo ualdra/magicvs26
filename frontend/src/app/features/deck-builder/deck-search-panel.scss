@@ -93,17 +93,83 @@
   position: relative;
   overflow: hidden;
   border-radius: 10px;
+  isolation: isolate;
+}
+
+.card-flip-scene {
+  perspective: 1100px;
+  pointer-events: none;
+}
+
+.card-flip-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.22, 0.7, 0.2, 1);
+  pointer-events: none;
+
+  &.is-flipped {
+    transform: rotateY(180deg);
+  }
 }
 
 .card-image {
+  display: block;
   width: 100%;
   aspect-ratio: 0.72;
   object-fit: cover;
   border-radius: 10px;
   transition: transform 0.22s ease;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-.collection-card:hover .card-image {
+.card-face-front {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.card-face-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  pointer-events: none;
+}
+
+.flip-toggle {
+  position: absolute;
+  left: 0.45rem;
+  top: 0.45rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(236, 178, 255, 0.45);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.08));
+  color: #f6eafe;
+  font-size: 0.95rem;
+  font-weight: 800;
+  backdrop-filter: blur(10px) saturate(125%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(236, 178, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  pointer-events: auto;
+
+  &:hover {
+    transform: translateY(-1px) scale(1.06);
+    border-color: rgba(236, 178, 255, 0.78);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35), 0 0 14px rgba(236, 178, 255, 0.48);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.collection-card:hover .card-image-wrap:not(.card-image-wrap-double-faced) .card-image {
   transform: translateZ(10px) scale(1.06);
 }
 
@@ -113,6 +179,7 @@
   background: linear-gradient(120deg, transparent 15%, rgba(255, 255, 255, 0.18) 36%, transparent 58%);
   transform: translateX(-120%);
   transition: transform 0.35s ease;
+  pointer-events: none;
 }
 
 .collection-card:hover .card-shine {

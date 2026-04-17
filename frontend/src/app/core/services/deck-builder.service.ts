@@ -8,6 +8,8 @@ export interface Card {
   manaCost: string;
   type: string;
   imageUrl: string;
+  backImageUrl?: string;
+  doubleFaced?: boolean;
   colors: string[];
 }
 
@@ -15,6 +17,8 @@ export interface DeckCard {
   cardId: number;
   cardName: string;
   cardImage: string;
+  backCardImage?: string;
+  doubleFaced?: boolean;
   manaCost: string;
   cardType: string;
   quantity: number;
@@ -147,6 +151,8 @@ export class DeckBuilderService {
           cardId: card.id,
           cardName: card.name,
           cardImage: card.imageUrl,
+          backCardImage: card.backImageUrl,
+          doubleFaced: card.doubleFaced,
           manaCost: card.manaCost,
           cardType: card.type,
           quantity
