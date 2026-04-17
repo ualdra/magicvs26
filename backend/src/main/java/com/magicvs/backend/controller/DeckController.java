@@ -94,4 +94,13 @@ public class DeckController {
         return authService.getUserId(token)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido"));
     }
+    @PostMapping("/{id}/copy")
+public ResponseEntity<DeckResponseDTO> copyDeck(
+    @PathVariable Long id,
+    @RequestHeader(value = "Authorization", required = false) String authorization
+) {
+    Long userId = extractUserIdFromAuthorization(authorization);
+    DeckResponseDTO response = deckService.copyDeck(id, userId);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
 }

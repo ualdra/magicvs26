@@ -80,26 +80,34 @@ public class DeckService {
     /**
      * Crea un nuevo mazo
      */
-    @Transactional
-    public DeckResponseDTO createDeck(Long userId, CreateDeckDTO deckDTO) {
-        validateDeck(deckDTO);
+@Transactional
+public DeckResponseDTO copyDeck(Long deckId, Long currentUserId) {
+    Deck originalDeck = deckRepository.findById(deckId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mazo original no encontrado"));
 
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
-
-        Deck deck = new Deck();
-        deck.setUser(user);
-        deck.setName(deckDTO.getName());
-        deck.setDescription(deckDTO.getDescription());
-        deck.setFormat(DeckFormat.STANDARD);
-        
-        deck.setPublic(deckDTO.getIsPublic() != null ? deckDTO.getIsPublic() : false);
-
-        syncDeckCards(deck, deckDTO.getCards());
-        Deck savedDeck = deckRepository.save(deck);
-
-        return DeckResponseDTO.fromEntity(savedDeck);
+    if (originalDeck.getPublic() == null || !originalDeck.getPublic()) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No se puede copiar un mazo privado");
     }
+
+    User currentUser = userRepository.findById(currentUserId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
+
+    Deck newDeck = new Deck();
+    newDeck.setUser(currentUser);
+    newDeck.setName(originalDeck.getName() + " (Copia)");
+    newDeck.setDescription(originalDeck.getDescription());
+    newDeck.setFormat(originalDeck.getFormat());
+    newDeck.setPublic(false);
+
+    originalDeck.getCards().forEach(originalCard -> {
+        newDeck.addCard(originalCard.getCard(), originalCard.getQuantity());
+    });
+
+    newDeck.recalculateTotalCards();
+    Deck savedDeck = deckRepository.save(newDeck);
+
+    return DeckResponseDTO.fromEntity(savedDeck);
+}
 
     /**
      * Actualiza un mazo existente
