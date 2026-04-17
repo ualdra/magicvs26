@@ -8,6 +8,8 @@
 
 .summary-panel {
   backdrop-filter: blur(18px);
+  height: 100%;
+  overflow: hidden;
 }
 
 .curve-bar {
@@ -46,22 +48,25 @@
   z-index: 20;
 }
 
-.deck-list-scroll {
+.summary-scroll-area {
   scrollbar-width: thin;
   scrollbar-color: rgba(236, 178, 255, 0.45) rgba(42, 42, 42, 0.6);
 
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(42, 42, 42, 0.6);
-    border-radius: 999px;
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(236, 178, 255, 0.45);
+    background: rgba(236, 178, 255, 0.3);
     border-radius: 999px;
+
+    &:hover {
+      background: rgba(236, 178, 255, 0.5);
+    }
   }
 }
 

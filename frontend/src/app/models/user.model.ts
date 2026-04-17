@@ -7,6 +7,8 @@ export interface PublicUser {
   stats?: {
     matchesPlayed: number;
     winRate: number;
+    wins: number;
+    losses: number;
     tournamentsWon: number;
     globalRank: number;
   };

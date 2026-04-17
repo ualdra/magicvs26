@@ -46,12 +46,14 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="relative mb-24">
-      <div class="h-64 w-full rounded-xl overflow-hidden relative">
-        <div class="absolute inset-0 bg-gradient-to-br from-surface-container-lowest via-surface-container-low to-primary-container/20"></div>
-        <img alt="Banner background" class="w-full h-full object-cover mix-blend-overlay opacity-40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrUU1csz9USa84dGk50pvkNCuphNIdkDESaobV63mCts_KzW14XwOsgPbt0yyHxNKORwICPlksAWGJEWbAURvn9GrwHXKhYvcV0YTgCN5aCKbC0v6D5oTzlOTZmBnO-7bAHQq7QNeFmJvWAbQdVr8pt0zOZueEc1Ubz-QLNZdcAsPm2EYAa4tJBqAF5mGdNjPyv03fAzNLuPFlBwfMex00hhdtlO1fAUl43X5RU9ChxLFcJtygIO2uyifCyHhayJD8z9E1QNHtpnqh"/>
+    <header class="relative mb-48 profile-hero">
+      <div class="h-80 w-full rounded-2xl overflow-hidden relative shadow-2xl">
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-primary/10 z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20 z-10"></div>
+        <img alt="Banner background" class="w-full h-full object-cover banner-image" src="/assets/images/magicvs_banner.png"/>
+        <div class="absolute inset-0 backdrop-blur-[2px] backdrop-saturate-150"></div>
       </div>
-      <div class="absolute -bottom-16 left-8 flex flex-col md:flex-row items-end gap-6 w-full pr-16">
+      <div class="absolute -bottom-40 left-8 flex flex-col md:flex-row items-end gap-6 w-full pr-16 pr-16 pr-16 pr-16 pr-16">
         <!-- Avatar -->
         <app-avatar [username]="u.username" [avatarUrl]="u.avatarUrl" size="lg"></app-avatar>
 
@@ -70,20 +72,13 @@
               @if (u.id !== currentUserId()) {
                 <div class="inline-flex" [attr.data-tooltip]="!currentUserId() ? 'Inicia sesión o regístrate para seguir a otros invocadores' : ''">
                   <button (click)="toggleFollow(u.id)"
-                          class="flex items-center gap-2 px-6 py-2 rounded-full transition-all font-headline font-bold shadow-lg disabled:opacity-40 disabled:cursor-not-allowed group"
-                          [class.bg-gradient-to-r]="!isFollowing(u.id)"
-                          [class.from-primary]="!isFollowing(u.id)"
-                          [class.to-primary-container]="!isFollowing(u.id)"
-                          [class.text-on-primary]="!isFollowing(u.id)"
-                          [class.bg-surface-container-highest]="isFollowing(u.id)"
-                          [class.text-on-surface]="isFollowing(u.id)"
-                          [class.border]="isFollowing(u.id)"
-                          [class.border-white/10]="isFollowing(u.id)"
+                          class="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all duration-300 font-headline font-bold shadow-lg disabled:opacity-40 disabled:cursor-not-allowed group profile-follow-btn"
+                          [class.following]="isFollowing(u.id)"
                           [disabled]="!currentUserId()">
                     <span class="material-symbols-outlined text-[20px] transition-transform group-active:scale-75">
                       {{ isFollowing(u.id) ? 'person_remove' : 'person_add' }}
                     </span>
-                    <span class="text-sm">
+                    <span class="text-sm tracking-tight">
                       {{ isFollowing(u.id) ? 'Dejar de seguir' : 'Seguir Invocador' }}
                     </span>
                   </button>
@@ -101,22 +96,35 @@
     <!-- Stats Bar -->
     @if (u.stats; as s) {
       <section class="mb-16">
-        <div class="glass-panel rounded-xl p-6 grid grid-cols-2 md:grid-cols-4 gap-8 border border-white/5">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Partidas Jugadas</span>
-            <span class="text-3xl font-headline font-semibold text-secondary">{{ s.matchesPlayed | number }}</span>
+        <div class="glass-panel rounded-2xl p-8 grid grid-cols-2 md:grid-cols-5 gap-8 border border-white/10 shadow-xl overflow-hidden relative">
+          <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+          
+          <div class="flex flex-col gap-1 relative z-10">
+            <span class="text-[10px] font-label uppercase tracking-[0.2em] text-on-surface-variant/70">Partidas Jugadas</span>
+            <span class="text-3xl font-headline font-bold text-on-surface">{{ s.matchesPlayed | number }}</span>
           </div>
-          <div class="flex flex-col gap-1">
-            <span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Win Rate (%)</span>
-            <span class="text-3xl font-headline font-semibold text-primary">{{ s.winRate }}%</span>
+          
+          <div class="flex flex-col gap-1 relative z-10">
+            <span class="text-[10px] font-label uppercase tracking-[0.2em] text-success/70">Ganadas</span>
+            <span class="text-3xl font-headline font-bold text-success">{{ s.wins | number }}</span>
           </div>
-          <div class="hidden md:flex flex-col gap-1">
-            <span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Torneos Ganados</span>
-            <span class="text-3xl font-headline font-semibold text-tertiary">{{ s.tournamentsWon }}</span>
+
+          <div class="flex flex-col gap-1 relative z-10">
+            <span class="text-[10px] font-label uppercase tracking-[0.2em] text-error/70">Perdidas</span>
+            <span class="text-3xl font-headline font-bold text-error">{{ s.losses | number }}</span>
           </div>
-          <div class="hidden md:flex flex-col gap-1">
-            <span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Rango Global</span>
-            <span class="text-3xl font-headline font-semibold text-on-surface">#{{ s.globalRank || '---' }}</span>
+
+          <div class="flex flex-col gap-1 relative z-10">
+            <span class="text-[10px] font-label uppercase tracking-[0.2em] text-primary/70">Win Rate</span>
+            <div class="flex items-baseline gap-1">
+              <span class="text-3xl font-headline font-bold text-primary">{{ s.winRate }}</span>
+              <span class="text-sm font-headline text-primary/60">%</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1 relative z-10">
+            <span class="text-[10px] font-label uppercase tracking-[0.2em] text-tertiary/70">Rango Global</span>
+            <span class="text-3xl font-headline font-bold text-tertiary">#---</span>
           </div>
         </div>
       </section>
@@ -133,7 +141,7 @@
         @for (deck of u.decks; track deck.id) {
           <div class="bg-surface-container hover:bg-surface-container-high transition-all duration-300 rounded-xl overflow-hidden group">
             <div class="h-32 bg-surface-container-lowest relative">
-              <img [src]="deck.imageUrl || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDA-iCPoF4y9NB_A88Rowb07Endl4FN_ahVhWIh6te-YXiuKiJccu4Y-0TkTPat2P9Yx4BySVO3l6jcM-RJnr_ABigxf641EqIw3VLQYVWoZHBCUvhoRqSA1I4H4LmI3lY8czAxYGi5Q2FAsaWvlEUN9_5yrJK8u3-ebT1Eax39JnP3fyqu6ViSwPgrhprddax11D4tUSlSYD_jBQUFwwR7LNQKgxPqdj-um3L5Txj2uNL9jgA5ry4GEB274uaX9U-NDoZSws8cBB8x'" 
+              <img [src]="deck.imageUrl || '/assets/images/deck_default.png'" 
                    alt="Deck art" 
                    class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500">
               <div class="absolute inset-0 bg-gradient-to-t from-surface-container to-transparent"></div>

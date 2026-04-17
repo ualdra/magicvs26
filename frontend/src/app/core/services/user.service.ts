@@ -35,8 +35,10 @@ export class UserService {
           stats: {
             matchesPlayed: profile.gamesPlayed,
             winRate: winRate,
-            tournamentsWon: 0, // Placeholder as not in DTO
-            globalRank: 0 // Placeholder as not in DTO
+            wins: profile.gamesWon,
+            losses: profile.gamesLost,
+            tournamentsWon: 0, // Placeholder
+            globalRank: 0 // Placeholder
           },
           decks: decks.map(d => ({
             id: d.id,
