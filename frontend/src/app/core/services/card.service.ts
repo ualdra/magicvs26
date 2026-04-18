@@ -31,11 +31,12 @@ export class CardService {
     );
   }
 
-  searchCards(query = '', color = '', type = '', page = 0, size = 20): Observable<CardPage> {
+  searchCards(query = '', color = '', type = '', rarity = '', page = 0, size = 20): Observable<CardPage> {
     const params = new URLSearchParams({
       name: query,
       color,
       type,
+      rarity,
       page: String(page),
       size: String(size)
     });
@@ -96,12 +97,6 @@ export class CardService {
 
   private mapBackendCardToCard(card: any): Card {
     // Manejo especial para cartas con doble cara
-    if(card.name.includes('//')) {
-      const nameParts = card.name.split(' // ');
-      const firstName = nameParts[0].trim();
-      const secondName = nameParts[1].trim();
-     
-    }
     
     return {
       id: String(card.id),

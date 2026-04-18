@@ -81,6 +81,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                 :typeFilter = ''
                 OR LOWER(COALESCE(c.typeLine, '')) LIKE LOWER(CONCAT('%', :typeFilter, '%'))
                )
+           AND (
+                :rarityFilter = ''
+                OR LOWER(COALESCE(c.rarity, '')) = LOWER(:rarityFilter)
+               )
         """)
     Page<CardSearchProjection> searchProjectedByNameAndFilters(
         @Param("name") String name,
@@ -92,6 +96,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         @Param("needsG") boolean needsG,
         @Param("needsC") boolean needsC,
         @Param("typeFilter") String typeFilter,
+        @Param("rarityFilter") String rarityFilter,
         Pageable pageable
     );
 

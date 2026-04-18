@@ -84,12 +84,14 @@ public class CardController {
             @RequestParam String name,
             @RequestParam(defaultValue = "") String color,
             @RequestParam(defaultValue = "") String type,
+            @RequestParam(defaultValue = "") String rarity,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size) {
 
         String normalizedName = name == null ? "" : name.trim();
         String normalizedColors = color == null ? "" : color.trim().toUpperCase();
         String normalizedType = type == null ? "" : type.trim();
+        String normalizedRarity = rarity == null ? "" : rarity.trim();
 
         boolean noColorFilter = normalizedColors.isEmpty();
         boolean needsW = normalizedColors.contains("W");
@@ -104,7 +106,7 @@ public class CardController {
 
         Pageable pageable = PageRequest.of(safePage, safeSize);
         Page<CardSearchResponse> mappedPage = cardRepository
-            .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, pageable)
+            .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
                 resolveDisplayName(card.getName(), card.getRawJson()),

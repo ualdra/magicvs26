@@ -121,7 +121,7 @@
       }
     } @else {
       <!-- State: Loaded -->
-      @for (card of filteredCards(); track card.id) {
+      @for (card of cards; track card.id) {
         <div [routerLink]="['/cartas', card.id]"
              class="group relative aspect-[2.5/3.5] bg-surface-container rounded-xl overflow-hidden hover:scale-[1.02] transition-all duration-300 shadow-xl hover:shadow-primary/10 cursor-pointer">
 

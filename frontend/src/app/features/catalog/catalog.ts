@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, HostListener, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ interface FilterState {
   query: string;
   color: string;
   type: string;
+  rarity: string;
   page: number;
 }
 
@@ -23,7 +24,7 @@ interface FilterState {
 export class CatalogComponent implements OnInit, OnDestroy {
   private cardService = inject(CardService);
   private destroy$ = new Subject<void>();
-  private filterState$ = new BehaviorSubject<FilterState>({ query: '', color: '', type: '', page: 0 });
+  private filterState$ = new BehaviorSubject<FilterState>({ query: '', color: '', type: '', rarity: '', page: 0 });
 
   cardPage = signal<CardPage | null>(null);
   isLoading = signal(true);
@@ -35,12 +36,9 @@ export class CatalogComponent implements OnInit, OnDestroy {
   activeRarity = signal('Rareza');
   searchQuery = signal('');
 
-  filteredCards = computed(() => {
-    const cards = this.cardPage()?.cards || [];
-    const rarity = this.activeRarity();
-    if (rarity === 'Rareza') return cards;
-    return cards.filter(card => card.rarity === rarity);
-  });
+  get cards() {
+    return this.cardPage()?.cards || [];
+  }
 
   showTypeDropdown = signal(false);
   showRarityDropdown = signal(false);
@@ -81,7 +79,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
       debounceTime(300),
       switchMap(state => {
         this.isLoading.set(true);
-        return this.cardService.searchCards(state.query, state.color, state.type, state.page);
+        return this.cardService.searchCards(state.query, state.color, state.type, state.rarity, state.page);
       }),
       takeUntil(this.destroy$)
     ).subscribe({
@@ -105,6 +103,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
       query: this.searchQuery(),
       color: this.activeMana().join(','),
       type: this.typeMap[this.activeType()] ?? '',
+      rarity: this.activeRarity() === 'Rareza' ? '' : this.activeRarity(),
       page
     };
   }
@@ -139,6 +138,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
   selectRarity(rarity: string): void {
     this.activeRarity.set(rarity);
     this.showRarityDropdown.set(false);
+    this.filterState$.next(this.getFilterState(0));
   }
 
   resetFilters(): void {
