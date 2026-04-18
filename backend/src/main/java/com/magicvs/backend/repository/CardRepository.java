@@ -20,6 +20,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         String getTypeLine();
         String getNormalImageUri();
         String getSmallImageUri();
+        String getFaceNormalImageUri();
+        String getFaceSmallImageUri();
+        String getBackFaceNormalImageUri();
+        String getBackFaceSmallImageUri();
         String getColorsJson();
         String getRawJson();
     }
@@ -37,13 +41,44 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                c.typeLine AS typeLine,
                c.normalImageUri AS normalImageUri,
                c.smallImageUri AS smallImageUri,
-             c.colorsJson AS colorsJson,
-             c.rawJson AS rawJson
+               firstFace.normalImageUri AS faceNormalImageUri,
+               firstFace.smallImageUri AS faceSmallImageUri,
+               lastFace.normalImageUri AS backFaceNormalImageUri,
+               lastFace.smallImageUri AS backFaceSmallImageUri,
+               c.colorsJson AS colorsJson,
+               c.rawJson AS rawJson
         FROM Card c
-         WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
-            OR LOWER(c.rawJson) LIKE LOWER(CONCAT('%', :name, '%'))
+        LEFT JOIN c.faces firstFace
+            ON firstFace.faceOrder = (
+                SELECT MIN(f1.faceOrder)
+                FROM CardFace f1
+                WHERE f1.card = c
+            )
+        LEFT JOIN c.faces lastFace
+            ON lastFace.faceOrder = (
+                SELECT MAX(f2.faceOrder)
+                FROM CardFace f2
+                WHERE f2.card = c
+            )
+         WHERE (
+                LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
+                OR LOWER(c.rawJson) LIKE LOWER(CONCAT('%', :name, '%'))
+               )
+           AND (
+                :colorCode = ''
+                OR UPPER(COALESCE(c.colorsJson, '[]')) LIKE CONCAT('%"', UPPER(:colorCode), '"%')
+               )
+           AND (
+                :typeFilter = ''
+                OR LOWER(COALESCE(c.typeLine, '')) LIKE LOWER(CONCAT('%', :typeFilter, '%'))
+               )
         """)
-    Page<CardSearchProjection> searchProjectedByName(@Param("name") String name, Pageable pageable);
+    Page<CardSearchProjection> searchProjectedByNameAndFilters(
+        @Param("name") String name,
+        @Param("colorCode") String colorCode,
+        @Param("typeFilter") String typeFilter,
+        Pageable pageable
+    );
 
     Optional<Card> findFirstByNameIgnoreCase(String name);
 

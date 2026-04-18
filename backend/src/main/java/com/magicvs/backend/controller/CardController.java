@@ -81,25 +81,34 @@ public class CardController {
     @GetMapping("/search")
     public ResponseEntity<CardSearchPageResponse> searchCards(
             @RequestParam String name,
+            @RequestParam(defaultValue = "") String color,
+            @RequestParam(defaultValue = "") String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size) {
 
-        if (name == null || name.trim().isEmpty()) {
-            return new ResponseEntity<>(new CardSearchPageResponse(List.of(), 0, 0, 0, 0, true, true), HttpStatus.OK);
-        }
+        String normalizedName = name == null ? "" : name.trim();
+        String normalizedColor = color == null ? "" : color.trim();
+        String normalizedType = type == null ? "" : type.trim();
 
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 50));
 
         Pageable pageable = PageRequest.of(safePage, safeSize);
         Page<CardSearchResponse> mappedPage = cardRepository
-                .searchProjectedByName(name, pageable)
+            .searchProjectedByNameAndFilters(normalizedName, normalizedColor, normalizedType, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
                 resolveDisplayName(card.getName(), card.getRawJson()),
-                    resolveDisplayManaCost(card.getManaCost(), card.getRawJson()),
+                resolveDisplayManaCost(card.getManaCost(), card.getRawJson()),
                 resolveDisplayType(card.getTypeLine(), card.getRawJson()),
-                        resolveImageUrl(card.getNormalImageUri(), card.getSmallImageUri()),
+                resolveImageUrl(
+                    card.getNormalImageUri(),
+                    card.getSmallImageUri(),
+                    card.getFaceNormalImageUri(),
+                    card.getFaceSmallImageUri()
+                ),
+                resolveBackImageUrl(card.getBackFaceNormalImageUri(), card.getBackFaceSmallImageUri()),
+                isDoubleFacedCard(card.getName(), card.getBackFaceNormalImageUri(), card.getBackFaceSmallImageUri()),
                         resolveColors(card.getColorsJson(), card.getManaCost())
                 ));
 
@@ -133,14 +142,43 @@ public class CardController {
         return colors;
     }
 
-    private static String resolveImageUrl(String normalImageUri, String smallImageUri) {
+    private static String resolveImageUrl(
+            String normalImageUri,
+            String smallImageUri,
+            String faceNormalImageUri,
+            String faceSmallImageUri
+    ) {
         if (normalImageUri != null && !normalImageUri.isBlank()) {
             return normalImageUri;
         }
         if (smallImageUri != null && !smallImageUri.isBlank()) {
             return smallImageUri;
         }
+        if (faceNormalImageUri != null && !faceNormalImageUri.isBlank()) {
+            return faceNormalImageUri;
+        }
+        if (faceSmallImageUri != null && !faceSmallImageUri.isBlank()) {
+            return faceSmallImageUri;
+        }
         return IMAGE_FALLBACK;
+    }
+
+    private static String resolveBackImageUrl(String backFaceNormalImageUri, String backFaceSmallImageUri) {
+        if (backFaceNormalImageUri != null && !backFaceNormalImageUri.isBlank()) {
+            return backFaceNormalImageUri;
+        }
+        if (backFaceSmallImageUri != null && !backFaceSmallImageUri.isBlank()) {
+            return backFaceSmallImageUri;
+        }
+        return null;
+    }
+
+    private static boolean isDoubleFacedCard(String name, String backFaceNormalImageUri, String backFaceSmallImageUri) {
+        if (name == null || !name.contains(" // ")) {
+            return false;
+        }
+        return (backFaceNormalImageUri != null && !backFaceNormalImageUri.isBlank())
+                || (backFaceSmallImageUri != null && !backFaceSmallImageUri.isBlank());
     }
 
     private static List<String> resolveColors(String colorsJson, String manaCost) {
@@ -208,14 +246,18 @@ public class CardController {
         private String manaCost;
         private String type;
         private String imageUrl;
+        private String backImageUrl;
+        private boolean doubleFaced;
         private List<String> colors;
 
-        public CardSearchResponse(Long id, String name, String manaCost, String type, String imageUrl, List<String> colors) {
+        public CardSearchResponse(Long id, String name, String manaCost, String type, String imageUrl, String backImageUrl, boolean doubleFaced, List<String> colors) {
             this.id = id;
             this.name = name;
             this.manaCost = manaCost;
             this.type = type;
             this.imageUrl = imageUrl;
+            this.backImageUrl = backImageUrl;
+            this.doubleFaced = doubleFaced;
             this.colors = colors;
         }
 
@@ -257,6 +299,22 @@ public class CardController {
 
         public void setImageUrl(String imageUrl) {
             this.imageUrl = imageUrl;
+        }
+
+        public String getBackImageUrl() {
+            return backImageUrl;
+        }
+
+        public void setBackImageUrl(String backImageUrl) {
+            this.backImageUrl = backImageUrl;
+        }
+
+        public boolean isDoubleFaced() {
+            return doubleFaced;
+        }
+
+        public void setDoubleFaced(boolean doubleFaced) {
+            this.doubleFaced = doubleFaced;
         }
 
         public List<String> getColors() {

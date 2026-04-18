@@ -22,5 +22,3 @@ export interface PublicUser {
     imageUrl: string | null;
   }>;
 }
-
-export type User = PublicUser;

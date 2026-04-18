@@ -125,7 +125,7 @@
               }
             </div>
 
-            <div class="border-t border-outline-variant/60 py-4">
+            <div class="deck-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-y border-outline-variant/60 py-4">
               @if (deckCards().length === 0) {
                 <div class="rounded-2xl border border-dashed border-outline-variant p-5 text-center text-sm text-on-surface/65">
                   Añade cartas desde la colección para comenzar.
@@ -137,25 +137,45 @@
                       <h3 class="mb-2 font-headline text-sm font-semibold text-on-surface/85">{{ group.group }}</h3>
                       <div class="space-y-2">
                         @for (card of group.cards; track card.cardId) {
-                          <div class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2">
-                            <img [src]="card.cardImage" [alt]="card.cardName" class="h-12 w-9 rounded-md object-cover" />
+                          <div
+                            class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2"
+                            [class.deck-card-row-double-faced]="isDoubleFacedDeckCard(card)"
+                          >
+                            <div class="deck-card-image-wrap">
+                              @if (isDoubleFacedDeckCard(card)) {
+                                <button
+                                  type="button"
+                                  class="deck-flip-toggle"
+                                  aria-label="Cambiar cara"
+                                  (click)="toggleDeckCardFace(card, $event)"
+                                >
+                                  ↺
+                                </button>
+                              }
+
+                              <div class="deck-card-flip-scene">
+                                <div class="deck-card-flip-inner" [class.is-flipped]="isDeckCardFlipped(card)">
+                                  <img [src]="card.cardImage" [alt]="card.cardName + ' (frontal)'" class="h-12 w-9 rounded-md object-cover deck-card-face-front" />
+
+                                  @if (isDoubleFacedDeckCard(card)) {
+                                    <img [src]="card.backCardImage" [alt]="card.cardName + ' (trasera)'" class="h-12 w-9 rounded-md object-cover deck-card-face-back" />
+                                  }
+                                </div>
+                              </div>
+                            </div>
+
                             <div class="min-w-0 flex-1">
                               <p class="truncate text-sm font-semibold text-on-surface">{{ card.cardName }}</p>
-                              <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>
+                              <div class="flex items-center gap-2">
+                                <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>
+                                <div class="flex items-center gap-1 ml-auto mr-1">
+                                  <button (click)="onUpdateQuantity(card.cardId, card.quantity - 1)" class="qty-btn" aria-label="Reducir cantidad">-</button>
+                                  <span class="text-xs font-bold text-on-surface w-4 text-center">{{ card.quantity }}</span>
+                                  <button (click)="onUpdateQuantity(card.cardId, card.quantity + 1)" class="qty-btn" aria-label="Aumentar cantidad">+</button>
+                                </div>
+                                <button (click)="onRemoveCard(card.cardId)" class="remove-btn text-xs text-rose-400 hover:text-rose-300" aria-label="Eliminar carta">✕</button>
+                              </div>
                             </div>
-                            <div class="flex items-center gap-1">
-                              <button (click)="onUpdateQuantity(card.cardId, card.quantity - 1)" class="qty-btn" aria-label="Reducir cantidad">-</button>
-                              <input
-                                type="number"
-                                [value]="card.quantity"
-                                (change)="onUpdateQuantity(card.cardId, +$any($event.target).value)"
-                                class="qty-input"
-                                min="1"
-                                [attr.max]="getQuantityMax(card.cardType)"
-                              />
-                              <button (click)="onUpdateQuantity(card.cardId, card.quantity + 1)" class="qty-btn" aria-label="Aumentar cantidad">+</button>
-                            </div>
-                            <button (click)="onRemoveCard(card.cardId)" class="remove-btn" aria-label="Eliminar carta">✕</button>
                           </div>
                         }
                       </div>

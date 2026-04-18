@@ -4,7 +4,7 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="font-headline text-xl font-bold text-on-surface">Colección</h2>
-          <p class="text-xs text-on-surface/70">Busca, filtra y añade cartas en un clic.</p>
+          <p class="text-xs text-on-surface/70">Explora, filtra y añade cartas en un clic.</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@
     }
 
     @let results = (searchResults$ | async);
-    @let filtered = getFilteredResults(results ?? []);
+    @let filtered = (results ?? []);
 
     @if (loading) {
       <div class="mb-3 flex items-center gap-2 rounded-2xl border border-outline-variant/60 bg-surface/60 px-3 py-2 text-xs text-on-surface/70">
@@ -71,16 +71,16 @@
       </div>
     }
 
-    @if (searchQuery.trim().length >= 2 && results) {
+    @if (results) {
       <div class="mb-3 text-xs text-on-surface/65">
         Mostrando <span class="font-semibold text-on-surface">{{ filtered.length }}</span> de
         <span class="font-semibold text-on-surface">{{ totalElements }}</span> cartas
       </div>
     }
 
-    @if ((!results || results.length === 0) && searchQuery) {
+    @if ((!results || results.length === 0)) {
       <div class="grid min-h-[260px] place-items-center rounded-2xl border border-dashed border-outline-variant text-on-surface/70">
-        No se encontraron cartas para tu búsqueda.
+        No hay cartas disponibles para mostrar.
       </div>
     } @else if (filtered.length === 0 && results && results.length > 0) {
       <div class="grid min-h-[260px] place-items-center rounded-2xl border border-dashed border-outline-variant text-on-surface/70">
@@ -97,13 +97,38 @@
             class="collection-card"
             [class.card-added]="addingCardId === card.id"
           >
-            <div class="card-image-wrap">
-              <img
-                [src]="card.imageUrl"
-                [alt]="card.name"
-                (error)="onImageError($event)"
-                class="card-image"
-              />
+            <div class="card-image-wrap" [class.card-image-wrap-double-faced]="isDoubleFaced(card)">
+              @if (isDoubleFaced(card)) {
+                <button
+                  type="button"
+                  class="flip-toggle"
+                  aria-label="Cambiar cara"
+                  (click)="toggleCardFace(card, $event)"
+                >
+                  ↺
+                </button>
+              }
+
+              <div class="card-flip-scene">
+                <div class="card-flip-inner" [class.is-flipped]="isCardFlipped(card)">
+                  <img
+                    [src]="card.imageUrl"
+                    [alt]="card.name + ' (frontal)'"
+                    (error)="onImageError($event)"
+                    class="card-image card-face-front"
+                  />
+
+                  @if (isDoubleFaced(card)) {
+                    <img
+                      [src]="card.backImageUrl"
+                      [alt]="card.name + ' (trasera)'"
+                      (error)="onImageError($event)"
+                      class="card-image card-face-back"
+                    />
+                  }
+                </div>
+              </div>
+
               <div class="card-shine"></div>
             </div>
 
@@ -120,12 +145,6 @@
         }
       </div>
 
-    } @else {
-      <div class="grid min-h-[300px] place-items-center rounded-2xl border border-dashed border-outline-variant text-center text-on-surface/70">
-        <p>
-          Escribe al menos 2 caracteres para iniciar la búsqueda de cartas.
-        </p>
-      </div>
     }
 
     @if (totalPages > 1 && results) {

@@ -30,6 +30,7 @@ export interface ProfileDeckSummary {
   updatedAt: string | null;
   createdAt?: string | null;
   colors?: string[];
+  mainImageUrl?: string | null;
 }
 
 interface ApiDeckSummary {
@@ -44,6 +45,7 @@ interface ApiDeckSummary {
   colors?: string[] | string | null;
   colorIdentity?: string[] | string | null;
   mainColors?: string[] | string | null;
+  mainImageUrl?: string | null;
 }
 
 @Injectable({
@@ -113,6 +115,7 @@ export class ProfileService {
       updatedAt: deck.updatedAt ?? null,
       createdAt: deck.createdAt ?? null,
       colors: this.normalizeColors(deck.colors ?? deck.colorIdentity ?? deck.mainColors),
+      mainImageUrl: deck.mainImageUrl ?? null,
     };
   }
 
