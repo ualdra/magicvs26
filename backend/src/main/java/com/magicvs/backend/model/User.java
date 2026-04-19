@@ -51,7 +51,7 @@ public class User {
     @Column(name = "friends_count")
     private Integer friendsCount;
 
-    @Column(name = "is_active")
+        @Column(name = "is_active")
     private Boolean active = true;
 
     @Column(name = "created_at", updatable = false)
@@ -62,6 +62,12 @@ public class User {
 
     @Column(name = "google_id", unique = true, length = 255)
     private String googleId;
+
+    @Column(name = "is_online")
+    private Boolean isOnline = false;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
 
     public User() {
     }
@@ -87,6 +93,9 @@ public class User {
         }
         if (this.active == null) {
             this.active = true;
+        }
+        if (this.isOnline == null) {
+            this.isOnline = false;
         }
     }
 
@@ -229,5 +238,21 @@ public class User {
 
     public void setGoogleId(String googleId) {
         this.googleId = googleId;
+    }
+
+    public Boolean getIsOnline() {
+        return isOnline;
+    }
+
+    public void setIsOnline(Boolean isOnline) {
+        this.isOnline = isOnline;
+    }
+
+    public LocalDateTime getLastSeenAt() {
+        return lastSeenAt;
+    }
+
+    public void setLastSeenAt(LocalDateTime lastSeenAt) {
+        this.lastSeenAt = lastSeenAt;
     }
 }

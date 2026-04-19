@@ -75,7 +75,10 @@
           <div class="flex items-center gap-4 relative z-10">
             <div class="relative">
               <app-avatar [username]="user.username" [avatarUrl]="user.avatarUrl"></app-avatar>
-              <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-surface rounded-full"></div>
+              <div class="absolute -bottom-1 -right-1 w-5 h-5 border-4 border-surface rounded-full transition-colors"
+                   [class.bg-green-500]="user.isOnline"
+                   [class.bg-zinc-600]="!user.isOnline">
+              </div>
             </div>
             <div>
               <h3 class="font-headline font-bold text-lg text-white group-hover:text-primary transition-colors uppercase">{{ user.username }}</h3>
@@ -89,7 +92,11 @@
           <div class="mt-6 flex justify-between items-end relative z-10">
             <div class="space-y-1">
               <p class="text-[10px] font-headline text-zinc-500 uppercase tracking-widest">Estado</p>
-              <p class="text-xs font-body text-secondary">Invocador Activo</p>
+              @if (user.isOnline) {
+                <p class="text-xs font-body text-green-400">En línea</p>
+              } @else {
+                <p class="text-xs font-body text-zinc-500">Desconectado</p>
+              }
             </div>
             
             <div class="flex items-center gap-2">

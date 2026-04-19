@@ -17,13 +17,16 @@ public class ProfileResponseDto {
 	private Long decksCount;
 	private String email;
 	private java.time.LocalDateTime createdAt;
+	private Boolean isOnline;
+	private java.time.LocalDateTime lastSeenAt;
 
 	public ProfileResponseDto() {
 	}
 
 	public ProfileResponseDto(Long id, String username, String displayName, String avatarUrl, String country, String bio,
 							  Integer eloRating, Integer gamesPlayed, Integer gamesWon, Integer gamesLost,
-							  String friendTag, Integer friendsCount, Long decksCount, String email, java.time.LocalDateTime createdAt) {
+							  String friendTag, Integer friendsCount, Long decksCount, String email, java.time.LocalDateTime createdAt,
+							  Boolean isOnline, java.time.LocalDateTime lastSeenAt) {
 		this.id = id;
 		this.username = username;
 		this.displayName = displayName;
@@ -39,6 +42,8 @@ public class ProfileResponseDto {
 		this.decksCount = decksCount;
 		this.email = email;
 		this.createdAt = createdAt;
+		this.isOnline = isOnline;
+		this.lastSeenAt = lastSeenAt;
 	}
 
 	public String getEmail() {
@@ -159,5 +164,21 @@ public class ProfileResponseDto {
 
 	public void setDecksCount(Long decksCount) {
 		this.decksCount = decksCount;
+	}
+
+	public Boolean getIsOnline() {
+		return isOnline;
+	}
+
+	public void setIsOnline(Boolean isOnline) {
+		this.isOnline = isOnline;
+	}
+
+	public java.time.LocalDateTime getLastSeenAt() {
+		return lastSeenAt;
+	}
+
+	public void setLastSeenAt(java.time.LocalDateTime lastSeenAt) {
+		this.lastSeenAt = lastSeenAt;
 	}
 }

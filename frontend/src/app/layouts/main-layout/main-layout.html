@@ -56,11 +56,15 @@
           </span>
         </div>
 
-        <a class="group p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300" 
+        <a class="group relative p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300" 
            routerLink="/profile/me">
           <div class="h-9 w-9 flex items-center justify-center rounded-lg bg-zinc-900 shadow-inner group-hover:scale-95 transition-transform">
             <span class="material-symbols-outlined text-zinc-400 text-xl group-hover:text-purple-400 transition-colors">person</span>
           </div>
+          <!-- Online Status Indicator -->
+          @if (isOnline) {
+            <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border border-zinc-900 shadow-lg shadow-green-500/50"></div>
+          }
         </a>
       </div>
 
@@ -75,11 +79,16 @@
           </span>
         </div>
 
-        <a class="p-0.5 rounded-xl border border-white/10" routerLink="/profile/me">
+        <a class="group relative p-0.5 rounded-xl border border-white/10" routerLink="/profile/me">
           <div class="h-8 w-8 flex items-center justify-center rounded-lg bg-zinc-900">
             <span class="material-symbols-outlined text-zinc-400 text-lg">person</span>
           </div>
+          <!-- Online Status Indicator -->
+          @if (isOnline) {
+            <div class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border border-zinc-900 shadow-lg shadow-green-500/50"></div>
+          }
         </a>
+        
       </div>
 
       }

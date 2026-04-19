@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfileDeckListComponent } from './profile-deck-list.component';
 import { ProfileHeaderComponent } from './profile-header.component';
 import { ProfileResponse, ProfileService, ProfileDeckSummary } from './profile.service';
+import { UserService } from '../../core/services/user.service';
 
 interface StoredUser {
   id: number;
@@ -27,6 +28,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly profileService = inject(ProfileService);
+  private readonly userService = inject(UserService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profile = signal<ProfileResponse | null>(null);
@@ -49,10 +51,13 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   });
 
   logout(): void {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
-    // redirect to public home
+    if (token) {
+      this.userService.logout(token).subscribe();
+    }
     this.router.navigateByUrl('/');
   }
 

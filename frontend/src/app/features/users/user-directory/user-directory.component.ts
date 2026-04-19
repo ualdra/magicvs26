@@ -85,6 +85,8 @@ export class UserDirectoryComponent implements OnInit {
 
     this.userService.getUsers().subscribe({
       next: (data) => {
+        console.log('Users data:', data);
+        console.log('Sample user isOnline values:', data.slice(0, 3).map(u => ({ username: u.username, isOnline: u.isOnline, type: typeof u.isOnline })));
         this.users.set(data);
         this.isLoading.set(false);
       },

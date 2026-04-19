@@ -18,6 +18,8 @@ export interface ProfileResponse {
   decksCount: number | null;
   email?: string | null;
   createdAt?: string | null;
+  isOnline?: boolean | null;
+  lastSeenAt?: string | null;
 }
 
 export interface ProfileDeckSummary {

@@ -3,4 +3,6 @@ export interface PublicUser {
   username: string;
   elo: number;
   avatarUrl?: string | null;
+  isOnline?: boolean;
+  lastSeenAt?: string | null;
 }

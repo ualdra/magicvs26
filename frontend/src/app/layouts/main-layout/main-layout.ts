@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { ProfileService, ProfileResponse } from '../../features/profile/profile.service';
+import { UserService } from '../../core/services/user.service';
 
 interface StoredUser {
   id: number;
@@ -11,6 +12,7 @@ interface StoredUser {
   displayName?: string | null;
   friendTag?: string;
   token?: string;
+  isOnline?: boolean;
 }
 
 @Component({
@@ -25,6 +27,7 @@ export class MainLayout {
   friendTag: string | null = null;
   avatarUrl: string | null = null;
   manaColor: { name: string; color: string; code: string } | null = null;
+  isOnline = false;
 
   private readonly manaColors = [
     { name: 'Blanco', code: 'W', color: 'f0f2f0' },
@@ -35,6 +38,7 @@ export class MainLayout {
   ];
 
   private readonly profileService = inject(ProfileService);
+  private readonly userService = inject(UserService);
 
   constructor(private router: Router) {
     this.isLoggedIn = !!localStorage.getItem('user');
@@ -60,11 +64,19 @@ export class MainLayout {
     }
 
   logout(): void {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
     this.isLoggedIn = false;
-    // redirect to public home (not login)
+    this.isOnline = false;
+    this.displayName = null;
+    this.friendTag = null;
+    this.avatarUrl = null;
+    this.manaColor = null;
+    if (token) {
+      this.userService.logout(token).subscribe();
+    }
     this.router.navigateByUrl('/');
   }
 
@@ -75,6 +87,7 @@ export class MainLayout {
       this.friendTag = null;
       this.avatarUrl = null;
       this.manaColor = null;
+      this.isOnline = false;
       return;
     }
     try {
@@ -89,6 +102,7 @@ export class MainLayout {
         this.displayName = u.username ?? null;
       }
       this.friendTag = (u.friendTag ?? null)?.toString() ?? null;
+      this.isOnline = u.isOnline ?? false;
 
       // Magic Metadata
       this.avatarUrl = u.avatarUrl ?? null;
@@ -105,6 +119,7 @@ export class MainLayout {
       this.friendTag = null;
       this.avatarUrl = null;
       this.manaColor = null;
+      this.isOnline = false;
     }
   }
 

@@ -138,6 +138,11 @@ public class OAuthController {
     }
 
     private ResponseEntity<?> loginUser(User user) {
+        // Update online status
+        user.setIsOnline(true);
+        user.setLastSeenAt(java.time.LocalDateTime.now());
+        registroRepository.save(user);
+        
         String token = authService.createSession(user.getId());
         UserController.UserResponse resp = UserController.UserResponse.fromEntity(user);
         resp.token = token;

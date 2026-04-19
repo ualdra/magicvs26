@@ -124,6 +124,28 @@ public class UserController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            String token = authorization.substring("Bearer ".length());
+            
+            // Get the user and set offline status
+            var userId = authService.getUserId(token);
+            if (userId.isPresent()) {
+                var user = registroRepository.findById(userId.get());
+                if (user.isPresent()) {
+                    User loggedOutUser = user.get();
+                    loggedOutUser.setIsOnline(false);
+                    loggedOutUser.setLastSeenAt(java.time.LocalDateTime.now());
+                    registroRepository.save(loggedOutUser);
+                }
+            }
+            
+            authService.logout(token);
+        }
+        return ResponseEntity.ok().build();
+    }
+
     // ---- DTOs para las peticiones y respuestas ----
 
     public static class RegistroRequest {
@@ -147,6 +169,8 @@ public class UserController {
         public String token;
         public Integer eloRating;
         public Integer friendsCount;
+        public Boolean isOnline;
+        public String lastSeenAt;
 
         public static UserResponse fromEntity(User user) {
             UserResponse resp = new UserResponse();
@@ -157,6 +181,8 @@ public class UserController {
             resp.friendTag = user.getFriendTag();
             resp.eloRating = user.getEloRating();
             resp.friendsCount = user.getFriendsCount();
+            resp.isOnline = user.getIsOnline();
+            resp.lastSeenAt = user.getLastSeenAt() != null ? user.getLastSeenAt().toString() : null;
             return resp;
         }
     }

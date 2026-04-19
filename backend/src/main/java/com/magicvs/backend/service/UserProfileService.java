@@ -143,7 +143,9 @@ public class UserProfileService {
                 user.getFriendsCount(),
                 decksCount,
                 user.getEmail(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getIsOnline(),
+                user.getLastSeenAt()
         );
     }
 
