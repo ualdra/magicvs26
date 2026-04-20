@@ -138,7 +138,7 @@ public class OAuthController {
     }
 
     private ResponseEntity<?> loginUser(User user) {
-        // Update online status
+        // Actualizar estado del usuario
         user.setIsOnline(true);
         user.setLastSeenAt(java.time.LocalDateTime.now());
         registroRepository.save(user);
