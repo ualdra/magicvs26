@@ -10,17 +10,19 @@ public class DeckSummaryDTO {
     private Integer totalCards;
     private LocalDateTime updatedAt;
     private Boolean isPublic;
+    private String mainImageUrl;
 
     public DeckSummaryDTO() {
     }
 
-    public DeckSummaryDTO(Long id, String name, String format, Integer totalCards, LocalDateTime updatedAt, Boolean isPublic) {
+    public DeckSummaryDTO(Long id, String name, String format, Integer totalCards, LocalDateTime updatedAt, Boolean isPublic, String mainImageUrl) {
         this.id = id;
         this.name = name;
         this.format = format;
         this.totalCards = totalCards;
         this.updatedAt = updatedAt;
         this.isPublic = isPublic;
+        this.mainImageUrl = mainImageUrl;
     }
 
     public Long getId() {
@@ -69,5 +71,13 @@ public class DeckSummaryDTO {
 
     public void setIsPublic(Boolean aPublic) {
         isPublic = aPublic;
+    }
+
+    public String getMainImageUrl() {
+        return mainImageUrl;
+    }
+
+    public void setMainImageUrl(String mainImageUrl) {
+        this.mainImageUrl = mainImageUrl;
     }
 }

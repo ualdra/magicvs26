@@ -26,11 +26,13 @@ export interface DeckCard {
 
 export interface Deck {
   id?: number;
+  userId?: number;
   name: string;
   description: string;
   format: string;
   isPublic: boolean;
   totalCards?: number;
+  mainImageUrl?: string;
   cards: DeckCard[];
 }
 
@@ -321,5 +323,41 @@ export class DeckBuilderService {
 
   isBasicLandType(typeLine: string): boolean {
     return (typeLine || '').toLowerCase().includes('basic land');
+  }
+  /**
+   * Copia un mazo de otro usuario
+   */
+  copyDeck(deckId: number): Observable<any> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    const token = localStorage.getItem('token') || '';
+    if (!token) {
+      this.loadingSignal.set(false);
+      const error = new Error('Necesitas iniciar sesión para copiar un mazo');
+      this.errorSignal.set(error.message);
+      return new Observable(observer => observer.error(error));
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Hacemos el POST al nuevo endpoint que creamos en Java
+    return new Observable(observer => {
+      this.http.post(`${this.apiUrl}/${deckId}/copy`, {}, { headers }).subscribe({
+        next: (response) => {
+          this.loadingSignal.set(false);
+          observer.next(response);
+          observer.complete();
+        },
+        error: (err) => {
+          this.loadingSignal.set(false);
+          const errorMsg = err.error?.message || 'Error al copiar el mazo';
+          this.errorSignal.set(errorMsg);
+          observer.error(err);
+        }
+      });
+    });
   }
 }

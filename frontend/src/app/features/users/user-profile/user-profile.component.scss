@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.profile-hero {
+  min-height: 480px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  
+  .banner-background {
+    background-image: url('../../../../assets/images/magicvs_banner.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.20; /* Increased brightness slightly from 0.12 */
+    filter: brightness(0.48) contrast(1.1) saturate(1.2); /* Increased brightness from 0.35 */
+    transition: opacity 0.5s ease, filter 0.5s ease;
+  }
+
+  &:hover .banner-image {
+    transform: scale(1.1);
+  }
+}
+
+.profile-follow-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px -6px rgba(124, 58, 237, 0.7);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  z-index: 1;
+
+  &:hover:not(.following) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 32px -8px rgba(139, 92, 246, 0.8);
+    filter: brightness(1.1);
+  }
+
+  &.following {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+    backdrop-filter: blur(8px);
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      transform: translateY(-2px);
+
+      .unfollow-icon {
+        transform: rotate(90deg);
+        color: #fca5a5;
+        opacity: 1;
+      }
+    }
+  }
+
+  .unfollow-icon {
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+  }
+}
+
+.profile-msg-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.badge-verified {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+}
+
+/* Premium Gold Effect for ELO */
+.elo-value {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+  font-weight: 800;
+}
+
+/* Avatar popping effect */
+app-avatar {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: block;
+  
+  &:hover {
+    transform: scale(1.05) rotate(2deg);
+  }
+}
+
+.glass-panel {
+  background: rgba(29, 27, 30, 0.7); /* Surface Container Low */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.text-success {
+  color: #B2F2BB; /* Light success green */
+}
+
+.text-error {
+  color: #FFC9C9; /* Light error red */
+}

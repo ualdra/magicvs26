@@ -159,8 +159,36 @@ public class UserProfileService {
                 deck.getPublic(),
                 deck.getCreatedAt(),
                 deck.getUpdatedAt(),
-                extractColors(deck)
+                extractColors(deck),
+                getBestArtCrop(deck)
         );
+    }
+
+    private String getBestArtCrop(Deck deck) {
+        if (deck.getCards() == null || deck.getCards().isEmpty()) {
+            return null;
+        }
+
+        DeckCard bestCard = null;
+        int bestLevel = -1;
+
+        for (DeckCard dc : deck.getCards()) {
+            String rarity = (dc.getCard().getRarity() != null) ? dc.getCard().getRarity().toLowerCase() : "common";
+            int level = switch (rarity) {
+                case "mythic" -> 4;
+                case "rare" -> 3;
+                case "uncommon" -> 2;
+                case "common" -> 1;
+                default -> 0;
+            };
+
+            if (level > bestLevel) {
+                bestLevel = level;
+                bestCard = dc;
+            }
+        }
+
+        return (bestCard != null) ? bestCard.getCard().getArtCropUri() : null;
     }
 
     private List<String> extractColors(Deck deck) {

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 import { PublicUser } from '../../../models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-user-directory',
@@ -14,6 +15,7 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
 })
 export class UserDirectoryComponent implements OnInit {
   private userService = inject(UserService);
+  private toastService = inject(ToastService);
 
   users = signal<PublicUser[]>([]);
   isLoading = signal(true);
@@ -113,6 +115,11 @@ export class UserDirectoryComponent implements OnInit {
   }
 
   toggleFollow(userId: number): void {
+    if (!this.currentUserId()) {
+      this.toastService.show('Debes iniciar sesión para seguir a otros invocadores', 'info');
+      return;
+    }
+    
     this.followedUsers.update(set => {
       const newSet = new Set(set);
       if (newSet.has(userId)) {

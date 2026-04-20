@@ -14,11 +14,12 @@ public class UserDeckSummaryDto {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 	private List<String> colors;
+	private String mainImageUrl;
 
 	public UserDeckSummaryDto() {
 	}
 
-	public UserDeckSummaryDto(Long id, String name, String description, String formatName, Integer totalCards, Boolean isPublic, LocalDateTime createdAt, LocalDateTime updatedAt, List<String> colors) {
+	public UserDeckSummaryDto(Long id, String name, String description, String formatName, Integer totalCards, Boolean isPublic, LocalDateTime createdAt, LocalDateTime updatedAt, List<String> colors, String mainImageUrl) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
@@ -28,6 +29,7 @@ public class UserDeckSummaryDto {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 		this.colors = colors;
+		this.mainImageUrl = mainImageUrl;
 	}
 
 	public Long getId() {
@@ -100,5 +102,13 @@ public class UserDeckSummaryDto {
 
 	public void setColors(List<String> colors) {
 		this.colors = colors;
+	}
+
+	public String getMainImageUrl() {
+		return mainImageUrl;
+	}
+
+	public void setMainImageUrl(String mainImageUrl) {
+		this.mainImageUrl = mainImageUrl;
 	}
 }

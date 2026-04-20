@@ -29,7 +29,7 @@
     </div>
 
     <!-- RIGHT SIDE -->
-    <div class="flex items-center gap-4">
+    <div class="relative flex items-center gap-4">
 
       @if (!isLoggedIn) {
 
@@ -56,7 +56,23 @@
           </span>
         </div>
 
-        <a class="group relative p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300" 
+        <button
+          type="button"
+          class="notification-bell group relative p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300"
+          (click)="toggleNotifications($event)"
+          aria-label="Abrir notificaciones"
+        >
+          <div class="h-9 w-9 flex items-center justify-center rounded-lg bg-zinc-900 shadow-inner group-hover:scale-95 transition-transform">
+            <span class="material-symbols-outlined text-zinc-400 text-xl group-hover:text-purple-300 transition-colors">notifications</span>
+          </div>
+          @if (unreadNotificationCount > 0) {
+            <span class="notification-badge absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[11px] font-bold leading-5 text-center shadow-lg shadow-rose-900/50">
+              {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+            </span>
+          }
+        </button>
+
+        <a class="group p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300" 
            routerLink="/profile/me">
           <div class="h-9 w-9 flex items-center justify-center rounded-lg bg-zinc-900 shadow-inner group-hover:scale-95 transition-transform">
             <span class="material-symbols-outlined text-zinc-400 text-xl group-hover:text-purple-400 transition-colors">person</span>
@@ -79,7 +95,23 @@
           </span>
         </div>
 
-        <a class="group relative p-0.5 rounded-xl border border-white/10" routerLink="/profile/me">
+        <button
+          type="button"
+          class="notification-bell-mobile group relative p-0.5 rounded-xl border border-white/10"
+          (click)="toggleNotifications($event)"
+          aria-label="Abrir notificaciones"
+        >
+          <div class="h-8 w-8 flex items-center justify-center rounded-lg bg-zinc-900">
+            <span class="material-symbols-outlined text-zinc-400 text-lg">notifications</span>
+          </div>
+          @if (unreadNotificationCount > 0) {
+            <span class="notification-badge absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[11px] font-bold leading-5 text-center shadow-lg shadow-rose-900/50">
+              {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+            </span>
+          }
+        </button>
+
+        <a class="p-0.5 rounded-xl border border-white/10" routerLink="/profile/me">
           <div class="h-8 w-8 flex items-center justify-center rounded-lg bg-zinc-900">
             <span class="material-symbols-outlined text-zinc-400 text-lg">person</span>
           </div>
@@ -93,8 +125,96 @@
 
       }
     </div>
+
+    @if (isLoggedIn && isNotificationDropdownOpen) {
+      <section
+        class="notification-dropdown absolute top-[74px] right-0 w-[370px] max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-zinc-900/80 backdrop-blur-2xl shadow-2xl shadow-purple-950/45 overflow-hidden"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-purple-500/15 via-fuchsia-500/10 to-transparent">
+          <div>
+            <p class="text-sm font-black text-zinc-100 tracking-wide">Notificaciones</p>
+            <p class="text-xs text-zinc-400">{{ unreadNotificationCount }} sin leer</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="text-xs uppercase tracking-wide text-purple-300 hover:text-purple-100 transition-colors"
+              (click)="markAllNotificationsAsRead($event)"
+            >
+              Marcar todo
+            </button>
+            <button
+              type="button"
+              class="text-xs uppercase tracking-wide text-rose-300 hover:text-rose-200 transition-colors"
+              (click)="deleteAllNotifications($event)"
+            >
+              Borrar todo
+            </button>
+          </div>
+        </header>
+
+        <div class="max-h-[420px] overflow-y-auto notification-scroll-area">
+          @if (notifications.length === 0) {
+            <div class="px-5 py-10 text-center text-zinc-400 text-sm">
+              No tienes notificaciones por ahora.
+            </div>
+          } @else {
+            @for (notification of notifications; track notification.id) {
+              <div
+                class="notification-row w-full text-left px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors"
+                [class.unread-row]="notification.unread"
+              >
+                <button type="button" class="notification-open w-full text-left" (click)="openNotification(notification)">
+                  <div class="flex items-start gap-3">
+                  <div class="h-9 w-9 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm text-purple-300">{{ notificationIcon(notification.type) }}</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-zinc-100 truncate">{{ notificationTitle(notification) }}</p>
+                    <p class="text-xs text-zinc-400 mt-1 line-clamp-2">{{ notificationMessage(notification) }}</p>
+                  </div>
+                  @if (notification.unread) {
+                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.8)]"></span>
+                  }
+                </div>
+                </button>
+
+                <button
+                  type="button"
+                  class="notification-delete absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-lg border border-white/10 bg-zinc-900/80 text-zinc-400 hover:text-rose-200 hover:border-rose-400/40 hover:bg-rose-500/10 transition-colors"
+                  (click)="deleteNotification($event, notification.id)"
+                  aria-label="Borrar notificación"
+                >
+                  <span class="material-symbols-outlined text-[16px]">delete</span>
+                </button>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
   </div>
 </nav>
+
+<aside class="toast-stack fixed top-[92px] right-4 z-[70] flex flex-col gap-3 pointer-events-none w-[min(92vw,360px)]">
+  @for (toast of toasts; track toast.id) {
+    <article class="toast-item pointer-events-auto rounded-2xl border border-white/15 bg-zinc-900/85 backdrop-blur-xl px-4 py-3 shadow-xl shadow-purple-900/35">
+      <div class="flex items-start gap-3">
+        <div class="mt-0.5 h-7 w-7 shrink-0 rounded-lg bg-purple-500/20 border border-purple-300/30 flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm text-purple-200">{{ notificationIcon(toast.type) }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-zinc-100 truncate">{{ toastTitle(toast) }}</p>
+          <p class="text-xs text-zinc-300 mt-0.5 line-clamp-2">{{ toastMessage(toast) }}</p>
+        </div>
+        <button type="button" class="text-zinc-400 hover:text-zinc-100 transition-colors" (click)="dismissToast(toast.id)">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+    </article>
+  }
+</aside>
 
 <main class="flex-grow">
   <router-outlet></router-outlet>
@@ -116,3 +236,5 @@
     </div>
   </div>
 </footer>
+
+<app-toast></app-toast>

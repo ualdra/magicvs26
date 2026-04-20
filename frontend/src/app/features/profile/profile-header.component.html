@@ -1,7 +1,12 @@
-<section class="relative overflow-hidden rounded-[2rem] border border-white/5 bg-zinc-950/70 backdrop-blur-xl shadow-2xl shadow-purple-950/20">
-  <div class="absolute inset-0 opacity-80">
-    <div class="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-purple-600/20 blur-3xl"></div>
-    <div class="absolute -bottom-24 left-16 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl"></div>
+<section class="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-3xl shadow-2xl shadow-purple-950/30">
+  <!-- Dynamic Banner Energy -->
+  <div class="absolute inset-x-0 top-0 h-48 opacity-40">
+    <div class="absolute inset-0 bg-gradient-to-b from-purple-600/30 to-transparent"
+         [style.background-image]="'linear-gradient(to bottom, ' + manaColorFromUrl().color + '44, transparent)'"></div>
+    <div class="absolute -top-24 -left-20 h-64 w-96 rounded-full blur-[100px]"
+         [style.background-color]="'#' + manaColorFromUrl().color + '66'"></div>
+    <div class="absolute -top-12 -right-12 h-40 w-80 rounded-full blur-[80px]"
+         [style.background-color]="'#' + selectedManaColor().color + '33'"></div>
   </div>
 
   <div class="relative z-10 grid gap-8 px-6 py-8 md:px-10 md:py-10 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">

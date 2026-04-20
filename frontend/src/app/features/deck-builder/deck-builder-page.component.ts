@@ -306,4 +306,18 @@ export class DeckBuilderPageComponent {
 
     return 'Otros';
   }
+  copyCurrentDeck(): void {
+  if (!this.editingDeckId) return;
+
+  this.deckService.copyDeck(this.editingDeckId).subscribe({
+    next: (newDeck) => {
+      this.showNotification('¡Mazo clonado con éxito! Ahora es tuyo.', 'success');
+      this.router.navigate(['/decks', newDeck.id, 'edit']);
+    },
+    error: (err) => {
+      const msg = err.status === 401 ? 'Debes iniciar sesión para clonar mazos' : 'Error al clonar el mazo';
+      this.showNotification(msg, 'error');
+    }
+  });
+}
 }

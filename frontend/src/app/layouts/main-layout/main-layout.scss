@@ -57,3 +57,63 @@ button.inline-flex, a.inline-flex, button.p-2, .p-2 {
   .center-nav{position:absolute; left:50%; transform:translateX(-50%);} 
 }
 /* header uses its natural padding (py-4 in template) so logged/unlogged heights match */
+
+.notification-dropdown {
+  animation: dropdownIn 180ms ease-out;
+}
+
+.notification-row.unread-row {
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), rgba(24, 24, 27, 0));
+}
+
+.notification-row {
+  position: relative;
+  padding-right: 3rem;
+}
+
+.notification-open {
+  display: block;
+}
+
+.notification-row:hover .notification-delete {
+  opacity: 1;
+}
+
+.notification-delete {
+  opacity: 0.75;
+}
+
+.notification-row:last-child {
+  border-bottom: none;
+}
+
+.notification-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 70, 239, 0.4) transparent;
+}
+
+.toast-item {
+  animation: toastSlideIn 240ms cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
