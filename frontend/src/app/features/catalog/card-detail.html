@@ -1,24 +1,51 @@
 @if (card$ | async; as card) {
-<main class="max-w-[1400px] mx-auto px-6 py-8">
-  <!-- Navigation Header -->
-  <nav class="mb-12">
-    <a (click)="goBack()"
-      class="inline-flex items-center gap-2 text-secondary hover:text-primary-fixed-dim transition-all group font-label tracking-wide uppercase text-xs font-bold cursor-pointer">
-      <span class="material-symbols-outlined text-sm group-hover:-translate-x-1 duration-300">arrow_back</span>
-      Volver al catálogo
-    </a>
-  </nav>
+  @let displayFace = (isFlipped && card.faces && card.faces.length > 1) ? card.faces[1] : (card.faces && card.faces.length > 0 ? card.faces[0] : card);
+  
+<main class="max-w-[1400px] mx-auto px-6 pt-32 pb-24 relative">
+  <!-- Navigation Header (Floating button relative to content) -->
+  <div class="absolute top-32 left-0 z-30">
+    <button (click)="goBack()"
+      class="w-14 h-14 flex items-center justify-center glass-panel rounded-full text-secondary hover:text-primary transition-all group border border-outline-variant hover:border-primary shadow-xl">
+      <span class="material-symbols-outlined text-3xl group-hover:-translate-x-1 duration-300">arrow_back</span>
+    </button>
+  </div>
 
   <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
-    <!-- Left Column: Card Image -->
-    <div class="md:col-span-5 flex justify-center sticky top-24">
-      <div class="relative w-full max-w-sm">
-        <img
-          [src]="card.imageUrl || defaultImageUrl"
-          [alt]="card.name"
-          class="w-full rounded-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-transform duration-300"
-          (error)="$any($event.target).src = defaultImageUrl"
-        />
+    <!-- Left Column: Card Image with Animation -->
+    <div class="md:col-span-5 flex justify-center sticky top-24 z-10">
+      <div class="card-container relative w-full max-w-sm"
+           (mousemove)="onCardMouseMove($event)"
+           (mouseleave)="onCardMouseLeave($event)">
+        
+        <!-- Flip Scene -->
+        <div class="flip-scene w-full h-full aspect-[2.5/3.5]">
+          <div class="flip-inner w-full h-full" [class.is-flipped]="isFlipped">
+            <!-- Front Face -->
+            <img
+              [src]="(card.faces && card.faces.length > 0 ? card.faces[0].imageUrl : card.imageUrl) || defaultImageUrl"
+              [alt]="card.name"
+              class="card-face face-front w-full h-full rounded-2xl shadow-2xl shadow-primary/20"
+              (error)="$any($event.target).src = defaultImageUrl"
+            />
+            <!-- Back Face (if exists) -->
+            @if (card.imageUrl2 || (card.faces && card.faces.length > 1)) {
+              <img
+                [src]="(card.faces && card.faces.length > 1 ? card.faces[1].imageUrl : card.imageUrl2) || defaultImageUrl"
+                [alt]="card.name + ' (trasera)'"
+                class="card-face face-back w-full h-full rounded-2xl shadow-2xl shadow-primary/20"
+                (error)="$any($event.target).src = defaultImageUrl"
+              />
+            }
+          </div>
+        </div>
+
+        <!-- Flip Button -->
+        @if (card.imageUrl2 || (card.faces && card.faces.length > 1)) {
+          <button (click)="toggleFlip($event)"
+            class="flip-toggle-btn absolute top-4 left-4 z-20 w-12 h-12 flex items-center justify-center glass-panel rounded-full text-white hover:border-primary transition-all shadow-lg">
+            <span class="material-symbols-outlined">sync</span>
+          </button>
+        }
       </div>
     </div>
 
@@ -27,29 +54,35 @@
       <!-- Header Info -->
       <header class="space-y-4">
         <div class="flex justify-between items-start">
-          <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter text-on-surface">
-            {{ card.name }}
+          <h1 class="text-5xl md:text-6xl font-headline font-bold tracking-tighter text-on-surface flex-1">
+            {{ displayFace.name }}
           </h1>
-          <div class="flex gap-2">
-            @for (cost of card.manaCost; track $index) {
-              <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/5"
-                   [ngClass]="{
-                     'bg-surface-container-high text-on-surface': !['W','U','B','R','G'].includes(cost),
-                     'bg-white text-black': cost === 'W',
-                     'bg-[#0E68AB] text-white': cost === 'U',
-                     'bg-[#150B00] text-white border-white/20': cost === 'B',
-                     'bg-[#D3202A] text-white': cost === 'R',
-                     'bg-[#00733E] text-white': cost === 'G'
-                   }">
-                {{ cost }}
-              </div>
-            }
+          <div class="flex items-center gap-4">
+            <div class="flex gap-2">
+              @for (cost of displayFace.manaCost; track $index) {
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/5"
+                     [ngClass]="{
+                       'bg-surface-container-high text-on-surface': !['W','U','B','R','G'].includes(cost),
+                       'bg-white text-black': cost === 'W',
+                       'bg-[#0E68AB] text-white': cost === 'U',
+                       'bg-[#150B00] text-white border-white/20': cost === 'B',
+                       'bg-[#D3202A] text-white': cost === 'R',
+                       'bg-[#00733E] text-white': cost === 'G'
+                     }">
+                  {{ cost }}
+                </div>
+              }
+            </div>
+            <button
+              class="w-12 h-12 flex items-center justify-center glass-panel rounded-full hover:bg-primary/20 transition-all group border border-outline-variant hover:border-primary">
+              <span class="material-symbols-outlined text-secondary group-hover:scale-110 duration-300">favorite</span>
+            </button>
           </div>
         </div>
         <div class="flex items-center gap-4 py-2 border-y border-white/5">
-          <span class="text-lg font-medium text-on-surface-variant">{{ card.type }}</span>
+          <span class="text-lg font-medium text-on-surface-variant">{{ displayFace.type }}</span>
           <div class="h-4 w-px bg-white/10"></div>
-          <span class="material-symbols-outlined text-tertiary" title="Expansion Symbol">diamond</span>
+          <span class="text-xs font-bold uppercase tracking-widest text-tertiary">{{ translateRarity(card.rarity) }}</span>
         </div>
       </header>
 
@@ -57,87 +90,74 @@
       <section class="glass-panel p-8 rounded-xl relative overflow-hidden">
         <div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
         <div class="space-y-6 text-lg leading-relaxed text-on-surface/90 whitespace-pre-line">
-          {{ card.oracleText }}
+          {{ displayFace.oracleText }}
         </div>
         <!-- P/T -->
-        @if (card.powerToughness) {
+        @if (displayFace.powerToughness) {
           <div class="absolute bottom-4 right-6 bg-surface-container-highest px-4 py-2 rounded-lg border border-white/10">
-            <span class="font-headline font-bold text-2xl tracking-tight">{{ card.powerToughness }}</span>
+            <span class="font-headline font-bold text-2xl tracking-tight">{{ displayFace.powerToughness }}</span>
           </div>
         }
       </section>
 
-      <!-- Flavor Text -->
-      @if (card.flavorText) {
-        <section class="pl-4 italic text-gray-400 border-l-2 border-white/5">
-          "{{ card.flavorText }}"
+      <!-- Flavor Text (Always visible, using main card flavor if face one is empty) -->
+      @if (displayFace.flavorText || card.flavorText) {
+        <section class="pl-4 italic text-zinc-400 border-l-2 border-primary/30 py-1">
+          "{{ displayFace.flavorText || card.flavorText }}"
         </section>
       }
 
-      <!-- Formats Legality Grid -->
-      <section class="space-y-4">
-        <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Legality</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          @for (fmt of ['standard', 'pioneer', 'modern', 'commander']; track fmt) {
-            @let legality = card.legalities[fmt === 'standard' ? 'standard' : fmt === 'pioneer' ? 'pioneer' : fmt === 'modern' ? 'modern' : 'commander'];
-            <div class="bg-surface-container p-3 rounded-lg flex flex-col gap-1 border border-white/5">
-              <span class="text-[10px] text-white/50 uppercase font-bold">{{ fmt }}</span>
-              <span class="text-sm font-semibold flex items-center gap-1"
-                    [ngClass]="{
-                      'text-green-400': legality === 'Legal',
-                      'text-red-400': legality === 'Banned',
-                      'text-gray-400': legality === 'Not Legal'
-                    }">
-                <span class="material-symbols-outlined text-[16px]">
-                  {{ legality === 'Legal' ? 'check_circle' : 'cancel' }}
-                </span>
-                {{ legality }}
-              </span>
-            </div>
-          }
-        </div>
-      </section>
-
-      <!-- Actions CTA -->
-      <footer class="pt-6 flex gap-4">
-        <button
-          class="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-4 rounded-xl shadow-lg shadow-primary-container/20 hover:shadow-primary-container/40 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-          <span class="material-symbols-outlined">add_circle</span>
-          + Añadir al mazo actual
-        </button>
-        <button
-          class="w-16 h-full flex items-center justify-center glass-panel rounded-xl hover:bg-white/10 transition-colors">
-          <span class="material-symbols-outlined text-secondary">favorite</span>
-        </button>
-      </footer>
+      <!-- Legalities Summary (Alternative info) -->
+      <div class="flex flex-wrap gap-3">
+        @for (format of ['standard', 'modern', 'pioneer', 'commander']; track format) {
+          <div class="px-4 py-2 rounded-lg glass-panel border border-white/5 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" 
+                  [ngClass]="{
+                    'bg-green-500 shadow-[0_0_8px_#22c55e]': card.legalities[format] === 'Legal',
+                    'bg-rose-500 shadow-[0_0_8px_#f43f5e]': card.legalities[format] === 'Banned',
+                    'bg-zinc-600': card.legalities[format] === 'Not Legal'
+                  }"></span>
+            <span class="text-zinc-400">{{ format }}:</span>
+            <span [class.text-white]="card.legalities[format] === 'Legal'">{{ card.legalities[format] }}</span>
+          </div>
+        }
+      </div>
     </div>
   </div>
 
-  <!-- Secondary Info (Deck Insights) -->
+  <!-- Secondary Info (Print & Set Details) -->
   <section class="mt-24 pt-12 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="glass-panel p-6 rounded-2xl">
       <div class="flex items-center gap-3 mb-4 text-tertiary">
-        <span class="material-symbols-outlined">trending_up</span>
-        <h4 class="font-bold">Market Price</h4>
+        <span class="material-symbols-outlined">collections_bookmark</span>
+        <h4 class="font-bold uppercase text-xs tracking-widest">Edición y Rareza</h4>
       </div>
-      <div class="text-3xl font-headline font-bold">${{ card.price }}</div>
-      <div class="text-xs text-green-400 mt-1">+2.4% para tu colección</div>
+      <div class="text-2xl font-headline font-bold text-on-surface truncate" [title]="card.setName">
+        {{ card.setName }}
+      </div>
+      <div class="text-xs text-on-surface-variant mt-1">Lanzado el {{ card.releasedAt }}</div>
     </div>
+    
     <div class="glass-panel p-6 rounded-2xl">
       <div class="flex items-center gap-3 mb-4 text-secondary">
-        <span class="material-symbols-outlined">auto_fix_high</span>
-        <h4 class="font-bold">Synergy Score</h4>
+        <span class="material-symbols-outlined">palette</span>
+        <h4 class="font-bold uppercase text-xs tracking-widest">Arte e Impresión</h4>
       </div>
-      <div class="text-3xl font-headline font-bold">94/100</div>
-      <div class="text-xs text-on-surface-variant mt-1">High combo potential</div>
+      <div class="text-2xl font-headline font-bold text-on-surface truncate" [title]="card.artist">
+        {{ card.artist }}
+      </div>
+      <div class="text-xs text-on-surface-variant mt-1">Coleccionista #{{ card.collectorNumber }}</div>
     </div>
+
     <div class="glass-panel p-6 rounded-2xl">
       <div class="flex items-center gap-3 mb-4 text-primary">
         <span class="material-symbols-outlined">analytics</span>
-        <h4 class="font-bold">Usage Rate</h4>
+        <h4 class="font-bold uppercase text-xs tracking-widest">Estadísticas de Uso</h4>
       </div>
-      <div class="text-3xl font-headline font-bold">12.5%</div>
-      <div class="text-xs text-on-surface-variant mt-1">In competitive decks</div>
+      <div class="text-2xl font-headline font-bold text-on-surface">
+        #{{ card.edhrecRank || '---' }}
+      </div>
+      <div class="text-xs text-on-surface-variant mt-1">Ranking de popularidad (EDHREC)</div>
     </div>
   </section>
 </main>

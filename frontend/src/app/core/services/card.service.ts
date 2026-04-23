@@ -96,13 +96,11 @@ export class CardService {
   }
 
   private mapBackendCardToCard(card: any): Card {
-    // Manejo especial para cartas con doble cara
-    
     return {
       id: String(card.id),
       name: card.name || '',
       imageUrl: card.normalImageUri || card.smallImageUri || card.largeImageUri || card.pngImageUri || '',
-      imageUrl2: '',
+      imageUrl2: card.backImageUri || '',
       manaCost: this.parseManaCost(card.manaCost),
       type: card.typeLine || card.layout || '',
       rarity: this.capitalize(card.rarity) || '',
@@ -110,7 +108,22 @@ export class CardService {
       flavorText: card.flavorText || '',
       powerToughness: card.power && card.toughness ? `${card.power}/${card.toughness}` : undefined,
       legalities: this.normalizeLegalities(card.legalities),
-      price: this.normalizePrice(card.price)
+      price: this.normalizePrice(card.price),
+      edhrecRank: card.edhrecRank,
+      setName: card.setName,
+      collectorNumber: card.collectorNumber,
+      cmc: card.cmc,
+      releasedAt: card.releasedAt,
+      artist: card.artist,
+      faces: card.faces ? card.faces.map((f: any) => ({
+        name: f.name,
+        manaCost: this.parseManaCost(f.manaCost),
+        type: f.typeLine,
+        oracleText: f.oracleText,
+        flavorText: f.flavorText,
+        powerToughness: f.power && f.toughness ? `${f.power}/${f.toughness}` : undefined,
+        imageUrl: f.normalImageUri
+      })) : undefined
     };
   }
 
