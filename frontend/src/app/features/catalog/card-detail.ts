@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CardService } from '../../core/services/card.service';
@@ -17,6 +17,7 @@ export class CardDetailComponent implements OnInit {
   private cardService = inject(CardService);
   private location = inject(Location);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   
   card$!: Observable<Card | undefined>;
   defaultImageUrl = 'https://cards.scryfall.io/art_crop/front/b/8/b8622d43-4815-44fa-8a7f-611427728468.jpg?1765674064';
@@ -57,6 +58,7 @@ export class CardDetailComponent implements OnInit {
     if (token) {
       this.cardService.checkFavoriteStatus(cardId).subscribe(res => {
         this.isFavorite = res.isFavorite;
+        this.cdr.detectChanges();
       });
     }
   }
@@ -69,6 +71,7 @@ export class CardDetailComponent implements OnInit {
     }
     this.cardService.toggleFavorite(cardId).subscribe(res => {
       this.isFavorite = res.isFavorite;
+      this.cdr.detectChanges();
     });
   }
 

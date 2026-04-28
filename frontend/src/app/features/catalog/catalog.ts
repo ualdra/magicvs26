@@ -47,6 +47,10 @@ export class CatalogComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   favoritesOnly = signal(false);
 
+  get favoritesFillStyle(): string {
+    return this.favoritesOnly() ? "'FILL' 1" : "'FILL' 0";
+  }
+
   get cards() {
     return this.cardPage()?.cards || [];
   }
@@ -110,6 +114,14 @@ export class CatalogComponent implements OnInit, OnDestroy {
       this.favoritesOnly.set(true);
       const initial = this.filterState$.getValue();
       this.filterState$.next({ ...initial, favoritesOnly: true });
+
+      // Remove the query param from the URL history so 'Back' navigation returns to normal view
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { favoritesOnly: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
     }
 
     this.filterState$
