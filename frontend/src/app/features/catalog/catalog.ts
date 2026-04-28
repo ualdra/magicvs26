@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CardService, CardPage } from '../../core/services/card.service';
 import { Subject, BehaviorSubject, takeUntil } from 'rxjs';
@@ -12,6 +12,7 @@ interface FilterState {
   type: string;
   rarity: string;
   page: number;
+  favoritesOnly: boolean;
 }
 
 @Component({
@@ -19,12 +20,21 @@ interface FilterState {
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './catalog.html',
-  styleUrl: './catalog.scss'
+  styleUrl: './catalog.scss',
 })
 export class CatalogComponent implements OnInit, OnDestroy {
   private cardService = inject(CardService);
   private destroy$ = new Subject<void>();
-  private filterState$ = new BehaviorSubject<FilterState>({ query: '', color: '', type: '', rarity: '', page: 0 });
+  private filterState$ = new BehaviorSubject<FilterState>({
+    query: '',
+    color: '',
+    type: '',
+    rarity: '',
+    page: 0,
+    favoritesOnly: false,
+  });
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   cardPage = signal<CardPage | null>(null);
   isLoading = signal(true);
@@ -35,6 +45,11 @@ export class CatalogComponent implements OnInit, OnDestroy {
   activeType = signal('Tipo');
   activeRarity = signal('Rareza');
   searchQuery = signal('');
+  favoritesOnly = signal(false);
+
+  get favoritesFillStyle(): string {
+    return this.favoritesOnly() ? "'FILL' 1" : "'FILL' 0";
+  }
 
   get cards() {
     return this.cardPage()?.cards || [];
@@ -64,18 +79,18 @@ export class CatalogComponent implements OnInit, OnDestroy {
   }
 
   private readonly rarityApiMap: Record<string, string> = {
-    'Rareza': '',
-    'Común': 'common',
-    'Infrecuente': 'uncommon',
-    'Rara': 'rare',
-    'Mítica': 'mythic'
+    Rareza: '',
+    Común: 'common',
+    Infrecuente: 'uncommon',
+    Rara: 'rare',
+    Mítica: 'mythic',
   };
 
   private readonly rarityDisplayMap: Record<string, string> = {
-    'Common': 'Común',
-    'Uncommon': 'Infrecuente',
-    'Rare': 'Rara',
-    'Mythic': 'Mítica'
+    Common: 'Común',
+    Uncommon: 'Infrecuente',
+    Rare: 'Rara',
+    Mythic: 'Mítica',
   };
 
   rarityLabel(rarity: string): string {
@@ -83,33 +98,58 @@ export class CatalogComponent implements OnInit, OnDestroy {
   }
 
   private readonly typeMap: Record<string, string> = {
-    'Tipo': '',
-    'Criatura': 'creature',
-    'Instantáneo': 'instant',
-    'Conjuro': 'sorcery',
-    'Encantamiento': 'enchantment',
-    'Artefacto': 'artifact',
-    'Planeswalker': 'planeswalker',
-    'Tierra': 'land'
+    Tipo: '',
+    Criatura: 'creature',
+    Instantáneo: 'instant',
+    Conjuro: 'sorcery',
+    Encantamiento: 'enchantment',
+    Artefacto: 'artifact',
+    Planeswalker: 'planeswalker',
+    Tierra: 'land',
   };
 
   ngOnInit(): void {
-    this.filterState$.pipe(
-      debounceTime(300),
-      switchMap(state => {
-        this.isLoading.set(true);
-        return this.cardService.searchCards(state.query, state.color, state.type, state.rarity, state.page);
-      }),
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (data) => {
-        this.cardPage.set(data);
-        this.currentPage.set(data.currentPage);
-        this.totalPages.set(data.totalPages);
-        this.isLoading.set(false);
-      },
-      error: () => this.isLoading.set(false)
-    });
+    const isFavOnly = this.route.snapshot.queryParamMap.get('favoritesOnly') === 'true';
+    if (isFavOnly) {
+      this.favoritesOnly.set(true);
+      const initial = this.filterState$.getValue();
+      this.filterState$.next({ ...initial, favoritesOnly: true });
+
+      // Remove the query param from the URL history so 'Back' navigation returns to normal view
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { favoritesOnly: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
+
+    this.filterState$
+      .pipe(
+        debounceTime(300),
+        switchMap((state) => {
+          this.isLoading.set(true);
+          return this.cardService.searchCards(
+            state.query,
+            state.color,
+            state.type,
+            state.rarity,
+            state.page,
+            20,
+            state.favoritesOnly,
+          );
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: (data) => {
+          this.cardPage.set(data);
+          this.currentPage.set(data.currentPage);
+          this.totalPages.set(data.totalPages);
+          this.isLoading.set(false);
+        },
+        error: () => this.isLoading.set(false),
+      });
   }
 
   ngOnDestroy(): void {
@@ -123,7 +163,8 @@ export class CatalogComponent implements OnInit, OnDestroy {
       color: this.activeMana().join(','),
       type: this.typeMap[this.activeType()] ?? '',
       rarity: this.rarityApiMap[this.activeRarity()] ?? '',
-      page
+      page,
+      favoritesOnly: this.favoritesOnly(),
     };
   }
 
@@ -142,8 +183,8 @@ export class CatalogComponent implements OnInit, OnDestroy {
   }
 
   toggleMana(mana: string): void {
-    this.activeMana.update(current =>
-      current.includes(mana) ? current.filter(m => m !== mana) : [...current, mana]
+    this.activeMana.update((current) =>
+      current.includes(mana) ? current.filter((m) => m !== mana) : [...current, mana],
     );
     this.filterState$.next(this.getFilterState(0));
   }
@@ -165,6 +206,17 @@ export class CatalogComponent implements OnInit, OnDestroy {
     this.activeType.set('Tipo');
     this.activeRarity.set('Rareza');
     this.searchQuery.set('');
+    this.favoritesOnly.set(false);
+    this.filterState$.next(this.getFilterState(0));
+  }
+
+  toggleFavoritesFilter(): void {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    if (!token) {
+      this.router.navigate(['/registro']);
+      return;
+    }
+    this.favoritesOnly.set(!this.favoritesOnly());
     this.filterState$.next(this.getFilterState(0));
   }
 

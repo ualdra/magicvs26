@@ -74,8 +74,15 @@
               }
             </div>
             <button
-              class="w-12 h-12 flex items-center justify-center glass-panel rounded-full hover:bg-primary/20 transition-all group border border-outline-variant hover:border-primary">
-              <span class="material-symbols-outlined text-secondary group-hover:scale-110 duration-300">favorite</span>
+              (click)="toggleFavoriteCard(card.id)"
+              [ngClass]="{
+                'border-primary bg-primary/10 shadow-[0_0_15px_rgba(142,68,173,0.3)]': isFavorite,
+                'border-outline-variant hover:border-primary': !isFavorite
+              }"
+              class="w-12 h-12 flex items-center justify-center glass-panel rounded-full hover:bg-primary/20 transition-all group">
+              <span class="material-symbols-outlined group-hover:scale-110 duration-300"
+                    [style.font-variation-settings]="fillStyle"
+                    [ngClass]="{'text-primary': isFavorite, 'text-secondary': !isFavorite}">favorite</span>
             </button>
           </div>
         </div>

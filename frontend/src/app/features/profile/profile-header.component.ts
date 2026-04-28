@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, signal, Output, EventEmitter, inject, computed, HostListener, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProfileResponse, ProfileService } from './profile.service';
 import { Country, CountryService } from '../../core/services/country.service';
@@ -7,7 +8,7 @@ import { Country, CountryService } from '../../core/services/country.service';
 @Component({
   selector: 'app-profile-header',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './profile-header.component.html',
   styleUrl: './profile-header.component.scss',
 })

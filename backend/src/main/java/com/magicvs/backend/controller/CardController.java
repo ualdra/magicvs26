@@ -7,8 +7,15 @@ import com.magicvs.backend.service.CardService;
 import com.magicvs.backend.dto.CardSummaryDTO;
 import com.magicvs.backend.dto.CardDetailDTO;
 import com.magicvs.backend.service.CardService;
+import com.magicvs.backend.model.FavoriteCard;
+import com.magicvs.backend.model.User;
+import com.magicvs.backend.repository.FavoriteCardRepository;
+import com.magicvs.backend.repository.RegistroRepository;
+import com.magicvs.backend.service.AuthService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +55,15 @@ public class CardController {
     @Autowired
     private CardService cardService;
 
+    @Autowired
+    private FavoriteCardRepository favoriteCardRepository;
+
+    @Autowired
+    private RegistroRepository registroRepository;
+
+    @Autowired
+    private AuthService authService;
+
     @GetMapping("/stats")
     public Map<String, Object> getStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -85,8 +101,21 @@ public class CardController {
             @RequestParam(defaultValue = "") String color,
             @RequestParam(defaultValue = "") String type,
             @RequestParam(defaultValue = "") String rarity,
+            @RequestParam(defaultValue = "false") boolean favoritesOnly,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "24") int size) {
+            @RequestParam(defaultValue = "24") int size,
+            @RequestHeader(name = "Authorization", required = false) String authorization) {
+
+        Long userId = null;
+        if (favoritesOnly) {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            userId = authService.getUserId(authorization.replace("Bearer ", "")).orElse(null);
+            if (userId == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+        }
 
         String normalizedName = name == null ? "" : name.trim();
         String normalizedColors = color == null ? "" : color.trim().toUpperCase();
@@ -106,7 +135,7 @@ public class CardController {
 
         Pageable pageable = PageRequest.of(safePage, safeSize);
         Page<CardSearchResponse> mappedPage = cardRepository
-            .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, pageable)
+            .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, favoritesOnly, userId, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
                 resolveDisplayName(card.getName(), card.getRawJson()),
@@ -135,6 +164,53 @@ public class CardController {
         );
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/favorite")
+    public ResponseEntity<Map<String, Boolean>> checkFavoriteStatus(
+            @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.ok(Map.of("isFavorite", false));
+        }
+        Long userId = authService.getUserId(authorization.replace("Bearer ", "")).orElse(null);
+        if (userId == null) {
+            return ResponseEntity.ok(Map.of("isFavorite", false));
+        }
+        boolean isFavorite = favoriteCardRepository.existsByUserIdAndCardId(userId, id);
+        return ResponseEntity.ok(Map.of("isFavorite", isFavorite));
+    }
+
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<Map<String, Boolean>> toggleFavorite(
+            @PathVariable Long id,
+            @RequestHeader(name = "Authorization") String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        Long userId = authService.getUserId(authorization.replace("Bearer ", "")).orElse(null);
+        if (userId == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        
+        Card card = cardRepository.findById(id).orElse(null);
+        if (card == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        User user = registroRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        java.util.Optional<FavoriteCard> favoriteOpt = favoriteCardRepository.findByUserIdAndCardId(userId, id);
+        if (favoriteOpt.isPresent()) {
+            favoriteCardRepository.delete(favoriteOpt.get());
+            return ResponseEntity.ok(Map.of("isFavorite", false));
+        } else {
+            favoriteCardRepository.save(new FavoriteCard(user, card));
+            return ResponseEntity.ok(Map.of("isFavorite", true));
+        }
     }
 
     private static List<String> extractColorsFromManaCost(String manaCost) {

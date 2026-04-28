@@ -85,6 +85,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                 :rarityFilter = ''
                 OR LOWER(COALESCE(c.rarity, '')) = LOWER(:rarityFilter)
                )
+           AND (
+                :favoritesOnly = FALSE
+                OR c.id IN (SELECT fc.card.id FROM FavoriteCard fc WHERE fc.user.id = :userId)
+               )
         """)
     Page<CardSearchProjection> searchProjectedByNameAndFilters(
         @Param("name") String name,
@@ -97,6 +101,8 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         @Param("needsC") boolean needsC,
         @Param("typeFilter") String typeFilter,
         @Param("rarityFilter") String rarityFilter,
+        @Param("favoritesOnly") boolean favoritesOnly,
+        @Param("userId") Long userId,
         Pageable pageable
     );
 

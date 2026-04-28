@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CardService } from '../../core/services/card.service';
 import { Card } from '../../models/card.model';
-import { Observable, map, switchMap, of } from 'rxjs';
+import { Observable, map, switchMap, of, tap } from 'rxjs';
 
 @Component({
   selector: 'app-card-detail',
@@ -16,10 +16,17 @@ export class CardDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private cardService = inject(CardService);
   private location = inject(Location);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   
   card$!: Observable<Card | undefined>;
   defaultImageUrl = 'https://cards.scryfall.io/art_crop/front/b/8/b8622d43-4815-44fa-8a7f-611427728468.jpg?1765674064';
   isFlipped = false;
+  isFavorite = false;
+
+  get fillStyle(): string {
+    return this.isFavorite ? "'FILL' 1" : "'FILL' 0";
+  }
 
   toggleFlip(event?: MouseEvent): void {
     if (event) {
@@ -34,6 +41,7 @@ export class CardDetailComponent implements OnInit {
       map(params => params.get('id')),
       switchMap(id => {
         if (id) {
+          this.checkFavorite(id);
           return this.cardService.getCardById(id);
         }
         return of(undefined);
@@ -43,6 +51,28 @@ export class CardDetailComponent implements OnInit {
 
   goBack(): void {
     this.location.back();
+  }
+
+  checkFavorite(cardId: string): void {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    if (token) {
+      this.cardService.checkFavoriteStatus(cardId).subscribe(res => {
+        this.isFavorite = res.isFavorite;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  toggleFavoriteCard(cardId: string): void {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    if (!token) {
+      this.router.navigate(['/registro']);
+      return;
+    }
+    this.cardService.toggleFavorite(cardId).subscribe(res => {
+      this.isFavorite = res.isFavorite;
+      this.cdr.detectChanges();
+    });
   }
 
   isNaN(val: any): boolean {

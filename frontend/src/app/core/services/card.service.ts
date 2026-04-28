@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Card } from '../../models/card.model';
@@ -31,18 +31,35 @@ export class CardService {
     );
   }
 
-  searchCards(query = '', color = '', type = '', rarity = '', page = 0, size = 20): Observable<CardPage> {
-    const params = new URLSearchParams({
+  searchCards(query = '', color = '', type = '', rarity = '', page = 0, size = 20, favoritesOnly = false): Observable<CardPage> {
+    const params: Record<string, string> = {
       name: query,
       color,
       type,
       rarity,
       page: String(page),
-      size: String(size)
-    });
-    return this.http.get<any>(`${this.apiUrl}/search?${params}`).pipe(
+      size: String(size),
+      favoritesOnly: String(favoritesOnly)
+    };
+    
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const headers = token && favoritesOnly ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+
+    return this.http.get<any>(`${this.apiUrl}/search`, { params, headers }).pipe(
       map(response => this.mapSearchResponseToCardPage(response, page, size))
     );
+  }
+
+  checkFavoriteStatus(cardId: string): Observable<{ isFavorite: boolean }> {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+    return this.http.get<{ isFavorite: boolean }>(`${this.apiUrl}/${cardId}/favorite`, { headers });
+  }
+
+  toggleFavorite(cardId: string): Observable<{ isFavorite: boolean }> {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+    return this.http.post<{ isFavorite: boolean }>(`${this.apiUrl}/${cardId}/favorite`, {}, { headers });
   }
 
   getStats(): Observable<{ totalCards: number; totalSets: number }> {

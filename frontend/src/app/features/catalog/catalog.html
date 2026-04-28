@@ -96,9 +96,17 @@
 
     <div class="flex items-center gap-6">
       <button
-        class="glass-panel border border-outline-variant rounded-xl px-4 py-2.5 flex items-center gap-2 group transition-all hover:border-primary active:shadow-[0_0_15px_rgba(142,68,173,0.4)] active:border-primary">
-        <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform text-on-surface-variant group-hover:text-primary">favorite</span>
-        <span class="text-sm font-label uppercase tracking-wider text-on-surface-variant group-hover:text-on-surface">Favoritos</span>
+        (click)="toggleFavoritesFilter()"
+        [ngClass]="{
+          'border-primary shadow-[0_0_15px_rgba(142,68,173,0.3)] bg-primary/10 text-primary': favoritesOnly(),
+          'border-outline-variant hover:border-primary text-on-surface-variant': !favoritesOnly()
+        }"
+        class="glass-panel border rounded-xl px-4 py-2.5 flex items-center gap-2 group transition-all active:shadow-[0_0_15px_rgba(142,68,173,0.4)] active:border-primary">
+        <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform group-hover:text-primary"
+              [style.font-variation-settings]="favoritesFillStyle"
+              [class.text-primary]="favoritesOnly()" [class.text-on-surface-variant]="!favoritesOnly()">favorite</span>
+        <span class="text-sm font-label uppercase tracking-wider group-hover:text-on-surface"
+              [class.text-primary]="favoritesOnly()" [class.text-on-surface-variant]="!favoritesOnly()">Favoritos</span>
       </button>
       <button (click)="resetFilters()" class="text-secondary text-sm font-label uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-2 group">
         <span class="material-symbols-outlined text-lg group-hover:rotate-180 transition-transform duration-500">refresh</span>
