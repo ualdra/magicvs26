@@ -98,4 +98,20 @@ public ResponseEntity<DeckResponseDTO> copyDeck(
     DeckResponseDTO response = deckService.copyDeck(id, authorization);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
 }
+
+    @GetMapping("/{deckId}/export")
+    public ResponseEntity<String> exportDeck(
+        @PathVariable Long deckId,
+        @RequestHeader(value = "Authorization", required = true) String authorization
+    ) {
+        Long userId = extractUserIdFromAuthorization(authorization);
+        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
+        
+        String exportData = deckService.exportDeck(deckId, userId);
+        return ResponseEntity.ok()
+            .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"deck_" + deckId + ".txt\"")
+            .contentType(org.springframework.http.MediaType.TEXT_PLAIN)
+            .body(exportData);
+    }
+
 }

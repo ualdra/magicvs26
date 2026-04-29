@@ -84,6 +84,13 @@ export class ProfileService {
       .pipe(map((profile) => this.normalizeProfile(profile)));
   }
 
+  exportDeck(deckId: number): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/decks/${deckId}/export`, {
+      headers: this.authHeaders(),
+      responseType: 'blob'
+    });
+  }
+
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/me`, { headers: this.authHeaders() });
   }

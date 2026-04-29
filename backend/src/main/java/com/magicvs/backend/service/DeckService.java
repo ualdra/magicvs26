@@ -212,6 +212,20 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
     return copyDeck(deckId, userId);
 }
 
+    @Transactional(readOnly = true)
+    public String exportDeck(Long deckId, Long userId) {
+        Deck deck = deckRepository.findByIdWithCards(deckId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mazo no encontrado"));
+
+        ensureOwner(deck, userId);
+
+        StringBuilder sb = new StringBuilder();
+        for (com.magicvs.backend.model.DeckCard dc : deck.getCards()) {
+            sb.append(dc.getQuantity()).append(" ").append(dc.getCard().getName()).append("\r\n");
+        }
+        return sb.toString();
+    }
+
     private void syncDeckCards(Deck deck, List<CreateDeckDTO.DeckCardDTO> deckCards) {
         if (deck.getId() != null) {
             // Force delete existing persisted rows before inserts to avoid unique key collisions.
