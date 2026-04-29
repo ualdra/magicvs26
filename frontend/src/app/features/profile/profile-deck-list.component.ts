@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProfileDeckSummary, ProfileService } from './profile.service';
 
 @Component({
   selector: 'app-profile-deck-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './profile-deck-list.component.html',
   styleUrl: './profile-deck-list.component.scss',
 })
@@ -19,6 +20,40 @@ export class ProfileDeckListComponent {
   private readonly profileService = inject(ProfileService);
 
   expandedDeckId: number | null = null;
+  
+  showImportForm = false;
+  importName = '';
+  importText = '';
+  importing = false;
+
+  toggleImportForm(): void {
+    this.showImportForm = !this.showImportForm;
+    if (!this.showImportForm) {
+      this.importName = '';
+      this.importText = '';
+    }
+  }
+
+  submitImport(): void {
+    if (!this.importText.trim()) return;
+    this.importing = true;
+    this.profileService.importDeck(this.importName, this.importText).subscribe({
+      next: (res) => {
+        this.importing = false;
+        this.toggleImportForm();
+        if (res.missingCards && res.missingCards.length > 0) {
+          const missingText = res.missingCards.join(', ');
+          alert(`Mazo importado con éxito, pero faltaron estas cartas (se omitieron): ${missingText}`);
+        }
+        window.location.reload();
+      },
+      error: (err) => {
+        this.importing = false;
+        alert(err.error?.message || 'Error importando mazo');
+        console.error(err);
+      }
+    });
+  }
 
   toggleDeck(deckId: number): void {
     this.expandedDeckId = this.expandedDeckId === deckId ? null : deckId;

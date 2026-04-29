@@ -2,6 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MetaDeck } from '../../models/meta-deck.model';
 import { HttpClient } from '@angular/common/http';
+import { ProfileService } from '../profile/profile.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-meta',
@@ -15,8 +17,14 @@ export class MetaComponent implements OnInit {
   loading: boolean = true;
   error: string | null = null;
   syncing: boolean = false;
+  importingDeckId: number | null = null;
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private http: HttpClient, 
+    private cdr: ChangeDetectorRef,
+    private profileService: ProfileService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.loadMetagame();
@@ -110,5 +118,45 @@ export class MetaComponent implements OnInit {
 
   toggleFullList(deck: MetaDeck): void {
     deck.showFullList = !deck.showFullList;
+  }
+
+  importMetaDeck(deck: MetaDeck): void {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.toastService.show('Debes iniciar sesión para importar mazos', 'error');
+      return;
+    }
+
+    if (!deck.mainboard || deck.mainboard.length === 0) {
+      this.toastService.show('El mazo no tiene cartas', 'warning');
+      return;
+    }
+
+    this.importingDeckId = deck.id;
+    
+    // Construct text ignoring sideboard
+    const deckText = deck.mainboard
+      .filter(card => !card.isSideboard)
+      .map(card => `${card.quantity} ${card.name}`)
+      .join('\n');
+
+    this.profileService.importDeck(deck.name, deckText).subscribe({
+      next: (res) => {
+        this.toastService.show('Mazo importado con éxito', 'success');
+        if (res.missingCards && res.missingCards.length > 0) {
+          res.missingCards.forEach(missing => {
+            this.toastService.show(`Carta omitida (no encontrada): ${missing}`, 'warning', 6000);
+          });
+        }
+        this.importingDeckId = null;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error importando mazo:', err);
+        this.toastService.show(err.error?.message || 'Error al importar el mazo', 'error');
+        this.importingDeckId = null;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

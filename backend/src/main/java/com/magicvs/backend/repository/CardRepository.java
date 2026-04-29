@@ -108,6 +108,9 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     Optional<Card> findFirstByNameIgnoreCase(String name);
 
+    @Query("SELECT c FROM Card c WHERE LOWER(c.name) = LOWER(:name) OR LOWER(c.rawJson) LIKE LOWER(CONCAT('%\"printed_name\":\"', :name, '\"%')) OR LOWER(c.rawJson) LIKE LOWER(CONCAT('%\"printed_name\": \"', :name, '\"%'))")
+    List<Card> findByNameOrPrintedName(@Param("name") String name);
+
     Optional<Card> findFirstByNameIgnoreCaseAndLang(String name, String lang);
 
     boolean existsByScryfallId(UUID scryfallId);

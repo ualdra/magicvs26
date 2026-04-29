@@ -91,6 +91,10 @@ export class ProfileService {
     });
   }
 
+  importDeck(name: string, deckText: string): Observable<{ deck: any, missingCards: string[] }> {
+    return this.http.post<{ deck: any, missingCards: string[] }>('http://localhost:8080/api/decks/import', { name, deckText }, { headers: this.authHeaders() });
+  }
+
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/me`, { headers: this.authHeaders() });
   }

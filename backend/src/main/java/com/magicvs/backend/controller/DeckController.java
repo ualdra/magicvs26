@@ -3,6 +3,7 @@ package com.magicvs.backend.controller;
 import com.magicvs.backend.dto.CreateDeckDTO;
 import com.magicvs.backend.dto.DeckResponseDTO;
 import com.magicvs.backend.dto.DeckSummaryDTO;
+import com.magicvs.backend.dto.ImportDeckRequestDTO;
 import com.magicvs.backend.service.AuthService;
 import com.magicvs.backend.service.DeckService;
 import org.springframework.http.HttpStatus;
@@ -114,4 +115,18 @@ public ResponseEntity<DeckResponseDTO> copyDeck(
             .body(exportData);
     }
 
+    @PostMapping("/import")
+    public ResponseEntity<?> importDeck(
+        @RequestHeader(name = "Authorization", required = true) String authorization,
+        @RequestBody ImportDeckRequestDTO request
+    ) {
+        Long userId = extractUserIdFromAuthorization(authorization);
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message", "Token no proporcionado"));
+        
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(deckService.importDeck(userId, request));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", ex.getMessage()));
+        }
+    }
 }

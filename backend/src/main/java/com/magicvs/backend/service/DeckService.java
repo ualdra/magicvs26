@@ -18,9 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import com.magicvs.backend.dto.ImportDeckRequestDTO;
+import com.magicvs.backend.dto.ImportDeckResponseDTO;
 
 @Service
 public class DeckService {
@@ -59,9 +64,8 @@ public class DeckService {
             .mapToInt(Integer::intValue)
             .sum();
 
-        if (totalCards != minDeckCards) {
-            throw new IllegalArgumentException("El mazo debe tener exactamente " + minDeckCards + " cartas. Actual: " + totalCards);
-        }
+        // Check for max 4 copies
+
 
         for (Map.Entry<Long, Integer> entry : cardQuantities.entrySet()) {
             Card card = cardRepository.findById(entry.getKey())
@@ -84,7 +88,14 @@ public class DeckService {
      */
 @Transactional
 public DeckResponseDTO createDeck(Long userId, CreateDeckDTO deckDTO) {
-    validateDeck(deckDTO);
+    return createDeck(userId, deckDTO, false);
+}
+
+@Transactional
+public DeckResponseDTO createDeck(Long userId, CreateDeckDTO deckDTO, boolean skipValidation) {
+    if (!skipValidation) {
+        validateDeck(deckDTO);
+    }
 
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
@@ -224,6 +235,65 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
             sb.append(dc.getQuantity()).append(" ").append(dc.getCard().getName()).append("\r\n");
         }
         return sb.toString();
+    }
+
+    @Transactional
+    public ImportDeckResponseDTO importDeck(Long userId, ImportDeckRequestDTO request) {
+        if (request.getDeckText() == null || request.getDeckText().trim().isEmpty()) {
+            throw new IllegalArgumentException("El texto del mazo está vacío");
+        }
+
+        List<CreateDeckDTO.DeckCardDTO> cards = new ArrayList<>();
+        List<String> missingCards = new ArrayList<>();
+        String[] lines = request.getDeckText().split("\\r?\\n");
+        Pattern pattern = Pattern.compile("^\\s*(\\d+)\\s+(.+?)(?:\\s+\\(|$)");
+
+        for (String line : lines) {
+            String trimmedLine = line.trim();
+            if (trimmedLine.isEmpty() || trimmedLine.equalsIgnoreCase("Deck") || trimmedLine.equalsIgnoreCase("Commander")) {
+                continue;
+            }
+            if (trimmedLine.equalsIgnoreCase("Sideboard")) {
+                break;
+            }
+
+            Matcher matcher = pattern.matcher(trimmedLine);
+            if (matcher.find()) {
+                int quantity = Integer.parseInt(matcher.group(1));
+                String cardName = matcher.group(2).trim();
+
+                Card card = cardRepository.findByNameOrPrintedName(cardName).stream().findFirst()
+                    .orElseGet(() -> cardRepository.findByNameContainingIgnoreCase(cardName + " //").stream().findFirst().orElse(null));
+
+                if (card == null) {
+                    // Try to match just the first part if the DB has exactly the cardName but the import text has "Front // Back"
+                    if (cardName.contains("//")) {
+                        String frontName = cardName.split("//")[0].trim();
+                        card = cardRepository.findByNameOrPrintedName(frontName).stream().findFirst()
+                            .orElseGet(() -> cardRepository.findByNameContainingIgnoreCase(frontName + " //").stream().findFirst().orElse(null));
+                    }
+                }
+
+                if (card != null) {
+                    cards.add(new CreateDeckDTO.DeckCardDTO(card.getId(), quantity));
+                } else {
+                    missingCards.add(cardName);
+                }
+            }
+        }
+
+        if (cards.isEmpty()) {
+            throw new IllegalArgumentException("No se pudieron encontrar cartas válidas en el texto proporcionado");
+        }
+
+        CreateDeckDTO createDeckDTO = new CreateDeckDTO();
+        createDeckDTO.setName(request.getName() != null && !request.getName().trim().isEmpty() ? request.getName() : "Mazo Importado");
+        createDeckDTO.setDescription("Mazo importado.");
+        createDeckDTO.setIsPublic(false);
+        createDeckDTO.setCards(cards);
+
+        DeckResponseDTO deck = createDeck(userId, createDeckDTO, true);
+        return new ImportDeckResponseDTO(deck, missingCards);
     }
 
     private void syncDeckCards(Deck deck, List<CreateDeckDTO.DeckCardDTO> deckCards) {

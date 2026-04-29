@@ -91,7 +91,12 @@
                 <div class="h-2 w-full overflow-hidden rounded-full bg-surface">
                   <div class="h-full rounded-full bg-gradient-to-r from-secondary to-primary transition-all duration-500" [style.width.%]="deckProgressPercent()"></div>
                 </div>
-                <p class="mt-2 text-xs" [ngClass]="isValidDeck() ? 'text-emerald-300' : 'text-amber-200'">{{ validationMessage() }}</p>
+                <p class="mt-2 text-xs" [ngClass]="isValidDeck() ? 'text-emerald-300' : 'text-amber-200'">
+                  {{ validationMessage() }}
+                  @if (!isValidDeck()) {
+                    <span class="block mt-1 font-bold text-amber-300">⚠️ El mazo será inutilizable si no tiene 60 cartas.</span>
+                  }
+                </p>
               </div>
 
               <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 p-3">
@@ -189,7 +194,7 @@
           <div class="mt-4 grid grid-cols-2 gap-2">
             <button
               (click)="saveDeck()"
-              [disabled]="!isValidDeck() || loading()"
+              [disabled]="loading()"
               class="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-on-primary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               @if (loading()) {

@@ -8,11 +8,39 @@
     </div>
 
     @if (!loading && !error) {
-      <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-300">
-        {{ decks.length }} mazos
-      </span>
+      <div class="flex items-center gap-3">
+        @if (isOwnProfile) {
+          <button (click)="toggleImportForm()" class="rounded-xl bg-purple-600 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-purple-500 transition-colors">
+            {{ showImportForm ? 'Cancelar' : 'Importar Mazo' }}
+          </button>
+        }
+        <span class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.35em] text-zinc-300">
+          {{ decks.length }} mazos
+        </span>
+      </div>
     }
   </div>
+
+  @if (showImportForm && isOwnProfile) {
+    <div class="mb-8 rounded-2xl border border-purple-500/30 bg-zinc-900/50 p-6 backdrop-blur-md">
+      <h3 class="mb-4 text-lg font-bold text-white">Importar Mazo desde MTG Arena</h3>
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="mb-1 block text-sm font-medium text-zinc-400">Nombre del mazo</label>
+          <input type="text" [(ngModel)]="importName" class="w-full rounded-lg border border-white/10 bg-black/40 p-3 text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500" placeholder="Ej. Dimir Midrange" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-zinc-400">Lista (Formato MTG Arena)</label>
+          <textarea [(ngModel)]="importText" rows="6" class="w-full rounded-lg border border-white/10 bg-black/40 p-3 text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono" placeholder="4 Delver of Secrets&#10;4 Lightning Bolt&#10;..."></textarea>
+        </div>
+        <div class="flex justify-end gap-3 mt-2">
+          <button (click)="submitImport()" [disabled]="importing || !importText.trim()" class="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ importing ? 'Importando...' : 'Importar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   @if (loading) {
     <div class="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
@@ -85,7 +113,12 @@
                 <div class="flex items-center gap-6">
                   <div class="flex flex-col">
                     <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Cartas</span>
-                    <span class="text-sm font-black text-white">{{ deck.totalCards ?? 0 }}</span>
+                    <span class="text-sm font-black text-white" [class.!text-amber-400]="deck.totalCards !== 60">
+                      {{ deck.totalCards ?? 0 }}
+                      @if (deck.totalCards !== 60) {
+                        <span class="ml-1 text-[10px] text-amber-500/80" title="Mazo inutilizable: debe tener 60 cartas">⚠️</span>
+                      }
+                    </span>
                   </div>
                   <div class="flex flex-col">
                     <span class="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Identidad</span>

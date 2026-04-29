@@ -177,10 +177,6 @@ export class DeckBuilderPageComponent {
   }
 
   saveDeck(): void {
-    if (!this.isValidDeck()) {
-      this.showNotification('El mazo debe tener exactamente 60 cartas.', 'error');
-      return;
-    }
 
     const save$ = this.editingDeckId != null
       ? this.deckService.saveDeck(this.editingDeckId)
