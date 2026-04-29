@@ -245,22 +245,28 @@
                      [class.tapped]="card.isTapped"
                      [class.attacking]="card.isAttacking"
                      [class.blocking]="card.isBlocking"
+                     [class.animate-hit]="isHitting(card.id)"
                      [class.ring-4]="card.isAttacking && !card.blockingTargetId"
                      [class.ring-primary]="card.isAttacking"
                      [style.box-shadow]="card.blockingTargetId ? '0 0 30px 5px rgba(59, 130, 246, 0.8)' : (card.isAttacking ? '0 0 20px rgba(var(--primary-rgb), 0.5)' : 'none')"
                      [style.border-radius]="'12px'"
                      [class.targetable-glow]="gameState.pendingTarget && (gameState.pendingTarget.validTargets === 'CREATURE' || gameState.pendingTarget.validTargets === 'ANY')">
+                  
+                  @if (isHitting(card.id)) {
+                    <div class="damage-number">-{{ getRecentDamage(card.id) }}</div>
+                  }
+
                   <div class="card-art-crop">
                     <img [src]="card.imageUrl" [alt]="card.name">
                     @if (card.isTapped && !card.isAttacking) { <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><span class="material-symbols-outlined text-white text-lg animate-spin-slow">rotate_right</span></div> }
                   </div>
                   @if (card.isAttacking) {
-                    <div class="combat-badge attacker animate-bounce">
+                    <div class="combat-badge attacker">
                       <span class="material-symbols-outlined text-[10px]">swords</span>
                     </div>
                   }
                   @if (card.blockingTargetId) {
-                    <div class="combat-badge blocker animate-bounce">
+                    <div class="combat-badge blocker">
                       <span class="material-symbols-outlined text-[10px]">shield</span>
                     </div>
                   }
@@ -273,6 +279,20 @@
                   }
                 </div>
               </div>
+            }
+
+            <!-- Opponent Dying Cards -->
+            @for (card of dyingCards; track card.id) {
+              @if (card.ownerId === opponent.id) {
+                <div class="card-battle-mode animate-death grayscale opacity-50 relative">
+                  <div class="card-art-crop">
+                    <img [src]="card.imageUrl">
+                  </div>
+                  <div class="absolute inset-0 flex items-center justify-center z-50">
+                    <span class="material-symbols-outlined text-red-600 text-5xl drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] animate-pulse">skull</span>
+                  </div>
+                </div>
+              }
             }
           </div>
 
@@ -289,7 +309,7 @@
                     @if (card.isTapped && !card.isAttacking) { <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><span class="material-symbols-outlined text-white text-lg animate-spin-slow">rotate_right</span></div> }
                   </div>
                   @if (card.isAttacking) {
-                    <div class="combat-badge attacker animate-bounce">
+                    <div class="combat-badge attacker">
                       <span class="material-symbols-outlined text-[10px]">swords</span>
                     </div>
                   }
@@ -317,23 +337,29 @@
                      [class.tapped]="card.isTapped"
                      [class.attacking]="card.isAttacking"
                      [class.blocking]="card.isBlocking"
+                     [class.animate-hit]="isHitting(card.id)"
                      [class.ring-4]="card.isAttacking && !card.blockingTargetId"
                      [class.ring-primary]="card.isAttacking"
                      [style.box-shadow]="card.blockingTargetId ? '0 0 30px 5px rgba(59, 130, 246, 0.8)' : (card.isAttacking ? '0 0 20px rgba(var(--primary-rgb), 0.5)' : 'none')"
                      [style.border-radius]="'12px'"
                      [class.targetable-glow]="gameState.pendingTarget && (gameState.pendingTarget.validTargets === 'CREATURE' || gameState.pendingTarget.validTargets === 'ANY')">
+                  
+                  @if (isHitting(card.id)) {
+                    <div class="damage-number">-{{ getRecentDamage(card.id) }}</div>
+                  }
+
                   <div class="absolute -inset-4 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
                   <div class="card-art-crop">
                     <img [src]="card.imageUrl" [alt]="card.name">
                     @if (card.isTapped && !card.isAttacking) { <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><span class="material-symbols-outlined text-white text-lg animate-spin-slow">rotate_right</span></div> }
                   </div>
                   @if (card.isAttacking) {
-                    <div class="combat-badge attacker animate-bounce">
+                    <div class="combat-badge attacker">
                       <span class="material-symbols-outlined text-[10px]">swords</span>
                     </div>
                   }
                   @if (card.blockingTargetId) {
-                    <div class="combat-badge blocker animate-bounce">
+                    <div class="combat-badge blocker">
                       <span class="material-symbols-outlined text-[10px]">shield</span>
                     </div>
                   }
@@ -346,6 +372,20 @@
                   }
                 </div>
               </div>
+            }
+
+            <!-- Player Dying Cards -->
+            @for (card of dyingCards; track card.id) {
+              @if (card.ownerId === me.id) {
+                <div class="card-battle-mode animate-death grayscale opacity-50 relative">
+                  <div class="card-art-crop">
+                    <img [src]="card.imageUrl">
+                  </div>
+                  <div class="absolute inset-0 flex items-center justify-center z-50">
+                    <span class="material-symbols-outlined text-red-600 text-5xl drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] animate-pulse">skull</span>
+                  </div>
+                </div>
+              }
             }
           </div>
 

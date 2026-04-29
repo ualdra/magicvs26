@@ -207,25 +207,13 @@
             <button
                (click)="copyCurrentDeck()"
               [disabled]="loading()"
-              class="rounded-xl bg-secondary px-3 py-2 text-sm font-semibold text-on-secondary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              class="col-span-2 rounded-xl bg-secondary px-3 py-2 text-sm font-semibold text-on-secondary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
               @if (loading()) {
               Clonando...
               } @else {
                 Clonar
               }
-            </button>
-            <button
-              (click)="exportDeckToFile()"
-              class="rounded-xl border border-outline-variant bg-surface px-3 py-2 text-[11px] font-semibold text-on-surface transition hover:bg-white/5"
-            >
-              Exportar (.json)
-            </button>
-            <button
-              (click)="importDeckFromFile()"
-              class="col-span-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-[11px] font-semibold text-on-surface transition hover:bg-white/5"
-            >
-              Importar (.json)
             </button>
           </div>
         </div>

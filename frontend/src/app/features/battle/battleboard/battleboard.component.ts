@@ -24,6 +24,13 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   me: any = null;
   opponent: any = null;
   hoveredCard: any = null;
+  
+  // Animation states
+  private prevDamageMap = new Map<string, number>();
+  private prevFieldIds = new Set<string>();
+  hittingCards = new Set<string>();
+  dyingCards: any[] = [];
+  lastDamageTaken = new Map<string, number>();
 
   onHoverCard(card: any): void {
     this.hoveredCard = card;
@@ -73,6 +80,7 @@ export class BattleboardComponent implements OnInit, OnDestroy {
                this.selectedBlockerIds = [...(state.pendingBlockerOrders[0] as any).currentSelection];
             }
             
+            this.processStateChanges(state);
             this.cdr.detectChanges();
           });
           this.engine.startGame();
@@ -185,5 +193,68 @@ export class BattleboardComponent implements OnInit, OnDestroy {
 
   goToMenu(): void {
     this.router.navigate(['/home']);
+  }
+
+  private processStateChanges(state: GameState | null): void {
+    if (!state) return;
+
+    const currentField = [...(state.player1?.field || []), ...(state.player2?.field || [])];
+    const currentIds = new Set(currentField.map(c => c.id));
+
+    // 1. Detect Hits
+    currentField.forEach(card => {
+      const currentDamage = card.damageTaken || 0;
+      const prevDamage = this.prevDamageMap.get(card.id) || 0;
+      if (currentDamage > prevDamage) {
+        this.triggerHit(card.id, currentDamage - prevDamage);
+      }
+      this.prevDamageMap.set(card.id, currentDamage);
+    });
+
+    // 2. Detect Deaths (was in field, now is in graveyard)
+    const p1GraveIds = new Set((state.player1?.graveyard || []).map(c => c.id));
+    const p2GraveIds = new Set((state.player2?.graveyard || []).map(c => c.id));
+
+    this.prevFieldIds.forEach(id => {
+      if (!currentIds.has(id)) {
+        if (p1GraveIds.has(id)) {
+          const deadCard = state.player1.graveyard.find(c => c.id === id);
+          if (deadCard) this.triggerDeath(deadCard, state.player1.id);
+        } else if (p2GraveIds.has(id)) {
+          const deadCard = state.player2.graveyard.find(c => c.id === id);
+          if (deadCard) this.triggerDeath(deadCard, state.player2.id);
+        }
+      }
+    });
+
+    this.prevFieldIds = currentIds;
+  }
+
+  private triggerHit(cardId: string, amount: number): void {
+    this.hittingCards.add(cardId);
+    this.lastDamageTaken.set(cardId, amount);
+    setTimeout(() => {
+      this.hittingCards.delete(cardId);
+      this.lastDamageTaken.delete(cardId);
+      this.cdr.detectChanges();
+    }, 600);
+  }
+
+  private triggerDeath(card: any, ownerId: string): void {
+    if (this.dyingCards.find(c => c.id === card.id)) return;
+    
+    this.dyingCards.push({ ...card, ownerId });
+    setTimeout(() => {
+      this.dyingCards = this.dyingCards.filter(c => c.id !== card.id);
+      this.cdr.detectChanges();
+    }, 850);
+  }
+
+  isHitting(cardId: string): boolean {
+    return this.hittingCards.has(cardId);
+  }
+
+  getRecentDamage(cardId: string): number {
+    return this.lastDamageTaken.get(cardId) || 0;
   }
 }
