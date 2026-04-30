@@ -250,4 +250,7 @@ interface UserResponse {
   token?: string;
   eloRating: number | null;
   friendsCount: number | null;
+  isOnline?: boolean;
+  lastSeenAt?: string | null;
+  avatarUrl?: string | null;
 }

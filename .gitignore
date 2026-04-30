@@ -47,3 +47,6 @@ package-lock.json (si prefieres no trackearlo, aunque suele ser buena idea track
 # OS specific files
 Thumbs.db
 Desktop.ini
+
+/scripts-bbdd
+/scratch

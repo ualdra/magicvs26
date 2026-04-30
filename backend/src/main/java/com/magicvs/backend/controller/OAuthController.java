@@ -85,7 +85,8 @@ public class OAuthController {
                 "email", info.getEmail(),
                 "username", generatedUsername,
                 "displayName", info.getName(),
-                "googleId", info.getGoogleId()
+                "googleId", info.getGoogleId(),
+                "picture", info.getPicture() != null ? info.getPicture() : ""
         ));
     }
 
@@ -138,6 +139,11 @@ public class OAuthController {
     }
 
     private ResponseEntity<?> loginUser(User user) {
+        // Actualizar estado del usuario
+        user.setIsOnline(true);
+        user.setLastSeenAt(java.time.LocalDateTime.now());
+        registroRepository.save(user);
+        
         String token = authService.createSession(user.getId());
         UserController.UserResponse resp = UserController.UserResponse.fromEntity(user);
         resp.token = token;

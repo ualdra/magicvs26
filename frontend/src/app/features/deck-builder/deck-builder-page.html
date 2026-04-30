@@ -46,153 +46,155 @@
     }
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
-      <aside class="summary-column md:sticky md:top-28 md:max-h-[calc(100vh-8.5rem)] md:overflow-hidden">
+      <aside class="summary-column md:sticky md:top-28 md:h-[calc(100vh-8.5rem)] md:overflow-hidden">
         <div class="summary-panel flex h-full flex-col rounded-3xl border border-outline-variant/70 bg-surface-container-high/70 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
-          <div class="space-y-4 border-b border-outline-variant/60 pb-5">
-            <div>
-              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/65">Nombre del mazo</label>
-              <input
-                type="text"
-                [value]="deckName()"
-                (input)="onNameChange($any($event.target).value)"
-                class="w-full rounded-xl border border-outline-variant bg-surface/80 px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
-                placeholder="Mi Nuevo Mazo"
-              />
-            </div>
-
-            <div>
-              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/65">Descripción</label>
-              <textarea
-                [value]="deckDescription()"
-                (input)="onDescriptionChange($any($event.target).value)"
-                class="h-20 w-full resize-none rounded-xl border border-outline-variant bg-surface/80 px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
-                placeholder="Define el plan del mazo..."
-              ></textarea>
-            </div>
-
-            <label class="inline-flex items-center gap-2 text-sm text-on-surface/80">
-              <input
-                type="checkbox"
-                [checked]="deckIsPublic()"
-                (change)="onIsPublicChange($event.target.checked)"
-                class="h-4 w-4 rounded border-outline-variant bg-surface text-primary"
-              />
-              Hacer público
-            </label>
-          </div>
-
-          <div class="space-y-4 py-5">
-            <div>
-              <div class="mb-2 flex items-center justify-between">
-                <span class="text-xs uppercase tracking-[0.14em] text-on-surface/65">Progreso del mazo</span>
-                <span class="font-headline text-lg font-bold text-on-surface">{{ totalCards() }}/{{ deckGoal }}</span>
-              </div>
-              <div class="h-2 w-full overflow-hidden rounded-full bg-surface">
-                <div class="h-full rounded-full bg-gradient-to-r from-secondary to-primary transition-all duration-500" [style.width.%]="deckProgressPercent()"></div>
-              </div>
-              <p class="mt-2 text-xs" [ngClass]="isValidDeck() ? 'text-emerald-300' : 'text-amber-200'">{{ validationMessage() }}</p>
-            </div>
-
-            <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 p-3">
-              <div class="mb-3 flex items-center justify-between">
-                <span class="text-xs uppercase tracking-[0.14em] text-on-surface/65">Curva de maná</span>
-                <span class="text-xs text-on-surface/60">CMC</span>
-              </div>
-              <div class="grid grid-cols-8 items-end gap-2">
-                @for (bucket of manaCurve(); track bucket.label) {
-                  <div class="curve-bucket flex flex-col items-center gap-1">
-                    <div class="curve-tooltip">CMC {{ bucket.label }}: {{ bucket.value }} carta(s)</div>
-                    <div class="curve-value text-[10px] text-on-surface/70">{{ bucket.value }}</div>
-                    <div class="curve-bar w-full rounded-t-md bg-gradient-to-t from-primary/85 to-secondary/85" [style.height.px]="getCurveBarHeight(bucket.value)"></div>
-                    <div class="text-[10px] text-on-surface/70">{{ bucket.label }}</div>
-                  </div>
-                }
-              </div>
-            </div>
-
-            @if (deckColors().length > 0) {
+          <div class="summary-scroll-area min-h-0 flex-1 overflow-y-auto px-5 py-2">
+            <div class="space-y-4 border-b border-outline-variant/60 pb-5">
               <div>
-                <div class="mb-2 text-xs uppercase tracking-[0.14em] text-on-surface/65">Identidad de color</div>
-                <div class="flex flex-wrap gap-2">
-                  @for (color of deckColors(); track color) {
-                    <span [ngClass]="getColorClass(color)" class="rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize">
-                      {{ color }}
-                    </span>
+                <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/65">Nombre del mazo</label>
+                <input
+                  type="text"
+                  [value]="deckName()"
+                  (input)="onNameChange($any($event.target).value)"
+                  class="w-full rounded-xl border border-outline-variant bg-surface/80 px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+                  placeholder="Mi Nuevo Mazo"
+                />
+              </div>
+
+              <div>
+                <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/65">Descripción</label>
+                <textarea
+                  [value]="deckDescription()"
+                  (input)="onDescriptionChange($any($event.target).value)"
+                  class="h-20 w-full resize-none rounded-xl border border-outline-variant bg-surface/80 px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+                  placeholder="Define el plan del mazo..."
+                ></textarea>
+              </div>
+
+              <label class="inline-flex items-center gap-2 text-sm text-on-surface/80">
+                <input
+                  type="checkbox"
+                  [checked]="deckIsPublic()"
+                  (change)="onIsPublicChange($event.target.checked)"
+                  class="h-4 w-4 rounded border-outline-variant bg-surface text-primary"
+                />
+                Hacer público
+              </label>
+            </div>
+
+            <div class="space-y-4 py-5">
+              <div>
+                <div class="mb-2 flex items-center justify-between">
+                  <span class="text-xs uppercase tracking-[0.14em] text-on-surface/65">Progreso del mazo</span>
+                  <span class="font-headline text-lg font-bold text-on-surface">{{ totalCards() }}/{{ deckGoal }}</span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-surface">
+                  <div class="h-full rounded-full bg-gradient-to-r from-secondary to-primary transition-all duration-500" [style.width.%]="deckProgressPercent()"></div>
+                </div>
+                <p class="mt-2 text-xs" [ngClass]="isValidDeck() ? 'text-emerald-300' : 'text-amber-200'">
+                  {{ validationMessage() }}
+                  @if (!isValidDeck()) {
+                    <span class="block mt-1 font-bold text-amber-300">⚠️ El mazo será inutilizable si no tiene 60 cartas.</span>
+                  }
+                </p>
+              </div>
+
+              <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 p-3">
+                <div class="mb-3 flex items-center justify-between">
+                  <span class="text-xs uppercase tracking-[0.14em] text-on-surface/65">Curva de maná</span>
+                  <span class="text-xs text-on-surface/60">CMC</span>
+                </div>
+                <div class="grid grid-cols-8 items-end gap-2">
+                  @for (bucket of manaCurve(); track bucket.label) {
+                    <div class="curve-bucket flex flex-col items-center gap-1">
+                      <div class="curve-tooltip">CMC {{ bucket.label }}: {{ bucket.value }} carta(s)</div>
+                      <div class="curve-value text-[10px] text-on-surface/70">{{ bucket.value }}</div>
+                      <div class="curve-bar w-full rounded-t-md bg-gradient-to-t from-primary/85 to-secondary/85" [style.height.px]="getCurveBarHeight(bucket.value)"></div>
+                      <div class="text-[10px] text-on-surface/70">{{ bucket.label }}</div>
+                    </div>
                   }
                 </div>
               </div>
-            }
-          </div>
 
-          <div class="deck-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-y border-outline-variant/60 py-4">
-            @if (deckCards().length === 0) {
-              <div class="rounded-2xl border border-dashed border-outline-variant p-5 text-center text-sm text-on-surface/65">
-                Añade cartas desde la colección para comenzar.
-              </div>
-            } @else {
-              <div class="space-y-4">
-                @for (group of groupedDeckCards(); track group.group) {
-                  <section>
-                    <h3 class="mb-2 font-headline text-sm font-semibold text-on-surface/85">{{ group.group }}</h3>
-                    <div class="space-y-2">
-                      @for (card of group.cards; track card.cardId) {
-                        <div
-                          class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2"
-                          [class.deck-card-row-double-faced]="isDoubleFacedDeckCard(card)"
-                        >
-                          <div class="deck-card-image-wrap">
-                            @if (isDoubleFacedDeckCard(card)) {
-                              <button
-                                type="button"
-                                class="deck-flip-toggle"
-                                aria-label="Cambiar cara"
-                                (click)="toggleDeckCardFace(card, $event)"
-                              >
-                                ↺
-                              </button>
-                            }
+              @if (deckColors().length > 0) {
+                <div>
+                  <div class="mb-2 text-xs uppercase tracking-[0.14em] text-on-surface/65">Identidad de color</div>
+                  <div class="flex flex-wrap gap-2">
+                    @for (color of deckColors(); track color) {
+                      <span [ngClass]="getColorClass(color)" class="rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize">
+                        {{ color }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
 
-                            <div class="deck-card-flip-scene">
-                              <div class="deck-card-flip-inner" [class.is-flipped]="isDeckCardFlipped(card)">
-                                <img [src]="card.cardImage" [alt]="card.cardName + ' (frontal)'" class="h-12 w-9 rounded-md object-cover deck-card-face-front" />
+            <div class="deck-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-y border-outline-variant/60 py-4">
+              @if (deckCards().length === 0) {
+                <div class="rounded-2xl border border-dashed border-outline-variant p-5 text-center text-sm text-on-surface/65">
+                  Añade cartas desde la colección para comenzar.
+                </div>
+              } @else {
+                <div class="space-y-4">
+                  @for (group of groupedDeckCards(); track group.group) {
+                    <section>
+                      <h3 class="mb-2 font-headline text-sm font-semibold text-on-surface/85">{{ group.group }}</h3>
+                      <div class="space-y-2">
+                        @for (card of group.cards; track card.cardId) {
+                          <div
+                            class="deck-card-row flex items-center gap-2 rounded-xl border border-outline-variant/50 bg-surface/65 p-2"
+                            [class.deck-card-row-double-faced]="isDoubleFacedDeckCard(card)"
+                          >
+                            <div class="deck-card-image-wrap">
+                              @if (isDoubleFacedDeckCard(card)) {
+                                <button
+                                  type="button"
+                                  class="deck-flip-toggle"
+                                  aria-label="Cambiar cara"
+                                  (click)="toggleDeckCardFace(card, $event)"
+                                >
+                                  ↺
+                                </button>
+                              }
 
-                                @if (isDoubleFacedDeckCard(card)) {
-                                  <img [src]="card.backCardImage" [alt]="card.cardName + ' (trasera)'" class="h-12 w-9 rounded-md object-cover deck-card-face-back" />
-                                }
+                              <div class="deck-card-flip-scene">
+                                <div class="deck-card-flip-inner" [class.is-flipped]="isDeckCardFlipped(card)">
+                                  <img [src]="card.cardImage" [alt]="card.cardName + ' (frontal)'" class="h-12 w-9 rounded-md object-cover deck-card-face-front" />
+
+                                  @if (isDoubleFacedDeckCard(card)) {
+                                    <img [src]="card.backCardImage" [alt]="card.cardName + ' (trasera)'" class="h-12 w-9 rounded-md object-cover deck-card-face-back" />
+                                  }
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                              <p class="truncate text-sm font-semibold text-on-surface">{{ card.cardName }}</p>
+                              <div class="flex items-center gap-2">
+                                <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>
+                                <div class="flex items-center gap-1 ml-auto mr-1">
+                                  <button (click)="onUpdateQuantity(card.cardId, card.quantity - 1)" class="qty-btn" aria-label="Reducir cantidad">-</button>
+                                  <span class="text-xs font-bold text-on-surface w-4 text-center">{{ card.quantity }}</span>
+                                  <button (click)="onUpdateQuantity(card.cardId, card.quantity + 1)" class="qty-btn" aria-label="Aumentar cantidad">+</button>
+                                </div>
+                                <button (click)="onRemoveCard(card.cardId)" class="remove-btn text-xs text-rose-400 hover:text-rose-300" aria-label="Eliminar carta">✕</button>
                               </div>
                             </div>
                           </div>
-
-                          <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-semibold text-on-surface">{{ card.cardName }}</p>
-                            <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>
-                          </div>
-                          <div class="flex items-center gap-1">
-                            <button (click)="onUpdateQuantity(card.cardId, card.quantity - 1)" class="qty-btn" aria-label="Reducir cantidad">-</button>
-                            <input
-                              type="number"
-                              [value]="card.quantity"
-                              (change)="onUpdateQuantity(card.cardId, +$any($event.target).value)"
-                              class="qty-input"
-                              min="1"
-                              [attr.max]="getQuantityMax(card.cardType)"
-                            />
-                            <button (click)="onUpdateQuantity(card.cardId, card.quantity + 1)" class="qty-btn" aria-label="Aumentar cantidad">+</button>
-                          </div>
-                          <button (click)="onRemoveCard(card.cardId)" class="remove-btn" aria-label="Eliminar carta">✕</button>
-                        </div>
-                      }
-                    </div>
-                  </section>
-                }
-              </div>
-            }
+                        }
+                      </div>
+                    </section>
+                  }
+                </div>
+              }
+            </div>
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-2">
             <button
               (click)="saveDeck()"
-              [disabled]="!isValidDeck() || loading()"
+              [disabled]="loading()"
               class="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-on-primary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               @if (loading()) {
@@ -206,19 +208,18 @@
               class="rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm font-semibold text-on-surface transition hover:border-rose-400/80 hover:text-rose-200"
             >
               Limpiar
-              
             </button>
             <button
                (click)="copyCurrentDeck()"
               [disabled]="loading()"
-              class="rounded-xl bg-secondary px-3 py-2 text-sm font-semibold text-on-secondary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              class="col-span-2 rounded-xl bg-secondary px-3 py-2 text-sm font-semibold text-on-secondary transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
               @if (loading()) {
               Clonando...
               } @else {
-                Clonar mazo
+                Clonar
               }
-  </button>
+            </button>
           </div>
         </div>
       </aside>

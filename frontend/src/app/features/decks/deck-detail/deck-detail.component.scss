@@ -1,0 +1,75 @@
+:host {
+  display: block;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.group:hover .group-hover\:scale-110 {
+  transform: scale(1.1);
+}
+
+// Mana Curve Styles
+.curve-bar {
+  min-height: 8px;
+  transition: height 0.3s ease, filter 0.2s ease;
+}
+
+.curve-bucket {
+  position: relative;
+
+  &:hover .curve-bar {
+    filter: brightness(1.12);
+  }
+
+  &:hover .curve-tooltip {
+    opacity: 1;
+    transform: translate(-50%, -4px);
+  }
+}
+
+.curve-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 0);
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(19, 19, 19, 0.96);
+  color: #e5e2e1;
+  border-radius: 8px;
+  font-size: 10px;
+  padding: 4px 7px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 20;
+}
+
+// Custom scrollbar for better look
+main {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+}

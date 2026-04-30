@@ -90,15 +90,57 @@
       </div>
   </div>
 
-  <!-- REGISTRATION PROMPT MODAL -->
-  <div *ngIf="showRegisterModal" 
-       class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300 animate-in fade-in">
-    <!-- ... existing modal content ... -->
+  <!-- REGISTRATION PROMPT MODAL (PREMIUM GLASSMORPISM) -->
+  @if (showRegisterModal) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300 animate-in fade-in">
+    
+    <div class="max-w-md w-full bg-surface-container-high/40 border border-purple-500/30 rounded-2xl p-8 shadow-2xl shadow-purple-900/50 backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-300">
+      
+      <!-- Icon & Header -->
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-purple-600/20 flex items-center justify-center mb-4 border border-purple-500/40">
+          <span class="material-symbols-outlined text-4xl text-purple-400">person_add</span>
+        </div>
+        <h2 class="text-2xl font-headline font-bold text-white mb-2">Cuenta no encontrada</h2>
+        <p class="text-on-surface-variant text-sm leading-relaxed">
+          Esta cuenta de Google no está registrada en **MagicVS**. <br>
+          ¿Quieres crear una cuenta nueva ahora mismo?
+        </p>
+      </div>
+
+      <!-- User Info Card -->
+      <div class="bg-surface-container/60 rounded-xl p-4 border border-outline-variant/10 flex items-center gap-4 mb-8">
+        @if (googleDataForPrompt?.picture) {
+          <img [src]="googleDataForPrompt?.picture" alt="Avatar" class="w-12 h-12 rounded-full border border-purple-500/30">
+        } @else {
+          <div class="w-12 h-12 rounded-full bg-purple-600/30 flex items-center justify-center border border-purple-500/30">
+             <span class="material-symbols-outlined text-purple-200">person</span>
+          </div>
+        }
+        <div class="flex-1 min-w-0">
+          <p class="text-white font-semibold truncate">{{ googleDataForPrompt?.displayName }}</p>
+          <p class="text-xs text-on-surface-variant truncate opacity-60">{{ googleDataForPrompt?.email }}</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col gap-3">
+        <button (click)="proceedToRegister()" 
+                class="w-full py-3.5 rounded-lg bg-purple-600 text-white font-bold tracking-wider uppercase text-sm shadow-lg shadow-purple-900/40 hover:bg-purple-500 hover:-translate-y-0.5 transition-all">
+          Sí, Registrarme
+        </button>
+        <button (click)="cancelRegisterPrompt()" 
+                class="w-full py-3.5 rounded-lg bg-transparent border border-outline-variant/30 text-zinc-300 font-bold tracking-wider uppercase text-sm hover:bg-white/5 transition-all">
+          No, corregir cuenta
+        </button>
+      </div>
+    </div>
   </div>
+}
 
   <!-- PASSWORD RECOVERY MODAL (PREMIUM GLASSMORPISM) -->
-  <div *ngIf="showForgotModal" 
-       class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all duration-300 animate-in fade-in">
+  @if (showForgotModal) {
+    <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all duration-300 animate-in fade-in">
     
     <div class="max-w-md w-full bg-surface-container-high/40 border border-purple-500/30 rounded-2xl p-8 shadow-2xl shadow-purple-900/50 backdrop-blur-2xl ring-1 ring-white/10 animate-in zoom-in-95 duration-300">
       
@@ -144,4 +186,5 @@
       </div>
     </div>
   </div>
+}
 </section>

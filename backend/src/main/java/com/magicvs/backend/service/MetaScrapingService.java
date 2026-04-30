@@ -34,10 +34,6 @@ public class MetaScrapingService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Sincroniza los arquetipos de MTGGoldfish.
-     * Se ejecuta todos los días a las 4 AM.
-     */
     @Scheduled(cron = "0 0 4 * * ?")
     @Transactional
     public void cronSync() {
@@ -46,13 +42,10 @@ public class MetaScrapingService {
 
     @Transactional
     public void syncMetagame(String days) {
-        // MTGGoldfish doesn't natively expose discrete time paths in this endpoint anymore, 
-        // so we route all time-bracket requests to the live rolling baseline to prevent 404 crashes.
         String url = "https://www.mtggoldfish.com/metagame/standard#paper";
         log.info("Iniciando escaneo del metajuego en MTGGoldfish (solicitado: {} días)... {}", days, url);
 
         try {
-            // Simulator User-Agent to bypass superficial bot protections
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .header("Accept-Language", "en-US,en;q=0.9")
@@ -64,7 +57,6 @@ public class MetaScrapingService {
                 return;
             }
 
-            // Wipe existing metagame to replace with fresh standing 
             metaDeckRepository.deleteAllInBatch();
             
             List<MetaDeck> newDecks = new ArrayList<>();
@@ -74,35 +66,29 @@ public class MetaScrapingService {
                 try {
                     MetaDeck deck = new MetaDeck();
                     
-                    // Nombre y URL
                     Element nameLink = tile.selectFirst(".deck-price-paper a");
                     if (nameLink == null) continue;
                     
                     deck.setName(nameLink.text());
                     deck.setFullListUrl(MTG_GOLDFISH_BASE_URL + nameLink.attr("href"));
                     
-                    // Presencia (Porcentaje)
                     Element percentElem = tile.selectFirst(".metagame-percentage .archetype-tile-statistic-value");
                     if (percentElem != null) {
                         String rawPercent = percentElem.text().replaceAll("\\(.*?\\)", "").trim();
                         deck.setPresence(rawPercent);
                     }
                     
-                    // Filtro Anti-Budget / Casual Decks:
-                    // Si no tiene % de presencia oficial, o el nombre lleva signos de ser budget barato, lo ignoramos para mantener la limpieza del Tier
                     if (deck.getPresence() == null || deck.getPresence().isEmpty() || 
                         deck.getName().toLowerCase().contains("budget") || 
                         deck.getName().trim().startsWith("$")) {
                         continue;
                     }
 
-                    // Precio Físico
                     Element priceElem = tile.selectFirst(".deck-price-paper .archetype-tile-statistic-value");
                     if (priceElem != null) {
                         deck.setPrice(priceElem.text().trim());
                     }
 
-                    // Colores
                     List<String> colors = new ArrayList<>();
                     Elements colorIcons = tile.select(".manacost-container i");
                     for (Element icon : colorIcons) {
@@ -115,7 +101,6 @@ public class MetaScrapingService {
                     }
                     deck.setColorsJson(objectMapper.writeValueAsString(colors));
 
-                    // Cartas Clave (De lista inferior)
                     List<String> keyCardNames = new ArrayList<>();
                     List<Map<String, String>> gallery = new ArrayList<>();
                     
@@ -124,12 +109,10 @@ public class MetaScrapingService {
                         String cName = li.text();
                         keyCardNames.add(cName);
                         
-                        // Buscar en nuestra base de datos para recuperar el arte de alta calidad
                         Optional<Card> dbCard = cardRepository.findFirstByNameIgnoreCase(cName);
                         dbCard.ifPresent(c -> {
                             Map<String, String> imgData = new HashMap<>();
                             imgData.put("name", cName);
-                            // Preferimos artCropUri si existe para la galería
                             String imageUrl = c.getArtCropUri() != null ? c.getArtCropUri() : c.getNormalImageUri();
                             if (imageUrl != null) {
                                 imgData.put("imageUrl", imageUrl);
@@ -140,7 +123,6 @@ public class MetaScrapingService {
                     deck.setKeyCardsString(String.join(", ", keyCardNames));
                     deck.setGalleryJson(objectMapper.writeValueAsString(gallery));
                     
-                    // Extracción Profunda del Mazo (Subpágina)
                     try {
                         Document subDoc = Jsoup.connect(deck.getFullListUrl())
                                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
@@ -149,8 +131,6 @@ public class MetaScrapingService {
 
                         List<Map<String, Object>> mainboard = new ArrayList<>();
                         
-                        // En las páginas de Archetype, la tabla HTML suele cargarse por JS. 
-                        // Sin embargo, MTGGoldfish inyecta la lista cruda en un input oculto para su botón de "Exportar".
                         Element deckInput = subDoc.getElementById("deck_input_deck");
                         if (deckInput != null) {
                             String rawList = deckInput.attr("value");
@@ -179,12 +159,10 @@ public class MetaScrapingService {
                                         cardRow.put("name", cardName);
                                         cardRow.put("isSideboard", isSideboard);
                                         
-                                        // Buscar versión en Español, si no existe caer atrás en la oficial.
                                         Card dbCard = cardRepository.findFirstByNameIgnoreCaseAndLang(cardName, "es")
                                                 .orElseGet(() -> cardRepository.findFirstByNameIgnoreCase(cardName).orElse(null));
 
                                         if (dbCard != null) {
-                                            // Si existe dbCard y logramos enganchar el idioma ES, inyectamos su traducción
                                             if ("es".equals(dbCard.getLang()) && dbCard.getRawJson() != null) {
                                                 try {
                                                     JsonNode node = objectMapper.readTree(dbCard.getRawJson());
@@ -194,14 +172,13 @@ public class MetaScrapingService {
                                                 } catch (Exception e) {}
                                             }
 
-                                            // Extraer tipología intacta en Inglés para no romper la división en 3 sacos
                                             if (dbCard.getTypeLine() != null) {
                                                 cardRow.put("typeLine", dbCard.getTypeLine());
                                             } else {
                                                 cardRow.put("typeLine", "Spell");
                                             }
                                         } else {
-                                            cardRow.put("typeLine", "Spell"); // Fallback
+                                            cardRow.put("typeLine", "Spell"); 
                                         }
 
                                         mainboard.add(cardRow);
@@ -212,7 +189,6 @@ public class MetaScrapingService {
                         
                         deck.setMainboardJson(objectMapper.writeValueAsString(mainboard));
 
-                        // Pausa de seguridad anti-bots (Cloudflare)
                         Thread.sleep(750);
                     } catch (Exception subpageEx) {
                         log.error("No se pudo extraer la sub-lista profunda de {}: {}", deck.getName(), subpageEx.getMessage());

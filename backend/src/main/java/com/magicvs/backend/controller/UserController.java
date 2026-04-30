@@ -23,13 +23,20 @@ public class UserController {
     private final AuthService authService;
     private final RegistroRepository registroRepository;
     private final com.magicvs.backend.service.RegistrationVerificationService verificationService;
+    private final com.magicvs.backend.service.FriendshipService friendshipService;
 
-    public UserController(RegistroService registroService, LoginService loginService, AuthService authService, RegistroRepository registroRepository, com.magicvs.backend.service.RegistrationVerificationService verificationService) {
+    public UserController(RegistroService registroService, 
+                          LoginService loginService, 
+                          AuthService authService, 
+                          RegistroRepository registroRepository, 
+                          com.magicvs.backend.service.RegistrationVerificationService verificationService,
+                          com.magicvs.backend.service.FriendshipService friendshipService) {
         this.registroService = registroService;
         this.loginService = loginService;
         this.authService = authService;
         this.registroRepository = registroRepository;
         this.verificationService = verificationService;
+        this.friendshipService = friendshipService;
     }
 
     @GetMapping("/exists")
@@ -40,10 +47,24 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDirectoryResponseDto>> getAllUsers() {
+    public ResponseEntity<List<UserDirectoryResponseDto>> getAllUsers(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        Long currentUserId = null;
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            currentUserId = authService.getUserId(authorization.substring(7)).orElse(null);
+        }
+
+        final Long finalCurrentUserId = currentUserId;
         List<UserDirectoryResponseDto> users = registroRepository.findAll().stream()
                 .filter(User::getActive)
-                .map(UserDirectoryResponseDto::fromEntity)
+                .map(u -> {
+                    UserDirectoryResponseDto dto = UserDirectoryResponseDto.fromEntity(u);
+                    if (finalCurrentUserId != null && !finalCurrentUserId.equals(u.getId())) {
+                        dto.setFriendshipStatus(friendshipService.getFriendshipStatus(finalCurrentUserId, u.getId()));
+                    } else {
+                        dto.setFriendshipStatus("NONE");
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
     }
@@ -124,6 +145,28 @@ public class UserController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            String token = authorization.substring("Bearer ".length());
+            
+            // Get the user and set offline status
+            var userId = authService.getUserId(token);
+            if (userId.isPresent()) {
+                var user = registroRepository.findById(userId.get());
+                if (user.isPresent()) {
+                    User loggedOutUser = user.get();
+                    loggedOutUser.setIsOnline(false);
+                    loggedOutUser.setLastSeenAt(java.time.LocalDateTime.now());
+                    registroRepository.save(loggedOutUser);
+                }
+            }
+            
+            authService.logout(token);
+        }
+        return ResponseEntity.ok().build();
+    }
+
     // ---- DTOs para las peticiones y respuestas ----
 
     public static class RegistroRequest {
@@ -147,6 +190,9 @@ public class UserController {
         public String token;
         public Integer eloRating;
         public Integer friendsCount;
+        public Boolean isOnline;
+        public String lastSeenAt;
+        public String avatarUrl;
 
         public static UserResponse fromEntity(User user) {
             UserResponse resp = new UserResponse();
@@ -157,6 +203,9 @@ public class UserController {
             resp.friendTag = user.getFriendTag();
             resp.eloRating = user.getElo();
             resp.friendsCount = user.getFriendsCount();
+            resp.isOnline = user.getIsOnline();
+            resp.lastSeenAt = user.getLastSeenAt() != null ? user.getLastSeenAt().toString() : null;
+            resp.avatarUrl = user.getAvatarUrl();
             return resp;
         }
     }

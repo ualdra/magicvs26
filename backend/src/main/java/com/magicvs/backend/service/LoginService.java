@@ -4,6 +4,7 @@ import com.magicvs.backend.model.User;
 import com.magicvs.backend.repository.LoginRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 import com.magicvs.backend.util.ValidationUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,6 +33,11 @@ public class LoginService {
         if (!encoder.matches(password, user.getPasswordHash())) {
             throw new IllegalArgumentException("Credenciales incorrectas");
         }
+
+        // Update online status
+        user.setIsOnline(true);
+        user.setLastSeenAt(LocalDateTime.now());
+        loginRepository.save(user);
 
         return user;
     }

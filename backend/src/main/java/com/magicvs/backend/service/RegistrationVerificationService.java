@@ -75,6 +75,7 @@ public class RegistrationVerificationService {
         pr.setVerificationHash(codeHash);
         pr.setExpiresAt(LocalDateTime.now().plusMinutes(15));
         pr.setGoogleId(googleId);
+        pr.setManualRegistration(googleId == null);
 
         PendingRegistration saved = pendingRepo.save(pr);
 
@@ -165,6 +166,7 @@ public class RegistrationVerificationService {
         user.setDisplayName(pr.getDisplayName().isBlank() ? pr.getUsername() : pr.getDisplayName());
         user.setFriendTag(generateFriendTag());
         user.setGoogleId(pr.getGoogleId());
+        user.setManualRegistration(pr.getManualRegistration());
 
         User savedUser = registroRepository.save(user);
         pendingRepo.delete(pr);

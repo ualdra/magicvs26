@@ -67,6 +67,7 @@ public class RegistroService {
 
         // Generar friendTag tipo Discord (letras y números), único por usuario
         user.setFriendTag(generateFriendTag());
+        user.setManualRegistration(true);
 
         return registroRepository.save(user);
     }

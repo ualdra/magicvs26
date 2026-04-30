@@ -1,4 +1,80 @@
-/* Styles are globally defined in styles.scss per requirements */
-:host {
-  display: block;
+.card-container {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --glow-x: 50%;
+  --glow-y: 50%;
+
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.12s linear, box-shadow 0.25s ease;
+  will-change: transform;
+  cursor: pointer;
+
+  &:hover {
+    transform: perspective(1000px) scale(1.03) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(146, 204, 255, 0.15);
+
+    .flip-scene::before {
+      opacity: 1;
+    }
+  }
+}
+
+.flip-scene {
+  perspective: 1200px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1.5rem;
+    background: radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(146, 204, 255, 0.25), rgba(146, 204, 255, 0) 45%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+}
+
+.flip-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+
+  &.is-flipped {
+    transform: rotateY(180deg);
+  }
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  object-fit: cover;
+  border-radius: 1rem;
+}
+
+.face-front {
+  z-index: 2;
+}
+
+.face-back {
+  transform: rotateY(180deg);
+}
+
+.flip-toggle-btn {
+  background: rgba(19, 19, 19, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &:hover {
+    background: rgba(142, 68, 173, 0.4);
+    transform: scale(1.1) rotate(180deg);
+  }
+
+  span {
+    font-size: 20px;
+  }
 }

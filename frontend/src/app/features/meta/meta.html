@@ -133,6 +133,18 @@
                   }
                 </button>
 
+                <!-- Import Button -->
+                <button (click)="importMetaDeck(deck)" [disabled]="importingDeckId === deck.id"
+                        class="w-full px-6 py-3.5 rounded-lg bg-[#4b9e60] hover:bg-[#3d834f] text-white transition-all font-bold text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 border border-[#4b9e60]/50">
+                  @if (importingDeckId === deck.id) {
+                    <span class="material-symbols-outlined text-lg animate-spin">sync</span>
+                    <span>Importando...</span>
+                  } @else {
+                    <span class="material-symbols-outlined text-lg">download</span>
+                    <span>Importar a mis mazos</span>
+                  }
+                </button>
+
                 <!-- External Source Button -->
                 <a [href]="deck.fullListUrl" target="_blank"
                    class="w-full px-6 py-3.5 rounded-lg bg-surface border border-outline-variant/20 hover:border-primary/50 text-on-surface transition-all flex items-center justify-center gap-2 group font-bold text-xs tracking-wide">

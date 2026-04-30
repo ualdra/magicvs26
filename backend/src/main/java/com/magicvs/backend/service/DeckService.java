@@ -18,9 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import com.magicvs.backend.dto.ImportDeckRequestDTO;
+import com.magicvs.backend.dto.ImportDeckResponseDTO;
 
 @Service
 public class DeckService {
@@ -59,9 +64,8 @@ public class DeckService {
             .mapToInt(Integer::intValue)
             .sum();
 
-        if (totalCards != minDeckCards) {
-            throw new IllegalArgumentException("El mazo debe tener exactamente " + minDeckCards + " cartas. Actual: " + totalCards);
-        }
+        // Check for max 4 copies
+
 
         for (Map.Entry<Long, Integer> entry : cardQuantities.entrySet()) {
             Card card = cardRepository.findById(entry.getKey())
@@ -84,7 +88,14 @@ public class DeckService {
      */
 @Transactional
 public DeckResponseDTO createDeck(Long userId, CreateDeckDTO deckDTO) {
-    validateDeck(deckDTO);
+    return createDeck(userId, deckDTO, false);
+}
+
+@Transactional
+public DeckResponseDTO createDeck(Long userId, CreateDeckDTO deckDTO, boolean skipValidation) {
+    if (!skipValidation) {
+        validateDeck(deckDTO);
+    }
 
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
@@ -139,10 +150,14 @@ public DeckResponseDTO createDeck(String authorization, CreateDeckDTO deckDTO) {
      */
     @Transactional(readOnly = true)
     public DeckResponseDTO getDeckById(Long deckId, Long userId) {
-        Deck deck = deckRepository.findById(deckId)
+        Deck deck = deckRepository.findByIdWithCards(deckId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mazo no encontrado"));
 
-        ensureOwner(deck, userId);
+        boolean isOwner = userId != null && deck.getUser().getId().equals(userId);
+        if (!deck.getPublic() && !isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para ver este mazo privado");
+        }
+        
         return DeckResponseDTO.fromEntity(deck);
     }
 
@@ -208,6 +223,79 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
     return copyDeck(deckId, userId);
 }
 
+    @Transactional(readOnly = true)
+    public String exportDeck(Long deckId, Long userId) {
+        Deck deck = deckRepository.findByIdWithCards(deckId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mazo no encontrado"));
+
+        ensureOwner(deck, userId);
+
+        StringBuilder sb = new StringBuilder();
+        for (com.magicvs.backend.model.DeckCard dc : deck.getCards()) {
+            sb.append(dc.getQuantity()).append(" ").append(dc.getCard().getName()).append("\r\n");
+        }
+        return sb.toString();
+    }
+
+    @Transactional
+    public ImportDeckResponseDTO importDeck(Long userId, ImportDeckRequestDTO request) {
+        if (request.getDeckText() == null || request.getDeckText().trim().isEmpty()) {
+            throw new IllegalArgumentException("El texto del mazo está vacío");
+        }
+
+        List<CreateDeckDTO.DeckCardDTO> cards = new ArrayList<>();
+        List<String> missingCards = new ArrayList<>();
+        String[] lines = request.getDeckText().split("\\r?\\n");
+        Pattern pattern = Pattern.compile("^\\s*(\\d+)\\s+(.+?)(?:\\s+\\(|$)");
+
+        for (String line : lines) {
+            String trimmedLine = line.trim();
+            if (trimmedLine.isEmpty() || trimmedLine.equalsIgnoreCase("Deck") || trimmedLine.equalsIgnoreCase("Commander")) {
+                continue;
+            }
+            if (trimmedLine.equalsIgnoreCase("Sideboard")) {
+                break;
+            }
+
+            Matcher matcher = pattern.matcher(trimmedLine);
+            if (matcher.find()) {
+                int quantity = Integer.parseInt(matcher.group(1));
+                String cardName = matcher.group(2).trim();
+
+                Card card = cardRepository.findByNameOrPrintedName(cardName).stream().findFirst()
+                    .orElseGet(() -> cardRepository.findByNameContainingIgnoreCase(cardName + " //").stream().findFirst().orElse(null));
+
+                if (card == null) {
+                    // Try to match just the first part if the DB has exactly the cardName but the import text has "Front // Back"
+                    if (cardName.contains("//")) {
+                        String frontName = cardName.split("//")[0].trim();
+                        card = cardRepository.findByNameOrPrintedName(frontName).stream().findFirst()
+                            .orElseGet(() -> cardRepository.findByNameContainingIgnoreCase(frontName + " //").stream().findFirst().orElse(null));
+                    }
+                }
+
+                if (card != null) {
+                    cards.add(new CreateDeckDTO.DeckCardDTO(card.getId(), quantity));
+                } else {
+                    missingCards.add(cardName);
+                }
+            }
+        }
+
+        if (cards.isEmpty()) {
+            throw new IllegalArgumentException("No se pudieron encontrar cartas válidas en el texto proporcionado");
+        }
+
+        CreateDeckDTO createDeckDTO = new CreateDeckDTO();
+        createDeckDTO.setName(request.getName() != null && !request.getName().trim().isEmpty() ? request.getName() : "Mazo Importado");
+        createDeckDTO.setDescription("Mazo importado.");
+        createDeckDTO.setIsPublic(false);
+        createDeckDTO.setCards(cards);
+
+        DeckResponseDTO deck = createDeck(userId, createDeckDTO, true);
+        return new ImportDeckResponseDTO(deck, missingCards);
+    }
+
     private void syncDeckCards(Deck deck, List<CreateDeckDTO.DeckCardDTO> deckCards) {
         if (deck.getId() != null) {
             // Force delete existing persisted rows before inserts to avoid unique key collisions.
@@ -254,7 +342,35 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
             deck.getFormat() != null ? deck.getFormat().name() : DeckFormat.STANDARD.name(),
             deck.getTotalCards(),
             deck.getUpdatedAt(),
-            deck.getPublic()
+            deck.getPublic(),
+            getBestArtCrop(deck)
         );
+    }
+
+    private String getBestArtCrop(Deck deck) {
+        if (deck.getCards() == null || deck.getCards().isEmpty()) {
+            return null;
+        }
+
+        com.magicvs.backend.model.DeckCard bestCard = null;
+        int bestLevel = -1;
+
+        for (com.magicvs.backend.model.DeckCard dc : deck.getCards()) {
+            String rarity = (dc.getCard().getRarity() != null) ? dc.getCard().getRarity().toLowerCase() : "common";
+            int level = switch (rarity) {
+                case "mythic" -> 4;
+                case "rare" -> 3;
+                case "uncommon" -> 2;
+                case "common" -> 1;
+                default -> 0;
+            };
+
+            if (level > bestLevel) {
+                bestLevel = level;
+                bestCard = dc;
+            }
+        }
+
+        return (bestCard != null) ? bestCard.getCard().getArtCropUri() : null;
     }
 }

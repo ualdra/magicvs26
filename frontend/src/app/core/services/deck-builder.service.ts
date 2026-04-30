@@ -26,11 +26,13 @@ export interface DeckCard {
 
 export interface Deck {
   id?: number;
+  userId?: number;
   name: string;
   description: string;
   format: string;
   isPublic: boolean;
   totalCards?: number;
+  mainImageUrl?: string;
   cards: DeckCard[];
 }
 

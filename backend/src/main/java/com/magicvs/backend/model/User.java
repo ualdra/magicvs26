@@ -32,26 +32,41 @@ public class User {
     @Column(length = 500)
     private String bio;
 
+    // --- TU LÓGICA DE ELO Y ESTADÍSTICAS ---
     @Column(name = "elo_rating", nullable = false)
-    private int eloRating = 1200;
+    private Integer eloRating = 1200;
 
     @Column(name = "games_played", nullable = false)
-    private int gamesPlayed = 0;
+    private Integer gamesPlayed = 0;
 
     @Column(name = "games_won", nullable = false)
-    private int gamesWon = 0;
+    private Integer gamesWon = 0;
 
     @Column(name = "games_lost", nullable = false)
-    private int gamesLost = 0;
+    private Integer gamesLost = 0;
 
+    // --- SOCIAL Y ESTADO ---
     @Column(name = "friend_tag", unique = true, length = 16)
     private String friendTag;
 
     @Column(name = "friends_count", nullable = false)
-    private int friendsCount = 0;
+    private Integer friendsCount = 0;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active")
     private Boolean active = true;
+
+    @Column(name = "is_online")
+    private Boolean isOnline = false;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
+
+    // --- SEGURIDAD Y REGISTRO ---
+    @Column(name = "google_id", unique = true, length = 255)
+    private String googleId;
+
+    @Column(name = "manual_registration")
+    private Boolean manualRegistration = true;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -59,17 +74,22 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "google_id", unique = true, length = 255)
-    private String googleId;
-
     public User() {}
-
-    // ===== LIFECYCLE =====
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        
+        // Inicializaciones de seguridad para evitar Nulos en la BD
+        if (this.eloRating == null) this.eloRating = 1200;
+        if (this.gamesPlayed == null) this.gamesPlayed = 0;
+        if (this.gamesWon == null) this.gamesWon = 0;
+        if (this.gamesLost == null) this.gamesLost = 0;
+        if (this.friendsCount == null) this.friendsCount = 0;
+        if (this.active == null) this.active = true;
+        if (this.isOnline == null) this.isOnline = false;
+        if (this.manualRegistration == null) this.manualRegistration = true;
     }
 
     @PreUpdate
@@ -77,7 +97,7 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // ===== LÓGICA DE NEGOCIO=====
+    // --- LÓGICA DE NEGOCIO (Tu motor) ---
 
     public void addWin() {
         this.gamesPlayed++;
@@ -90,11 +110,11 @@ public class User {
     }
 
     public double getWinRate() {
-        if (gamesPlayed == 0) return 0.0;
+        if (gamesPlayed == null || gamesPlayed == 0) return 0.0;
         return (double) gamesWon / gamesPlayed;
     }
 
-    // ===== GETTERS & SETTERS =====
+    // --- TODOS LOS GETTERS Y SETTERS ---
 
     public Long getId() { return id; }
 
@@ -122,25 +142,38 @@ public class User {
     public int getElo() { return eloRating; }
     public void setElo(int eloRating) { this.eloRating = eloRating; }
 
-    public int getGamesPlayed() { return gamesPlayed; }
+    public Integer getGamesPlayed() { return gamesPlayed; }
+    public void setGamesPlayed(Integer gamesPlayed) { this.gamesPlayed = gamesPlayed; }
 
-    public int getGamesWon() { return gamesWon; }
+    public Integer getGamesWon() { return gamesWon; }
+    public void setGamesWon(Integer gamesWon) { this.gamesWon = gamesWon; }
 
-    public int getGamesLost() { return gamesLost; }
+    public Integer getGamesLost() { return gamesLost; }
+    public void setGamesLost(Integer gamesLost) { this.gamesLost = gamesLost; }
 
     public String getFriendTag() { return friendTag; }
     public void setFriendTag(String friendTag) { this.friendTag = friendTag; }
 
-    public int getFriendsCount() { return friendsCount; }
-    public void setFriendsCount(int friendsCount) { this.friendsCount = friendsCount; }
+    public Integer getFriendsCount() { return friendsCount; }
+    public void setFriendsCount(Integer friendsCount) { this.friendsCount = friendsCount; }
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Boolean getIsOnline() { return isOnline; }
+    public void setIsOnline(Boolean isOnline) { this.isOnline = isOnline; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public LocalDateTime getLastSeenAt() { return lastSeenAt; }
+    public void setLastSeenAt(LocalDateTime lastSeenAt) { this.lastSeenAt = lastSeenAt; }
 
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
+
+    public Boolean getManualRegistration() { return manualRegistration; }
+    public void setManualRegistration(Boolean manualRegistration) { this.manualRegistration = manualRegistration; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

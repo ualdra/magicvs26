@@ -1,7 +1,12 @@
-<section class="relative overflow-hidden rounded-[2rem] border border-white/5 bg-zinc-950/70 backdrop-blur-xl shadow-2xl shadow-purple-950/20">
-  <div class="absolute inset-0 opacity-80">
-    <div class="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-purple-600/20 blur-3xl"></div>
-    <div class="absolute -bottom-24 left-16 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl"></div>
+<section class="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-3xl shadow-2xl shadow-purple-950/30">
+  <!-- Dynamic Banner Energy -->
+  <div class="absolute inset-x-0 top-0 h-48 opacity-40">
+    <div class="absolute inset-0 bg-gradient-to-b from-purple-600/30 to-transparent"
+         [style.background-image]="'linear-gradient(to bottom, ' + manaColorFromUrl().color + '44, transparent)'"></div>
+    <div class="absolute -top-24 -left-20 h-64 w-96 rounded-full blur-[100px]"
+         [style.background-color]="'#' + manaColorFromUrl().color + '66'"></div>
+    <div class="absolute -top-12 -right-12 h-40 w-80 rounded-full blur-[80px]"
+         [style.background-color]="'#' + selectedManaColor().color + '33'"></div>
   </div>
 
   <div class="relative z-10 grid gap-8 px-6 py-8 md:px-10 md:py-10 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">
@@ -34,6 +39,10 @@
 
             @if (isOwnProfile) {
               <div class="flex flex-wrap items-center gap-2">
+                <a routerLink="/cartas" [queryParams]="{ favoritesOnly: 'true' }" class="flex items-center gap-2 rounded-xl border border-pink-500/30 bg-pink-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-pink-300 transition-all hover:bg-pink-600/20 hover:text-white">
+                  <span class="material-symbols-outlined text-sm">favorite</span>
+                  Cartas Favoritas
+                </a>
                 <button (click)="toggleEdit()" class="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300 transition-all hover:bg-purple-600/20 hover:text-white">
                   <span class="material-symbols-outlined text-sm">edit</span>
                   Editar Perfil
@@ -81,7 +90,26 @@
         </div>
         <div class="info-pill">
           <span class="label">Cuentas Vinculadas</span>
-          <span class="value text-zinc-500 italic">No disponible</span>
+          <div class="value flex items-center gap-2 py-0.5">
+            @if (profile.manualRegistration) {
+              <div class="linked-badge gmail" title="Registrado con Email">
+                <span class="material-symbols-outlined text-base">mail</span>
+              </div>
+            }
+            @if (profile.googleLinked) {
+              <div class="linked-badge google" title="Google vinculado">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+              </div>
+            }
+            @if (!profile.manualRegistration && !profile.googleLinked) {
+              <span class="text-zinc-500 italic">No disponible</span>
+            }
+          </div>
         </div>
       </div>
     } @else {

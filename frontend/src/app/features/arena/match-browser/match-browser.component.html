@@ -1,0 +1,200 @@
+<main class="max-w-7xl mx-auto px-6 pt-32 pb-12 space-y-16">
+    <!-- Header Section -->
+    <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-12">
+        <div class="space-y-2">
+            <h1 class="text-5xl md:text-6xl font-headline font-bold text-on-background tracking-tighter uppercase">
+                Arena de <span class="text-primary italic font-black">Batalla</span>
+            </h1>
+            <p class="text-on-surface-variant font-body max-w-md opacity-70">Observa duelos en tiempo real o revive tus crónicas de batalla más gloriosas.</p>
+        </div>
+        <div class="flex items-center gap-6">
+            <button (click)="isMatchmakingModalOpen = true" class="group flex items-center gap-3 bg-primary-container text-on-primary-container px-8 py-3 rounded-xl font-headline font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(142,68,173,0.4)] transition-all active:scale-95">
+                <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add_circle</span>
+                Crear Partida
+            </button>
+            <div class="flex gap-4">
+                <div class="px-4 py-2 bg-zinc-900/50 rounded-lg border border-white/5 flex flex-col items-center min-w-[100px]">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500">Rating ELO</span>
+                    <span class="text-xl font-headline font-bold text-tertiary">{{userProfile?.eloRating || 1200}}</span>
+                </div>
+                <div class="px-4 py-2 bg-zinc-900/50 rounded-lg border border-white/5 flex flex-col items-center min-w-[100px]">
+                    <span class="text-[10px] uppercase tracking-widest text-zinc-500">Win Rate</span>
+                    <span class="text-xl font-headline font-bold text-secondary">{{winRate}}%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    @if (isLoading) {
+        <!-- Skeleton States -->
+        <div class="space-y-12">
+            <div class="space-y-6">
+                <div class="h-6 w-48 bg-white/5 rounded-md animate-pulse"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @for (i of [1,2,3]; track i) {
+                        <div class="h-64 bg-white/5 rounded-xl animate-pulse"></div>
+                    }
+                </div>
+            </div>
+        </div>
+    } @else {
+        <!-- LIVE BATTLES SECTION -->
+        <section class="space-y-8">
+            <div class="flex items-center gap-4">
+                <span class="w-12 h-[1px] bg-red-500/50"></span>
+                <h2 class="text-xs font-headline font-bold uppercase tracking-[0.4em] text-red-400">Transmisiones en Vivo</h2>
+                <span class="flex-grow h-[1px] bg-gradient-to-r from-red-500/10 to-transparent"></span>
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{{liveMatches.length}} Activistas</span>
+            </div>
+
+            @if (liveMatches.length === 0) {
+                <div class="glass-panel p-12 rounded-xl text-center border border-dashed border-white/10 opacity-50">
+                    <p class="text-sm font-body italic text-zinc-400">Silencio en el multiverso... no hay duelos en curso.</p>
+                </div>
+            } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @for (match of liveMatches; track match.id) {
+                        <article class="glass-panel group relative overflow-hidden rounded-xl border border-white/5 hover:border-primary/20 transition-all duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            
+                            <!-- Header -->
+                            <div class="p-4 flex justify-between items-center bg-white/5">
+                                <span class="flex items-center gap-2 text-[10px] font-bold text-red-400 uppercase tracking-widest">
+                                    <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                                    Espectando
+                                </span>
+                                <span class="text-[10px] text-white/30">{{match.format}}</span>
+                            </div>
+
+                            <!-- Players -->
+                            <div class="p-6 flex items-center justify-between gap-2">
+                                <div class="text-center space-y-2 flex-1">
+                                    <app-avatar [username]="match.player1.username" size="md" class="mx-auto"></app-avatar>
+                                    <p class="text-xs font-bold truncate">{{match.player1.username}}</p>
+                                    <div class="flex justify-center gap-1">
+                                        @for (color of match.player1.deckSummary?.colors; track color) {
+                                            <span class="w-2 h-2 rounded-full" [ngClass]="getColorClass(color)"></span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="text-xl font-headline font-black italic text-white/10">VS</div>
+                                <div class="text-center space-y-2 flex-1">
+                                    <app-avatar [username]="match.player2?.username || 'Unknown'" size="md" class="mx-auto"></app-avatar>
+                                    <p class="text-xs font-bold truncate">{{match.player2?.username}}</p>
+                                    <div class="flex justify-center gap-1">
+                                        @for (color of match.player2?.deckSummary?.colors; track color) {
+                                            <span class="w-2 h-2 rounded-full" [ngClass]="getColorClass(color)"></span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action -->
+                            <div class="p-4">
+                                <button [routerLink]="['/battle', match.id]" class="w-full bg-white/5 border border-white/10 hover:bg-secondary hover:text-zinc-900 py-3 rounded-lg text-xs font-bold uppercase tracking-widest transition-all">
+                                    Entrar como Espectador
+                                </button>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <!-- BATTLE HISTORY SECTION -->
+        <section class="space-y-8">
+            <div class="flex items-center gap-4">
+                <span class="w-12 h-[1px] bg-secondary/50"></span>
+                <h2 class="text-xs font-headline font-bold uppercase tracking-[0.4em] text-secondary">Historial de Duelistas</h2>
+                <span class="flex-grow h-[1px] bg-gradient-to-r from-secondary/10 to-transparent"></span>
+            </div>
+
+            <div class="space-y-4">
+                @for (match of historyMatches; track match.id) {
+                    <div class="glass-panel overflow-hidden rounded-xl border border-white/5 hover:border-white/20 transition-all">
+                        <!-- Main Summary Row -->
+                        <div class="p-6 flex flex-col md:flex-row items-center gap-8 cursor-pointer group" (click)="toggleExpand(match.id)">
+                            
+                            <!-- Result Badge -->
+                            <div class="flex flex-col items-center min-w-[100px]">
+                                <span class="text-[10px] font-black uppercase tracking-widest mb-1" 
+                                      [class.text-emerald-400]="match.winner === 'Current_User'"
+                                      [class.text-rose-400]="match.winner !== 'Current_User'">
+                                    {{ match.winner === 'Current_User' ? 'VICTORIA' : 'DERROTA' }}
+                                </span>
+                                <span class="text-sm font-headline font-bold"
+                                      [class.text-emerald-400]="match.winner === 'Current_User'"
+                                      [class.text-rose-400]="match.winner !== 'Current_User'">
+                                    {{ match.eloChange && match.eloChange > 0 ? '+' : '' }}{{ match.eloChange }} ELO
+                                </span>
+                            </div>
+
+                            <!-- Duel Visualization -->
+                            <div class="flex-grow flex items-center justify-between gap-12 w-full">
+                                <!-- Self -->
+                                <div class="flex items-center gap-4 flex-1 justify-end">
+                                    <app-avatar [username]="match.player1.username" [avatarUrl]="match.player1.avatarUrl" size="sm"></app-avatar>
+                                    <div class="text-right hidden sm:block">
+                                        <p class="text-xs font-bold">{{match.player1.username}}</p>
+                                        <p class="text-[10px] text-zinc-500">{{match.player1.deckSummary?.archetype}}</p>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        @for (color of match.player1.deckSummary?.colors; track color) {
+                                            <span class="w-3 h-3 rounded-full border border-white/10" [ngClass]="getColorClass(color)"></span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="text-sm font-headline font-black italic text-zinc-600">VS</div>
+
+                                <!-- Opponent -->
+                                <div class="flex items-center gap-4 flex-1">
+                                    <div class="flex gap-1">
+                                        @for (color of match.player2?.deckSummary?.colors; track color) {
+                                            <span class="w-3 h-3 rounded-full border border-white/10" [ngClass]="getColorClass(color)"></span>
+                                        }
+                                    </div>
+                                    <div class="hidden sm:block">
+                                        <p class="text-xs font-bold">{{match.player2?.username}}</p>
+                                        <p class="text-[10px] text-zinc-500">{{match.player2?.deckSummary?.archetype}}</p>
+                                    </div>
+                                    <app-avatar [username]="match.player2?.username || 'Unknown'" [avatarUrl]="match.player2?.avatarUrl" size="sm"></app-avatar>
+                                </div>
+                            </div>
+
+                            <!-- Chevron -->
+                            <span class="material-symbols-outlined text-zinc-600 group-hover:text-white transition-all transform" 
+                                  [class.rotate-180]="expandedMatchId === match.id">
+                                expand_more
+                            </span>
+                        </div>
+
+                        <!-- Expanded Details -->
+                        @if (expandedMatchId === match.id) {
+                            <div class="p-8 border-t border-white/5 bg-white/[0.02] grid grid-cols-1 md:grid-cols-2 gap-12 animate-in fade-in slide-in-from-top-4 duration-300">
+                                <div class="space-y-4">
+                                    <h4 class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Tu Mazo</h4>
+                                    <div class="p-4 rounded-lg bg-zinc-900/50 border border-white/5">
+                                        <p class="text-sm font-bold text-primary">{{match.player1.deckSummary?.archetype}}</p>
+                                        <p class="text-xs text-zinc-500 mt-2">Detalles del mazo próximamente (Cards List)...</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <h4 class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Mazo del Rival</h4>
+                                    <div class="p-4 rounded-lg bg-zinc-900/50 border border-white/5">
+                                        <p class="text-sm font-bold text-secondary">{{match.player2?.deckSummary?.archetype}}</p>
+                                        <p class="text-xs text-zinc-500 mt-2">Detalles del mazo próximamente (Cards List)...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</main>
+
+@if (isMatchmakingModalOpen) {
+    <app-matchmaking-modal (close)="isMatchmakingModalOpen = false"></app-matchmaking-modal>
+}

@@ -38,6 +38,9 @@ public class PendingRegistration {
     @Column(name = "google_id", length = 255)
     private String googleId;
 
+    @Column(name = "manual_registration")
+    private Boolean manualRegistration = true;
+
     public PendingRegistration() {
     }
 
@@ -116,5 +119,13 @@ public class PendingRegistration {
 
     public void setGoogleId(String googleId) {
         this.googleId = googleId;
+    }
+
+    public Boolean getManualRegistration() {
+        return manualRegistration;
+    }
+
+    public void setManualRegistration(Boolean manualRegistration) {
+        this.manualRegistration = manualRegistration;
     }
 }

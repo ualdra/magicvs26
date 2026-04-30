@@ -3,6 +3,7 @@ package com.magicvs.backend.controller;
 import com.magicvs.backend.dto.CreateDeckDTO;
 import com.magicvs.backend.dto.DeckResponseDTO;
 import com.magicvs.backend.dto.DeckSummaryDTO;
+import com.magicvs.backend.dto.ImportDeckRequestDTO;
 import com.magicvs.backend.service.AuthService;
 import com.magicvs.backend.service.DeckService;
 import org.springframework.http.HttpStatus;
@@ -58,9 +59,10 @@ public ResponseEntity<DeckResponseDTO> createDeck(
 
     @GetMapping("/user/me")
     public ResponseEntity<List<DeckSummaryDTO>> getMyDecks(
-        @RequestHeader(value = "Authorization", required = false) String authorization
+        @RequestHeader(value = "Authorization", required = true) String authorization
     ) {
         Long userId = extractUserIdFromAuthorization(authorization);
+        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
         return ResponseEntity.ok(deckService.getUserDecks(userId));
     }
 
@@ -72,21 +74,21 @@ public ResponseEntity<DeckResponseDTO> createDeck(
     @DeleteMapping("/{deckId}")
     public ResponseEntity<Void> deleteDeck(
         @PathVariable Long deckId,
-        @RequestHeader(value = "Authorization", required = false) String authorization
+        @RequestHeader(value = "Authorization", required = true) String authorization
     ) {
         Long userId = extractUserIdFromAuthorization(authorization);
+        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
         deckService.deleteDeck(deckId, userId);
         return ResponseEntity.noContent().build();
     }
 
     private Long extractUserIdFromAuthorization(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
+            return null;
         }
 
         String token = authorization.substring("Bearer ".length());
-        return authService.getUserId(token)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido"));
+        return authService.getUserId(token).orElse(null);
     }
 @PostMapping("/{id}/copy")
 public ResponseEntity<DeckResponseDTO> copyDeck(
@@ -97,4 +99,34 @@ public ResponseEntity<DeckResponseDTO> copyDeck(
     DeckResponseDTO response = deckService.copyDeck(id, authorization);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
 }
+
+    @GetMapping("/{deckId}/export")
+    public ResponseEntity<String> exportDeck(
+        @PathVariable Long deckId,
+        @RequestHeader(value = "Authorization", required = true) String authorization
+    ) {
+        Long userId = extractUserIdFromAuthorization(authorization);
+        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
+        
+        String exportData = deckService.exportDeck(deckId, userId);
+        return ResponseEntity.ok()
+            .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"deck_" + deckId + ".txt\"")
+            .contentType(org.springframework.http.MediaType.TEXT_PLAIN)
+            .body(exportData);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<?> importDeck(
+        @RequestHeader(name = "Authorization", required = true) String authorization,
+        @RequestBody ImportDeckRequestDTO request
+    ) {
+        Long userId = extractUserIdFromAuthorization(authorization);
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message", "Token no proporcionado"));
+        
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(deckService.importDeck(userId, request));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", ex.getMessage()));
+        }
+    }
 }

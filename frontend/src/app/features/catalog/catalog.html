@@ -2,11 +2,11 @@
   <header class="mb-16 space-y-8">
     <div class="flex flex-col items-center text-center space-y-4">
       <h1 class="font-headline text-5xl md:text-7xl font-bold tracking-tighter text-primary">
-        Arcane Catalog
+        Catálogo Arcano
       </h1>
       <p class="text-on-surface-variant font-light tracking-wide max-w-2xl">
-        Search through the ancient archives of power. Filter by mana essence, rarity, or card type to refine your
-        spellbook.
+        Busca en los antiguos archivos de poder. Filtra por esencia de maná, rareza o tipo de carta para refinar tu
+        grimorio.
       </p>
     </div>
 
@@ -16,7 +16,7 @@
       </div>
       <input
         [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
+        (input)="onSearch($event)"
         class="w-full bg-surface-container border-b border-outline-variant py-6 pl-16 pr-8 text-xl font-headline focus:outline-none focus:border-secondary transition-all placeholder:text-surface-container-highest rounded-t-xl"
         placeholder="Buscar cartas por nombre, texto o tipo..." type="text" />
       <div
@@ -32,13 +32,13 @@
           <button
             (click)="toggleMana(mana)"
             [ngClass]="{
-              'border-primary shadow-[0_0_15px_rgba(142,68,173,0.3)] bg-primary/10': activeMana() === mana,
-              'border-outline-variant hover:border-on-surface bg-white/5': activeMana() !== mana
+              'border-primary shadow-[0_0_15px_rgba(142,68,173,0.3)] bg-primary/10': activeMana().includes(mana),
+              'border-outline-variant hover:border-on-surface bg-white/5': !activeMana().includes(mana)
             }"
             class="w-10 h-10 rounded-full border transition-all flex items-center justify-center group"
             [title]="mana">
             <span class="font-headline font-bold text-xs group-hover:scale-110 transition-transform"
-                  [ngClass]="{'text-primary': activeMana() === mana}">{{ mana }}</span>
+                  [ngClass]="{'text-primary': activeMana().includes(mana)}">{{ mana }}</span>
           </button>
         }
       </div>
@@ -57,7 +57,7 @@
           
           @if (showTypeDropdown()) {
             <div class="absolute top-full left-0 w-full mt-2 glass-panel border border-outline-variant rounded-xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-              @for (type of ['Tipo', 'Criatura', 'Instantáneo', 'Conjuro', 'Encantamiento']; track type) {
+              @for (type of ['Tipo', 'Criatura', 'Instantáneo', 'Conjuro', 'Encantamiento', 'Artefacto', 'Planeswalker', 'Tierra']; track type) {
                 <div 
                   (click)="selectType(type)"
                   class="px-6 py-2.5 text-sm hover:bg-primary/20 cursor-pointer transition-colors"
@@ -80,7 +80,7 @@
           
           @if (showRarityDropdown()) {
             <div class="absolute top-full left-0 w-full mt-2 glass-panel border border-outline-variant rounded-xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-              @for (rarity of ['Rareza', 'Common', 'Uncommon', 'Rare', 'Mythic']; track rarity) {
+              @for (rarity of ['Rareza', 'Común', 'Infrecuente', 'Rara', 'Mítica']; track rarity) {
                 <div 
                   (click)="selectRarity(rarity)"
                   class="px-6 py-2.5 text-sm hover:bg-primary/20 cursor-pointer transition-colors"
@@ -96,9 +96,17 @@
 
     <div class="flex items-center gap-6">
       <button
-        class="glass-panel border border-outline-variant rounded-xl px-4 py-2.5 flex items-center gap-2 group transition-all hover:border-primary active:shadow-[0_0_15px_rgba(142,68,173,0.4)] active:border-primary">
-        <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform text-on-surface-variant group-hover:text-primary">favorite</span>
-        <span class="text-sm font-label uppercase tracking-wider text-on-surface-variant group-hover:text-on-surface">Favoritos</span>
+        (click)="toggleFavoritesFilter()"
+        [ngClass]="{
+          'border-primary shadow-[0_0_15px_rgba(142,68,173,0.3)] bg-primary/10 text-primary': favoritesOnly(),
+          'border-outline-variant hover:border-primary text-on-surface-variant': !favoritesOnly()
+        }"
+        class="glass-panel border rounded-xl px-4 py-2.5 flex items-center gap-2 group transition-all active:shadow-[0_0_15px_rgba(142,68,173,0.4)] active:border-primary">
+        <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform group-hover:text-primary"
+              [style.font-variation-settings]="favoritesFillStyle"
+              [class.text-primary]="favoritesOnly()" [class.text-on-surface-variant]="!favoritesOnly()">favorite</span>
+        <span class="text-sm font-label uppercase tracking-wider group-hover:text-on-surface"
+              [class.text-primary]="favoritesOnly()" [class.text-on-surface-variant]="!favoritesOnly()">Favoritos</span>
       </button>
       <button (click)="resetFilters()" class="text-secondary text-sm font-label uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-2 group">
         <span class="material-symbols-outlined text-lg group-hover:rotate-180 transition-transform duration-500">refresh</span>
@@ -107,7 +115,7 @@
     </div>
   </section>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
     <!-- State: Loading -->
     @if (isLoading()) {
       @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
@@ -121,14 +129,33 @@
       }
     } @else {
       <!-- State: Loaded -->
-      @for (card of cards(); track card.id) {
-        <div [routerLink]="['/cartas', card.id]" 
+      @for (card of cards; track card.id) {
+        <div [routerLink]="['/cartas', card.id]"
              class="group relative aspect-[2.5/3.5] bg-surface-container rounded-xl overflow-hidden hover:scale-[1.02] transition-all duration-300 shadow-xl hover:shadow-primary/10 cursor-pointer">
-          <img class="w-full h-full object-cover" [src]="card.imageUrl" [alt]="card.name" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+
+          <!-- Flip scene -->
+          <div class="catalog-flip-scene">
+            <div class="catalog-flip-inner" [class.is-flipped]="isCardFlipped(card)">
+              <img class="catalog-card-face catalog-face-front" [src]="card.imageUrl" [alt]="card.name" />
+              @if (isDoubleFaced(card)) {
+                <img class="catalog-card-face catalog-face-back" [src]="card.imageUrl2" [alt]="card.name + ' (trasera)'" />
+              }
+            </div>
+          </div>
+
+          <!-- Flip button -->
+          @if (isDoubleFaced(card)) {
+            <button
+              class="catalog-flip-toggle"
+              (click)="toggleCardFace(card.id, $event)"
+              aria-label="Girar carta">↺</button>
+          }
+
+          <!-- Hover overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 pointer-events-none">
             <h3 class="font-headline text-lg font-bold text-white">{{ card.name }}</h3>
             <div class="flex justify-between items-center mt-2">
-              <span class="text-xs text-primary-fixed uppercase tracking-tighter font-label">{{ card.rarity }}</span>
+              <span class="text-xs text-primary-fixed uppercase tracking-tighter font-label">{{ rarityLabel(card.rarity) }}</span>
               <span class="text-sm font-bold text-secondary">{{ getManaCostString(card.manaCost) }}</span>
             </div>
           </div>
@@ -136,4 +163,37 @@
       }
     }
   </div>
+
+  <!-- Pagination -->
+  @if (cardPage() && totalPages() > 1) {
+    <div class="flex justify-center items-center gap-4 mt-12">
+      <button 
+        (click)="prevPage()" 
+        [disabled]="currentPage() === 0"
+        class="glass-panel border border-outline-variant rounded-xl px-4 py-2.5 flex items-center gap-2 transition-all hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed">
+        <span class="material-symbols-outlined text-lg">chevron_left</span>
+        Anterior
+      </button>
+
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-on-surface-variant">Página</span>
+        <input 
+          type="number" 
+          [value]="currentPage() + 1" 
+          (input)="goToPage($any($event.target).value - 1)"
+          class="w-16 text-center glass-panel border border-outline-variant rounded-lg px-2 py-1 focus:border-primary focus:outline-none"
+          min="1" 
+          [max]="totalPages()" />
+        <span class="text-sm text-on-surface-variant">de {{ totalPages() }}</span>
+      </div>
+
+      <button 
+        (click)="nextPage()" 
+        [disabled]="currentPage() === totalPages() - 1"
+        class="glass-panel border border-outline-variant rounded-xl px-4 py-2.5 flex items-center gap-2 transition-all hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed">
+        Siguiente
+        <span class="material-symbols-outlined text-lg">chevron_right</span>
+      </button>
+    </div>
+  }
 </main>

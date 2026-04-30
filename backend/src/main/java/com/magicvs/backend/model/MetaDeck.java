@@ -17,23 +17,23 @@ public class MetaDeck {
     private String name;
 
     @Column(columnDefinition = "TEXT")
-    private String colorsJson; // Array of colors like ["u", "r"]
+    private String colorsJson; 
 
     @Column(name = "key_cards_string", columnDefinition = "TEXT")
     private String keyCardsString;
 
-    private String presence; // e.g. "18.7%"
+    private String presence; 
     
-    private String price; // e.g. "$ 360"
+    private String price; 
 
     @Column(name = "gallery_json", columnDefinition = "TEXT")
-    private String galleryJson; // JSON array of {name, imageUrl}
+    private String galleryJson; 
 
     @Column(name = "mainboard_json", columnDefinition = "TEXT")
-    private String mainboardJson; // Store the exact mapped deep-scrape JSON structure
+    private String mainboardJson; 
 
     @Column(name = "full_list_url")
-    private String fullListUrl; // MTGGoldfish link
+    private String fullListUrl; 
 
     public MetaDeck() {}
 

@@ -18,6 +18,10 @@ export interface ProfileResponse {
   decksCount: number | null;
   email?: string | null;
   createdAt?: string | null;
+  isOnline?: boolean | null;
+  lastSeenAt?: string | null;
+  manualRegistration?: boolean;
+  googleLinked?: boolean;
 }
 
 export interface ProfileDeckSummary {
@@ -30,6 +34,7 @@ export interface ProfileDeckSummary {
   updatedAt: string | null;
   createdAt?: string | null;
   colors?: string[];
+  mainImageUrl?: string | null;
 }
 
 interface ApiDeckSummary {
@@ -44,6 +49,7 @@ interface ApiDeckSummary {
   colors?: string[] | string | null;
   colorIdentity?: string[] | string | null;
   mainColors?: string[] | string | null;
+  mainImageUrl?: string | null;
 }
 
 @Injectable({
@@ -76,6 +82,17 @@ export class ProfileService {
     return this.http
       .patch<ProfileResponse>(`${this.apiUrl}/me`, data, { headers: this.authHeaders() })
       .pipe(map((profile) => this.normalizeProfile(profile)));
+  }
+
+  exportDeck(deckId: number): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/decks/${deckId}/export`, {
+      headers: this.authHeaders(),
+      responseType: 'blob'
+    });
+  }
+
+  importDeck(name: string, deckText: string): Observable<{ deck: any, missingCards: string[] }> {
+    return this.http.post<{ deck: any, missingCards: string[] }>('http://localhost:8080/api/decks/import', { name, deckText }, { headers: this.authHeaders() });
   }
 
   deleteAccount(): Observable<void> {
@@ -113,6 +130,7 @@ export class ProfileService {
       updatedAt: deck.updatedAt ?? null,
       createdAt: deck.createdAt ?? null,
       colors: this.normalizeColors(deck.colors ?? deck.colorIdentity ?? deck.mainColors),
+      mainImageUrl: deck.mainImageUrl ?? null,
     };
   }
 

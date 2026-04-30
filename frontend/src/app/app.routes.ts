@@ -12,8 +12,12 @@ import { ProfilePageComponent } from './features/profile/profile-page.component'
 import { DeckBuilderPageComponent } from './features/deck-builder/deck-builder-page.component';
 import { authGuard } from './core/guards/auth.guard';
 import { UserDirectoryComponent } from './features/users/user-directory/user-directory.component';
+import { UserProfileComponent } from './features/users/user-profile/user-profile.component';
 import { OAuthConfirm } from './features/oauth-confirm/oauth-confirm';
 import { ResetPassword } from './features/reset-password/reset-password';
+import { DeckDetailComponent } from './features/decks/deck-detail/deck-detail.component';
+import { MatchBrowserComponent } from './features/arena/match-browser/match-browser.component';
+import { BattleboardComponent } from './features/battle/battleboard/battleboard.component';
 
 export const routes: Routes = [
   {
@@ -34,7 +38,11 @@ export const routes: Routes = [
       { path: 'profile/:userId', component: ProfilePageComponent },
       { path: 'decks/create', component: DeckBuilderPageComponent, canActivate: [authGuard] },
       { path: 'decks/:deckId/edit', component: DeckBuilderPageComponent, canActivate: [authGuard] },
+      { path: 'decks/:id', component: DeckDetailComponent },
       { path: 'users', component: UserDirectoryComponent },
+      { path: 'users/:id', component: UserProfileComponent },
+      { path: 'arena', component: MatchBrowserComponent, canActivate: [authGuard] },
+      { path: 'battle/:id', component: BattleboardComponent, canActivate: [authGuard] },
       { path: 'reset-password/:token', component: ResetPassword }
     ]
   }
