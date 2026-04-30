@@ -58,6 +58,11 @@ export class CatalogComponent implements OnInit, OnDestroy {
   showTypeDropdown = signal(false);
   showRarityDropdown = signal(false);
 
+  // Hover Preview Logic
+  hoveredCard = signal<any>(null);
+  showHoverPreview = signal(false);
+  private hoverTimer: any;
+
   private flippedCardIds = new Set<string>();
 
   isDoubleFaced(card: any): boolean {
@@ -242,5 +247,41 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   getManaCostString(manaCost: string[]): string {
     return manaCost.join('');
+  }
+
+  translateRarity(rarity: string): string {
+    const map: Record<string, string> = {
+      'common': 'Común',
+      'uncommon': 'Infrecuente',
+      'rare': 'Rara',
+      'mythic': 'Mítica',
+      'special': 'Especial',
+      'bonus': 'Bonus'
+    };
+    return map[rarity.toLowerCase()] || rarity;
+  }
+
+  onMouseEnter(card: any): void {
+    this.hoveredCard.set(card);
+    this.clearHoverTimer();
+    this.hoverTimer = setTimeout(() => {
+      if (this.hoveredCard()?.id === card.id) {
+        console.log('Mostrando vista previa para:', card.name);
+        this.showHoverPreview.set(true);
+      }
+    }, 1000);
+  }
+
+  onMouseLeave(): void {
+    this.clearHoverTimer();
+    this.showHoverPreview.set(false);
+    this.hoveredCard.set(null);
+  }
+
+  private clearHoverTimer(): void {
+    if (this.hoverTimer) {
+      clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
+    }
   }
 }

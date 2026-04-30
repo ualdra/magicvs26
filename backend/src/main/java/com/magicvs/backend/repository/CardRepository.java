@@ -27,6 +27,16 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         String getColorsJson();
         String getRawJson();
         String getRarity();
+        String getSetName();
+        java.time.LocalDate getReleasedAt();
+        String getArtist();
+        String getCollectorNumber();
+        Integer getEdhrecRank();
+        String getOracleText();
+        String getFlavorText();
+        String getFaceRawJson();
+        String getPower();
+        String getToughness();
     }
 
     Optional<Card> findByScryfallId(UUID scryfallId);
@@ -48,8 +58,18 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                lastFace.smallImageUri AS backFaceSmallImageUri,
                c.colorsJson AS colorsJson,
                c.rawJson AS rawJson,
-               c.rarity AS rarity
+               c.rarity AS rarity,
+               c.set.name AS setName,
+               c.releasedAt AS releasedAt,
+               c.artist AS artist,
+               c.collectorNumber AS collectorNumber,
+               c.edhrecRank AS edhrecRank,
+               c.oracleText AS oracleText,
+               c.flavorText AS flavorText,
+               c.power AS power,
+               c.toughness AS toughness
         FROM Card c
+        LEFT JOIN c.set s
         LEFT JOIN c.faces firstFace
             ON firstFace.faceOrder = (
                 SELECT MIN(f1.faceOrder)

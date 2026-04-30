@@ -131,6 +131,8 @@
       <!-- State: Loaded -->
       @for (card of cards; track card.id) {
         <div [routerLink]="['/cartas', card.id]"
+             (mouseenter)="onMouseEnter(card)"
+             (mouseleave)="onMouseLeave()"
              class="group relative aspect-[2.5/3.5] bg-surface-container rounded-xl overflow-hidden hover:scale-[1.02] transition-all duration-300 shadow-xl hover:shadow-primary/10 cursor-pointer">
 
           <!-- Flip scene -->
@@ -194,6 +196,86 @@
         Siguiente
         <span class="material-symbols-outlined text-lg">chevron_right</span>
       </button>
+    </div>
+  }
+
+  <!-- Hover Preview Overlay -->
+  @if (showHoverPreview() && hoveredCard()) {
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 pointer-events-none animate-in fade-in duration-300">
+      <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+      
+      <div class="relative flex flex-col lg:flex-row gap-8 bg-surface-container-high border border-outline-variant p-8 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-4xl w-full animate-in zoom-in-95 duration-300">
+        <!-- Left: Large Image -->
+        <div class="w-full lg:w-1/2 aspect-[2.5/3.5] overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10">
+          <img [src]="hoveredCard().imageUrl" [alt]="hoveredCard().name" class="w-full h-full object-cover" />
+        </div>
+
+        <!-- Right: Information -->
+        <div class="w-full lg:w-1/2 flex flex-col space-y-8 py-2">
+          <div class="space-y-6">
+            <div class="flex justify-between items-start gap-4">
+              <h2 class="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter">{{ hoveredCard().name }}</h2>
+              <div class="flex gap-1.5 flex-wrap justify-end">
+                @for (cost of hoveredCard().manaCost; track $index) {
+                  <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs border border-white/5"
+                       [ngClass]="{
+                         'bg-surface-container-highest text-on-surface': !['W','U','B','R','G'].includes(cost),
+                         'bg-white text-black': cost === 'W',
+                         'bg-[#0E68AB] text-white': cost === 'U',
+                         'bg-[#150B00] text-white border-white/20': cost === 'B',
+                         'bg-[#D3202A] text-white': cost === 'R',
+                         'bg-[#00733E] text-white': cost === 'G'
+                       }">
+                    {{ cost }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 py-3 border-y border-white/10">
+              <span class="text-lg font-medium text-on-surface-variant">{{ hoveredCard().type }}</span>
+              <div class="h-4 w-px bg-white/20"></div>
+              <span class="text-xs font-bold uppercase tracking-widest text-primary">{{ translateRarity(hoveredCard().rarity) }}</span>
+            </div>
+          </div>
+
+
+          <!-- Secondary Details Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Edition -->
+            <div class="glass-panel p-3 rounded-xl border border-white/5">
+              <div class="flex items-center gap-2 mb-2 text-secondary text-[10px] font-bold uppercase tracking-widest">
+                <span class="material-symbols-outlined text-sm">collections_bookmark</span>
+                Edición y Rareza
+              </div>
+              <div class="text-lg font-headline font-bold text-white truncate">{{ hoveredCard().setName }}</div>
+              <div class="text-xs text-on-surface-variant">Lanzado el {{ hoveredCard().releasedAt }}</div>
+            </div>
+
+            <!-- Artist -->
+            <div class="glass-panel p-3 rounded-xl border border-white/5">
+              <div class="flex items-center gap-2 mb-2 text-tertiary text-[10px] font-bold uppercase tracking-widest">
+                <span class="material-symbols-outlined text-sm">palette</span>
+                Arte e Impresión
+              </div>
+              <div class="text-lg font-headline font-bold text-white truncate">{{ hoveredCard().artist }}</div>
+              <div class="text-xs text-on-surface-variant">Coleccionista #{{ hoveredCard().collectorNumber }}</div>
+            </div>
+
+            <!-- Stats -->
+            @if (hoveredCard().edhrecRank) {
+              <div class="glass-panel p-4 rounded-xl border border-white/5 col-span-1 md:col-span-2">
+                <div class="flex items-center gap-2 mb-2 text-primary text-[10px] font-bold uppercase tracking-widest">
+                  <span class="material-symbols-outlined text-sm">analytics</span>
+                  Estadísticas de Uso
+                </div>
+                <div class="text-lg font-headline font-bold text-white">#{{ hoveredCard().edhrecRank }}</div>
+                <div class="text-xs text-on-surface-variant">Ranking de popularidad (EDHREC)</div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
     </div>
   }
 </main>
