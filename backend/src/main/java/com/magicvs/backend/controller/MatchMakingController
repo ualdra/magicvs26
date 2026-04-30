@@ -1,0 +1,35 @@
+package com.magicvs.backend.controller;
+
+import com.magicvs.backend.model.User;
+import com.magicvs.backend.repository.UserRepository;
+import com.magicvs.backend.service.MatchmakingService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/matchmaking")
+public class MatchmakingController {
+
+    private final MatchmakingService matchmakingService;
+    private final UserRepository userRepository;
+
+    public MatchmakingController(MatchmakingService matchmakingService, UserRepository userRepository) {
+        this.matchmakingService = matchmakingService;
+        this.userRepository = userRepository;
+    }
+
+    @PostMapping("/join/{userId}")
+    public ResponseEntity<String> joinQueue(@PathVariable Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        matchmakingService.addToQueue(user.getId(), user.getElo());
+        return ResponseEntity.ok("Buscando partida...");
+    }
+
+    @DeleteMapping("/leave/{userId}")
+    public ResponseEntity<Void> leaveQueue(@PathVariable Long userId) {
+        matchmakingService.leaveQueue(userId);
+        return ResponseEntity.noContent().build();
+    }
+}
