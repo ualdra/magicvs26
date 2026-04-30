@@ -88,9 +88,16 @@ export class CardService {
       manaCost: this.parseManaCost(card.manaCost),
       type: card.type || '',
       rarity: this.capitalize(card.rarity) || '',
-      oracleText: '',
+      oracleText: card.oracleText || '',
+      flavorText: card.flavorText || '',
+      powerToughness: card.powerToughness || undefined,
       legalities: this.normalizeLegalities([]),
-      price: 0
+      price: 0,
+      setName: card.setName,
+      releasedAt: card.releasedAt,
+      artist: card.artist,
+      collectorNumber: card.collectorNumber,
+      edhrecRank: card.edhrecRank
     };
   }
 

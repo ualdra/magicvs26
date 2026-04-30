@@ -138,9 +138,9 @@ public class CardController {
             .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, favoritesOnly, userId, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
-                resolveDisplayName(card.getName(), card.getRawJson()),
-                resolveDisplayManaCost(card.getManaCost(), card.getRawJson()),
-                resolveDisplayType(card.getTypeLine(), card.getRawJson()),
+                resolveDisplayName(card.getName(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
+                resolveDisplayManaCost(card.getManaCost(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
+                resolveDisplayType(card.getTypeLine(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
                 resolveImageUrl(
                     card.getNormalImageUri(),
                     card.getSmallImageUri(),
@@ -150,7 +150,15 @@ public class CardController {
                 resolveBackImageUrl(card.getBackFaceNormalImageUri(), card.getBackFaceSmallImageUri()),
                 isDoubleFacedCard(card.getName(), card.getBackFaceNormalImageUri(), card.getBackFaceSmallImageUri()),
                         resolveColors(card.getColorsJson(), card.getManaCost()),
-                        card.getRarity()
+                        card.getRarity(),
+                        card.getSetName(),
+                        card.getReleasedAt() != null ? card.getReleasedAt().toString() : null,
+                        card.getArtist(),
+                        card.getCollectorNumber(),
+                        card.getEdhrecRank(),
+                        card.getOracleText(),
+                        card.getFlavorText(),
+                        card.getPower() != null && card.getToughness() != null ? card.getPower() + "/" + card.getToughness() : null
                 ));
 
         CardSearchPageResponse response = new CardSearchPageResponse(
@@ -338,8 +346,17 @@ public class CardController {
         private boolean doubleFaced;
         private List<String> colors;
         private String rarity;
+        private String setName;
+        private String releasedAt;
+        private String artist;
+        private String collectorNumber;
+        private Integer edhrecRank;
+        private String oracleText;
+        private String flavorText;
+        private String powerToughness;
 
-        public CardSearchResponse(Long id, String name, String manaCost, String type, String imageUrl, String backImageUrl, boolean doubleFaced, List<String> colors, String rarity) {
+        public CardSearchResponse(Long id, String name, String manaCost, String type, String imageUrl, String backImageUrl, boolean doubleFaced, List<String> colors, String rarity,
+                                  String setName, String releasedAt, String artist, String collectorNumber, Integer edhrecRank, String oracleText, String flavorText, String powerToughness) {
             this.id = id;
             this.name = name;
             this.manaCost = manaCost;
@@ -349,7 +366,25 @@ public class CardController {
             this.doubleFaced = doubleFaced;
             this.colors = colors;
             this.rarity = rarity;
+            this.setName = setName;
+            this.releasedAt = releasedAt;
+            this.artist = artist;
+            this.collectorNumber = collectorNumber;
+            this.edhrecRank = edhrecRank;
+            this.oracleText = oracleText;
+            this.flavorText = flavorText;
+            this.powerToughness = powerToughness;
         }
+
+        // Getters and Setters
+        public String getSetName() { return setName; }
+        public String getReleasedAt() { return releasedAt; }
+        public String getArtist() { return artist; }
+        public String getCollectorNumber() { return collectorNumber; }
+        public Integer getEdhrecRank() { return edhrecRank; }
+        public String getOracleText() { return oracleText; }
+        public String getFlavorText() { return flavorText; }
+        public String getPowerToughness() { return powerToughness; }
 
         public String getRarity() { return rarity; }
         public void setRarity(String rarity) { this.rarity = rarity; }

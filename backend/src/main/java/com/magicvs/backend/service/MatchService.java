@@ -6,11 +6,14 @@ import com.magicvs.backend.dto.MatchResultDTO;
 import com.magicvs.backend.model.Match;
 import com.magicvs.backend.model.MatchStatus;
 import com.magicvs.backend.model.User;
+import com.magicvs.backend.model.UserDailyStats;
 import com.magicvs.backend.repository.MatchRepository;
 import com.magicvs.backend.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.magicvs.backend.repository.UserDailyStatsRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,15 +24,19 @@ public class MatchService {
     private final EloService eloService;
     private final UserRepository userRepository;
     private final MatchRepository matchRepository;
+    private final UserDailyStatsRepository dailyStatsRepository;
 
     public MatchService(EloService eloService,
                         UserRepository userRepository,
-                        MatchRepository matchRepository) {
+                        MatchRepository matchRepository,
+                        UserDailyStatsRepository dailyStatsRepository) {
         this.eloService = eloService;
         this.userRepository = userRepository;
         this.matchRepository = matchRepository;
+        this.dailyStatsRepository = dailyStatsRepository;
     }
 
+    // --- TU LÓGICA: Procesamiento de partidas y ELO ---
     @Transactional
     public MatchResultDTO processMatch(CreateMatchDTO dto) {
         User p1 = userRepository.findById(dto.getPlayer1Id()).orElseThrow();
@@ -77,6 +84,7 @@ public class MatchService {
         return res;
     }
 
+    // --- LÓGICA DE HISTORIAL DE BATALLAS ---
     public List<MatchHistoryDto> getHistoryForUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
         List<Match> matches = matchRepository.findByUserAndStatus(user, MatchStatus.FINISHED);
@@ -128,5 +136,40 @@ public class MatchService {
         ));
 
         return dto;
+    }
+
+    // --- LÓGICA DE DEVELOP: Estadísticas diarias ---
+    @Transactional
+    public void recordMatchResult(Long userId, boolean won) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        // 1. Actualizar totales globales en el usuario
+        user.setGamesPlayed(user.getGamesPlayed() + 1);
+        if (won) {
+            user.setGamesWon(user.getGamesWon() + 1);
+        } else {
+            user.setGamesLost(user.getGamesLost() + 1);
+        }
+        userRepository.save(user);
+
+        // 2. Actualizar estadísticas diarias
+        LocalDate today = LocalDate.now();
+        UserDailyStats dailyStats = dailyStatsRepository.findByUserAndDate(user, today)
+                .orElseGet(() -> UserDailyStats.builder()
+                        .user(user)
+                        .date(today)
+                        .gamesPlayed(0)
+                        .gamesWon(0)
+                        .gamesLost(0)
+                        .build());
+
+        dailyStats.setGamesPlayed(dailyStats.getGamesPlayed() + 1);
+        if (won) {
+            dailyStats.setGamesWon(dailyStats.getGamesWon() + 1);
+        } else {
+            dailyStats.setGamesLost(dailyStats.getGamesLost() + 1);
+        }
+        dailyStatsRepository.save(dailyStats);
     }
 }
