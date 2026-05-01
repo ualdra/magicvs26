@@ -58,6 +58,22 @@
 
         <button
           type="button"
+          class="chat-trigger group relative p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300"
+          (click)="toggleChat($event)"
+          aria-label="Abrir chat"
+        >
+          <div class="h-9 w-9 flex items-center justify-center rounded-lg bg-zinc-900 shadow-inner group-hover:scale-95 transition-transform">
+            <span class="material-symbols-outlined text-zinc-400 text-xl group-hover:text-purple-300 transition-colors">chat</span>
+          </div>
+          @if (totalUnreadChatCount > 0) {
+            <span class="notification-badge absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-purple-500 text-white text-[11px] font-bold leading-5 text-center shadow-lg shadow-purple-900/50">
+              {{ totalUnreadChatCount > 99 ? '99+' : totalUnreadChatCount }}
+            </span>
+          }
+        </button>
+
+        <button
+          type="button"
           class="notification-bell group relative p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300"
           (click)="toggleNotifications($event)"
           aria-label="Abrir notificaciones"
@@ -102,6 +118,22 @@
             #{{ friendTag }}
           </span>
         </div>
+
+        <button
+          type="button"
+          class="chat-trigger-mobile group relative p-0.5 rounded-xl border border-white/10"
+          (click)="toggleChat($event)"
+          aria-label="Abrir chat"
+        >
+          <div class="h-8 w-8 flex items-center justify-center rounded-lg bg-zinc-900">
+            <span class="material-symbols-outlined text-zinc-400 text-lg">chat</span>
+          </div>
+          @if (totalUnreadChatCount > 0) {
+            <span class="notification-badge absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-purple-500 text-white text-[11px] font-bold leading-5 text-center shadow-lg shadow-purple-900/50">
+              {{ totalUnreadChatCount > 99 ? '99+' : totalUnreadChatCount }}
+            </span>
+          }
+        </button>
 
         <button
           type="button"
@@ -276,5 +308,6 @@
   </footer>
 }
 
+<app-chat-window></app-chat-window>
 <app-toast></app-toast>
 <app-confirm-dialog></app-confirm-dialog>
