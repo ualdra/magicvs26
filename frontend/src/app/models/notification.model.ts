@@ -1,4 +1,4 @@
-export type NotificationType = 'FRIEND_REQUEST' | 'NEW_MESSAGE' | 'BATTLE_INVITE' | 'MATCH_FOUND' | 'SYSTEM';
+export type NotificationType = 'FRIEND_REQUEST' | 'NEW_MESSAGE' | 'BATTLE_INVITE' | 'MATCH_FOUND' | 'MESSAGES_READ' | 'SYSTEM';
 
 export interface AppNotification {
   id: number;

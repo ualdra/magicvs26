@@ -155,7 +155,7 @@ export class NotificationService {
         this.unreadCountSignal.update((count) => count + 1);
       }
 
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && incoming.type !== 'MESSAGES_READ') {
         this.pushToast(incoming);
       }
     });
@@ -219,8 +219,11 @@ export class NotificationService {
   }
 
   private messageFor(notification: AppNotification): string {
-    if (typeof notification.data?.message === 'string' && notification.data.message.trim().length) {
-      return notification.data.message;
+    if (typeof notification.data?.['message_text'] === 'string' && notification.data['message_text'].trim().length) {
+      return notification.data['message_text'];
+    }
+    if (typeof notification.data?.['message'] === 'string' && (notification.data['message'] as string).trim().length) {
+      return notification.data['message'] as string;
     }
 
     switch (notification.type) {

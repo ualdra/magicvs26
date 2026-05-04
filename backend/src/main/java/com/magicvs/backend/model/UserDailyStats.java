@@ -26,12 +26,15 @@ public class UserDailyStats {
     @Column(nullable = false)
     private LocalDate date;
 
+    @Builder.Default
     @Column(name = "games_played", nullable = false)
     private Integer gamesPlayed = 0;
 
+    @Builder.Default
     @Column(name = "games_won", nullable = false)
     private Integer gamesWon = 0;
 
+    @Builder.Default
     @Column(name = "games_lost", nullable = false)
     private Integer gamesLost = 0;
 }

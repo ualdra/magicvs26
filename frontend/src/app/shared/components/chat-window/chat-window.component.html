@@ -1,0 +1,118 @@
+<div class="chat-container" [class.open]="isOpen()">
+  
+  <!-- Sidebar (Friends List) -->
+  <aside class="chat-sidebar" [class.hidden-on-mobile]="activeUser()">
+    <header class="sidebar-header">
+      <div class="title-group">
+        <span class="material-symbols-outlined">group</span>
+        <h3>Contactos</h3>
+      </div>
+      <button (click)="close()" class="close-btn" aria-label="Cerrar chat">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="friends-list">
+      @for (friend of friends(); track friend.id) {
+        <div class="friend-item" 
+             [class.active]="activeUser()?.id === friend.id"
+             (click)="selectFriend(friend)">
+          <div class="avatar-container">
+            @if (friend.avatarUrl) {
+              <img [src]="friend.avatarUrl" [alt]="friend.displayName">
+            } @else {
+              <div class="initials-avatar">{{ friend.displayName?.charAt(0) || friend.username.charAt(0) }}</div>
+            }
+            <div class="status-dot" [class.online]="friend.isOnline"></div>
+          </div>
+          <div class="friend-info">
+            <span class="name">{{ friend.displayName || friend.username }}</span>
+            <span class="status">{{ friend.isOnline ? 'En línea' : 'Desconectado' }}</span>
+          </div>
+          @if (getUnreadCount(friend.id) > 0) {
+            <div class="unread-badge">{{ getUnreadCount(friend.id) }}</div>
+          }
+        </div>
+      } @empty {
+        <div class="empty-friends">
+          <span class="material-symbols-outlined">person_search</span>
+          <p>No tienes amigos agregados</p>
+          <button class="add-btn" routerLink="/directory" (click)="close()">Explorar directorio</button>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- Main Chat Area -->
+  <main class="chat-main" [class.active]="activeUser()">
+    @if (activeUser()) {
+      <header class="chat-header">
+        <div class="header-left">
+          <button (click)="deselectFriend()" class="back-btn" title="Volver a contactos">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div class="active-user-info clickable" 
+               [routerLink]="['/users', activeUser()?.id]" 
+               (click)="close()"
+               title="Ver perfil">
+            <div class="avatar-sm">
+              @if (activeUser()?.avatarUrl) {
+                <img [src]="activeUser()?.avatarUrl" alt="">
+              } @else {
+                <div class="initials-avatar-sm">{{ activeUser()?.displayName?.charAt(0) || activeUser()?.username?.charAt(0) }}</div>
+              }
+              <div class="status-dot-sm" [class.online]="activeUser()?.isOnline"></div>
+            </div>
+            <div class="text">
+              <h4>{{ activeUser()?.displayName || activeUser()?.username }}</h4>
+              <span class="status">{{ activeUser()?.isOnline ? 'En línea' : 'Desconectado' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <!-- Perfil accesible clicando en el nombre -->
+        </div>
+      </header>
+
+      <div class="messages-area" #scrollContainer>
+        <div class="date-divider">Hoy</div>
+        
+        @for (msg of messages(); track msg.id) {
+          <div class="message-row" [class.own]="msg.senderId !== activeUser()?.id">
+            <div class="message-bubble">
+              <div class="content">{{ msg.content }}</div>
+              <div class="meta">
+                <span class="time">{{ msg.createdAt | date:'HH:mm' }}</span>
+                @if (msg.senderId !== activeUser()?.id) {
+                  <span class="material-symbols-outlined check" [class.read]="msg.read">done_all</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <footer class="chat-footer">
+        <div class="input-wrapper">
+          <input type="text" 
+                 [(ngModel)]="newMessage" 
+                 (keyup.enter)="sendMessage()" 
+                 placeholder="Escribe un mensaje..."
+                 autocomplete="off">
+          <button (click)="sendMessage()" [disabled]="!newMessage.trim()" class="send-btn">
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      </footer>
+    } @else {
+      <div class="chat-placeholder">
+        <div class="welcome-icon">
+          <span class="material-symbols-outlined">forum</span>
+          <div class="pulse-ring"></div>
+        </div>
+        <h3>Tus Conversaciones</h3>
+        <p>Selecciona un contacto de la lista para ver tus mensajes y chatear en tiempo real.</p>
+      </div>
+    }
+  </main>
+</div>
