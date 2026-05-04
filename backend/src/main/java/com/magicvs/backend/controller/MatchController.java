@@ -1,7 +1,5 @@
 package com.magicvs.backend.controller;
 
-import com.magicvs.backend.dto.CreateMatchDTO;
-import com.magicvs.backend.dto.MatchResultDTO;
 import com.magicvs.backend.dto.MatchHistoryDto;
 import com.magicvs.backend.service.AuthService;
 import com.magicvs.backend.service.MatchService;
@@ -24,18 +22,10 @@ public class MatchController {
         this.authService = authService;
     }
 
-    @PostMapping("/process")
-    public ResponseEntity<MatchResultDTO> playMatch(@RequestBody CreateMatchDTO dto) {
-        MatchResultDTO result = matchService.processMatch(dto);
-        return ResponseEntity.ok(result);
-    }
-
-
     @GetMapping("/history")
     public ResponseEntity<List<MatchHistoryDto>> getHistory(@RequestHeader("Authorization") String token) {
-        // Extraemos el ID del usuario a partir del token JWT
         Long userId = authService.getUserId(token.replace("Bearer ", ""))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido o expirado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token"));
         
         List<MatchHistoryDto> history = matchService.getHistoryForUser(userId);
         return ResponseEntity.ok(history);
