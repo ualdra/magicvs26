@@ -201,7 +201,7 @@ public class UserController {
             resp.email = user.getEmail();
             resp.displayName = user.getDisplayName();
             resp.friendTag = user.getFriendTag();
-            resp.eloRating = user.getEloRating();
+            resp.eloRating = user.getElo();
             resp.friendsCount = user.getFriendsCount();
             resp.isOnline = user.getIsOnline();
             resp.lastSeenAt = user.getLastSeenAt() != null ? user.getLastSeenAt().toString() : null;

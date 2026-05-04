@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
 
+    List<Match> findByPlayer1OrPlayer2(User player1, User player2);
+
     @Query("SELECT m FROM Match m WHERE (m.player1 = :user OR m.player2 = :user) AND m.status = :status ORDER BY m.createdAt DESC")
     List<Match> findByUserAndStatus(@Param("user") User user, @Param("status") MatchStatus status);
 
