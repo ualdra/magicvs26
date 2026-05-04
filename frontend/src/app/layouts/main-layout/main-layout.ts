@@ -10,6 +10,9 @@ import { FriendshipService } from '../../core/services/friendship.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ArenaService } from '../../core/services/arena.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ChatWindowComponent } from '../../shared/components/chat-window/chat-window.component';
+import { ChatService } from '../../core/services/chat.service';
+import { ViewChild } from '@angular/core';
 
 interface StoredUser {
   id: number;
@@ -24,11 +27,12 @@ interface StoredUser {
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastComponent, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastComponent, ConfirmDialogComponent, ChatWindowComponent],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.scss',
 })
 export class MainLayout {
+  @ViewChild(ChatWindowComponent) chatWindow!: ChatWindowComponent;
   isLoggedIn = false;
   displayName: string | null = null;
   friendTag: string | null = null;
@@ -51,6 +55,7 @@ export class MainLayout {
   private readonly friendshipService = inject(FriendshipService);
   private readonly toastService = inject(ToastService);
   private readonly arenaService = inject(ArenaService);
+  private readonly chatService = inject(ChatService);
 
   constructor(private router: Router) {
     this.isLoggedIn = !!localStorage.getItem('user');
@@ -134,6 +139,15 @@ export class MainLayout {
   toggleNotifications(event: MouseEvent): void {
     event.stopPropagation();
     this.notificationService.toggleDropdown();
+  }
+
+  toggleChat(event: MouseEvent): void {
+    event.stopPropagation();
+    this.chatWindow?.toggleWindow();
+  }
+
+  get totalUnreadChatCount(): number {
+    return this.chatService.getTotalUnreadCount()();
   }
 
   markAllNotificationsAsRead(event: MouseEvent): void {
