@@ -2,6 +2,7 @@ package com.magicvs.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -32,41 +33,26 @@ public class User {
     @Column(length = 500)
     private String bio;
 
-    // --- TU LÓGICA DE ELO Y ESTADÍSTICAS ---
-    @Column(name = "elo_rating", nullable = false)
-    private Integer eloRating = 1200;
+    @Column(name = "elo_rating")
+    private Integer eloRating;
 
-    @Column(name = "games_played", nullable = false)
-    private Integer gamesPlayed = 0;
+    @Column(name = "games_played")
+    private Integer gamesPlayed;
 
-    @Column(name = "games_won", nullable = false)
-    private Integer gamesWon = 0;
+    @Column(name = "games_won")
+    private Integer gamesWon;
 
-    @Column(name = "games_lost", nullable = false)
-    private Integer gamesLost = 0;
+    @Column(name = "games_lost")
+    private Integer gamesLost;
 
-    // --- SOCIAL Y ESTADO ---
     @Column(name = "friend_tag", unique = true, length = 16)
     private String friendTag;
 
-    @Column(name = "friends_count", nullable = false)
-    private Integer friendsCount = 0;
+    @Column(name = "friends_count")
+    private Integer friendsCount;
 
-    @Column(name = "is_active")
+        @Column(name = "is_active")
     private Boolean active = true;
-
-    @Column(name = "is_online")
-    private Boolean isOnline = false;
-
-    @Column(name = "last_seen_at")
-    private LocalDateTime lastSeenAt;
-
-    // --- SEGURIDAD Y REGISTRO ---
-    @Column(name = "google_id", unique = true, length = 255)
-    private String googleId;
-
-    @Column(name = "manual_registration")
-    private Boolean manualRegistration = true;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -74,22 +60,46 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public User() {}
+    @Column(name = "google_id", unique = true, length = 255)
+    private String googleId;
+
+    @Column(name = "manual_registration")
+    private Boolean manualRegistration = true;
+
+    @Column(name = "is_online")
+    private Boolean isOnline = false;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
+
+    public User() {
+    }
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        
-        // Inicializaciones de seguridad para evitar Nulos en la BD
-        if (this.eloRating == null) this.eloRating = 1200;
-        if (this.gamesPlayed == null) this.gamesPlayed = 0;
-        if (this.gamesWon == null) this.gamesWon = 0;
-        if (this.gamesLost == null) this.gamesLost = 0;
-        if (this.friendsCount == null) this.friendsCount = 0;
-        if (this.active == null) this.active = true;
-        if (this.isOnline == null) this.isOnline = false;
-        if (this.manualRegistration == null) this.manualRegistration = true;
+        if (this.eloRating == null) {
+            this.eloRating = 1200; 
+        }
+        if (this.gamesPlayed == null) {
+            this.gamesPlayed = 0;
+        }
+        if (this.gamesWon == null) {
+            this.gamesWon = 0;
+        }
+        if (this.gamesLost == null) {
+            this.gamesLost = 0;
+        }
+        if (this.friendsCount == null) {
+            this.friendsCount = 0;
+        }
+        if (this.active == null) {
+            this.active = true;
+        }
+        if (this.isOnline == null) {
+            this.isOnline = false;
+        }
     }
 
     @PreUpdate
@@ -97,83 +107,163 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // --- LÓGICA DE NEGOCIO (Tu motor) ---
-
-    public void addWin() {
-        this.gamesPlayed++;
-        this.gamesWon++;
+    public Long getId() {
+        return id;
     }
 
-    public void addLoss() {
-        this.gamesPlayed++;
-        this.gamesLost++;
+    public String getUsername() {
+        return username;
     }
 
-    public double getWinRate() {
-        if (gamesPlayed == null || gamesPlayed == 0) return 0.0;
-        return (double) gamesWon / gamesPlayed;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    // --- TODOS LOS GETTERS Y SETTERS ---
+    public String getEmail() {
+        return email;
+    }
 
-    public Long getId() { return id; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getPasswordHash() {
+        return passwordHash;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getDisplayName() {
+        return displayName;
+    }
 
-    public String getDisplayName() { return displayName; }
-    public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
-    public String getAvatarUrl() { return avatarUrl; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
 
-    public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+    public String getCountry() {
+        return country;
+    }
 
-    public int getElo() { return eloRating; }
-    public void setElo(int eloRating) { this.eloRating = eloRating; }
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
-    public Integer getGamesPlayed() { return gamesPlayed; }
-    public void setGamesPlayed(Integer gamesPlayed) { this.gamesPlayed = gamesPlayed; }
+    public String getBio() {
+        return bio;
+    }
 
-    public Integer getGamesWon() { return gamesWon; }
-    public void setGamesWon(Integer gamesWon) { this.gamesWon = gamesWon; }
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
 
-    public Integer getGamesLost() { return gamesLost; }
-    public void setGamesLost(Integer gamesLost) { this.gamesLost = gamesLost; }
+    public Integer getEloRating() {
+        return eloRating;
+    }
 
-    public String getFriendTag() { return friendTag; }
-    public void setFriendTag(String friendTag) { this.friendTag = friendTag; }
+    public void setEloRating(Integer eloRating) {
+        this.eloRating = eloRating;
+    }
 
-    public Integer getFriendsCount() { return friendsCount; }
-    public void setFriendsCount(Integer friendsCount) { this.friendsCount = friendsCount; }
+    public Integer getGamesPlayed() {
+        return gamesPlayed;
+    }
 
-    public Boolean getActive() { return active; }
-    public void setActive(Boolean active) { this.active = active; }
+    public void setGamesPlayed(Integer gamesPlayed) {
+        this.gamesPlayed = gamesPlayed;
+    }
 
-    public Boolean getIsOnline() { return isOnline; }
-    public void setIsOnline(Boolean isOnline) { this.isOnline = isOnline; }
+    public Integer getGamesWon() {
+        return gamesWon;
+    }
 
-    public LocalDateTime getLastSeenAt() { return lastSeenAt; }
-    public void setLastSeenAt(LocalDateTime lastSeenAt) { this.lastSeenAt = lastSeenAt; }
+    public void setGamesWon(Integer gamesWon) {
+        this.gamesWon = gamesWon;
+    }
 
-    public String getGoogleId() { return googleId; }
-    public void setGoogleId(String googleId) { this.googleId = googleId; }
+    public Integer getGamesLost() {
+        return gamesLost;
+    }
 
-    public Boolean getManualRegistration() { return manualRegistration; }
-    public void setManualRegistration(Boolean manualRegistration) { this.manualRegistration = manualRegistration; }
+    public void setGamesLost(Integer gamesLost) {
+        this.gamesLost = gamesLost;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getFriendTag() {
+        return friendTag;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setFriendTag(String friendTag) {
+        this.friendTag = friendTag;
+    }
+
+    public Integer getFriendsCount() {
+        return friendsCount;
+    }
+
+    public void setFriendsCount(Integer friendsCount) {
+        this.friendsCount = friendsCount;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
+    }
+
+    public Boolean getManualRegistration() {
+        return manualRegistration;
+    }
+
+    public void setManualRegistration(Boolean manualRegistration) {
+        this.manualRegistration = manualRegistration;
+    }
+
+    public Boolean getIsOnline() {
+        return isOnline;
+    }
+
+    public void setIsOnline(Boolean isOnline) {
+        this.isOnline = isOnline;
+    }
+
+    public LocalDateTime getLastSeenAt() {
+        return lastSeenAt;
+    }
+
+    public void setLastSeenAt(LocalDateTime lastSeenAt) {
+        this.lastSeenAt = lastSeenAt;
+    }
 }
