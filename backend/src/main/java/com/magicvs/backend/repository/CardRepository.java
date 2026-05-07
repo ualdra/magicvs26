@@ -15,6 +15,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     interface CardSearchProjection {
         Long getId();
+        UUID getScryfallId();
         String getName();
         String getManaCost();
         String getTypeLine();
@@ -39,6 +40,12 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         String getToughness();
     }
 
+    interface CardImageProjection {
+        UUID getScryfallId();
+        String getNormalImageUri();
+        String getFaceNormalImageUri();
+    }
+
     Optional<Card> findByScryfallId(UUID scryfallId);
 
     List<Card> findByNameContainingIgnoreCase(String name);
@@ -46,7 +53,22 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     Page<Card> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     @Query("""
+        SELECT c.scryfallId AS scryfallId,
+               c.normalImageUri AS normalImageUri,
+               firstFace.normalImageUri AS faceNormalImageUri
+        FROM Card c
+        LEFT JOIN c.faces firstFace
+            ON firstFace.faceOrder = (
+                SELECT MIN(f1.faceOrder)
+                FROM CardFace f1
+                WHERE f1.card = c
+            )
+        """)
+    List<CardImageProjection> findAllImageUris();
+
+    @Query("""
         SELECT c.id AS id,
+               c.scryfallId AS scryfallId,
                c.name AS name,
                c.manaCost AS manaCost,
                c.typeLine AS typeLine,

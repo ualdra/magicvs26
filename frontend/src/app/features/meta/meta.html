@@ -226,7 +226,7 @@
                     @for (card of deck.gallery; track card.name) {
                       <div class="flex flex-col gap-2 relative group w-full aspect-[2.2/3] lg:h-[340px] rounded-lg overflow-hidden border border-outline-variant/10 shadow-2xl bg-black">
                         <!-- Object-top ensures the art piece is visible usually at top-center of crops -->
-                        <img [src]="card.imageUrl" [alt]="card.name" class="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]">
+                        <img [src]="card.scryfallId ? '/assets/cards/' + card.scryfallId + '.jpg' : card.imageUrl" [alt]="card.name" (error)="$any($event.target).src = card.imageUrl" class="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]">
                         <div class="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e]/50 to-transparent flex flex-col justify-end p-5">
                           <span class="text-[11px] font-bold text-[#e2e2e2] tracking-[0.15em] uppercase drop-shadow-md">{{card.name}}</span>
                         </div>

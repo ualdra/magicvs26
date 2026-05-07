@@ -3,6 +3,7 @@ import java.util.List;
 
 public record CardDetailDTO(
     Long id,
+    java.util.UUID scryfallId,
     String name,
     String manaCost,
     String typeLine,
