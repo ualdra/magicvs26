@@ -32,7 +32,7 @@ public class UserDirectoryResponseDto {
             user.getId(),
             user.getUsername(),
             user.getDisplayName(),
-            user.getEloRating(),
+            user.getElo(),
             user.getAvatarUrl(),
             Boolean.TRUE.equals(user.getIsOnline()),
             user.getLastSeenAt(),

@@ -26,7 +26,9 @@ export class CardService {
   }
 
   getCardById(id: string): Observable<Card> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const headers = token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {};
+    return this.http.get<any>(`${this.apiUrl}/${id}`, headers).pipe(
       map(card => this.mapBackendCardToCard(card))
     );
   }
@@ -177,12 +179,7 @@ export class CardService {
 
     return legalities.reduce((result: Card['legalities'], entry: any) => {
       const format = entry.formatName?.toLowerCase();
-      
-      // Mapeamos lo que viene del backend (ej: "not_legal") a lo que quiere el modelo (ej: "Not Legal")
-      let status: "Legal" | "Banned" | "Not Legal" = 'Not Legal';
-      
-      if (entry.legalityStatus === 'legal' || entry.legalityStatus === 'Legal') status = 'Legal';
-      if (entry.legalityStatus === 'banned' || entry.legalityStatus === 'Banned') status = 'Banned';
+      const status = entry.legalityStatus || 'No legal';
 
       if (format in result) {
         (result as any)[format] = status;

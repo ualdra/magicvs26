@@ -30,8 +30,9 @@
 
           <div class="text-center md:text-left flex-1">
             <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
-              <span class="px-3 py-1 rounded-full bg-primary/20 text-white text-[10px] font-black uppercase tracking-[0.2em] border border-primary/30 backdrop-blur-md">
-                Invocador Legendario
+              <span class="px-3 py-1 rounded-full text-white text-[10px] font-black uppercase tracking-[0.2em] border backdrop-blur-md" 
+                    [class]="'px-3 py-1 rounded-full text-white text-[10px] font-black uppercase tracking-[0.2em] border backdrop-blur-md ' + profileTitleBgColor() + ' ' + profileTitleTextColor()">
+                {{ profileTitleDisplay() }}
               </span>
               <span class="px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-bold uppercase tracking-[0.1em] border border-white/20 backdrop-blur-md">
                 #{{ user()?.friendTag || 'MAGIC' }}
@@ -131,15 +132,21 @@
         <section class="glass-panel p-8 rounded-3xl border-white/5">
           <h3 class="text-sm font-headline font-bold text-white uppercase tracking-widest mb-6">Insignias</h3>
           <div class="flex flex-wrap gap-3">
-            <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary" title="Maestro Constructor">
-              <span class="material-symbols-outlined">architecture</span>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500" title="Coleccionista de Oro">
-              <span class="material-symbols-outlined">auto_awesome</span>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-500" title="Aliado de Confianza">
-              <span class="material-symbols-outlined">groups</span>
-            </div>
+            @if (featuredAchievements().length) {
+              @for (ua of featuredAchievements(); track ua.achievement.key) {
+                <div class="w-12 h-12 rounded-xl bg-zinc-900/50 border border-white/5 flex items-center justify-center" title="{{ ua.achievement.name }}">
+                  <span class="material-symbols-outlined {{ rankColor(ua.achievement.rango) }}">{{ ua.achievement.iconUrl || 'emoji_events' }}</span>
+                </div>
+              }
+            } @else if (achievements().length) {
+              @for (ua of achievements().slice(0,3); track ua.achievement.key) {
+                <div class="w-12 h-12 rounded-xl bg-zinc-900/50 border border-white/5 flex items-center justify-center" title="{{ ua.achievement.name }}">
+                  <span class="material-symbols-outlined {{ rankColor(ua.achievement.rango) }}">{{ ua.achievement.iconUrl || 'emoji_events' }}</span>
+                </div>
+              }
+            } @else {
+              <p class="text-sm text-zinc-400">Este usuario aún no tiene insignias públicas.</p>
+            }
           </div>
         </section>
       </aside>

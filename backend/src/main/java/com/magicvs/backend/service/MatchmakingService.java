@@ -1,19 +1,16 @@
 package com.magicvs.backend.service;
 
-import com.magicvs.backend.model.Match;
-import com.magicvs.backend.model.MatchStatus;
-import com.magicvs.backend.model.NotificationType;
-import com.magicvs.backend.model.User;
+import com.magicvs.backend.model.*;
 import com.magicvs.backend.repository.MatchRepository;
-import com.magicvs.backend.repository.RegistroRepository;
+import com.magicvs.backend.repository.RegistroRepository; 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Service
@@ -21,41 +18,53 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MatchmakingService {
 
     private final MatchRepository matchRepository;
-    private final RegistroRepository userRepository;
+    private final RegistroRepository registroRepository;
     private final NotificationService notificationService;
     private final BattleService battleService;
+    private final CopyOnWriteArrayList<QueuedPlayer> queue = new CopyOnWriteArrayList<>();
 
-    // Queue of user IDs waiting for a match
-    private final ConcurrentLinkedQueue<Long> queue = new ConcurrentLinkedQueue<>();
-    // Map to store deck IDs for each user in the queue
-    private final ConcurrentHashMap<Long, Long> userDecks = new ConcurrentHashMap<>();
-
-    public synchronized void joinQueue(Long userId, Long deckId) {
-        if (queue.contains(userId)) {
-            log.debug("User {} already in queue, ignoring join request.", userId);
-            return;
-        }
-
-        if (!queue.isEmpty()) {
-            Long opponentId = queue.poll();
-            Long opponentDeckId = userDecks.remove(opponentId);
-            log.info("Matchmaking: Opponent found! Pairing User {} with User {}", userId, opponentId);
-            createMatch(userId, deckId, opponentId, opponentDeckId);
-        } else {
-            log.info("Matchmaking: User {} added to queue. Waiting for opponent...", userId);
-            queue.add(userId);
-            userDecks.put(userId, deckId);
-        }
+    public void joinQueue(Long userId, int elo, Long deckId) {
+        queue.removeIf(p -> p.getUserId().equals(userId));
+        queue.add(new QueuedPlayer(userId, elo, deckId));
+        log.info("Matchmaking: Usuario {} (ELO: {}) en cola con mazo {}", userId, elo, deckId);
     }
 
     public void leaveQueue(Long userId) {
-        queue.remove(userId);
-        userDecks.remove(userId);
+        queue.removeIf(p -> p.getUserId().equals(userId));
     }
 
-    private void createMatch(Long u1Id, Long d1Id, Long u2Id, Long d2Id) {
-        User u1 = userRepository.findById(u1Id).orElseThrow();
-        User u2 = userRepository.findById(u2Id).orElseThrow();
+    @Scheduled(fixedDelay = 2000)
+    public void runMatchmaking() {
+        if (queue.size() < 2) return;
+
+        for (int i = 0; i < queue.size(); i++) {
+            for (int j = i + 1; j < queue.size(); j++) {
+                QueuedPlayer p1 = queue.get(i);
+                QueuedPlayer p2 = queue.get(j);
+
+                if (isMatchPossible(p1, p2)) {
+                    executeMatch(p1, p2);
+                    return; 
+                }
+            }
+        }
+    }
+
+    private boolean isMatchPossible(QueuedPlayer p1, QueuedPlayer p2) {
+        int eloDiff = Math.abs(p1.getElo() - p2.getElo());
+        // Lógica de rangos competitivos
+        return eloDiff <= p1.getSearchRange() || eloDiff <= p2.getSearchRange();
+    }
+
+    @Transactional
+    protected void executeMatch(QueuedPlayer p1, QueuedPlayer p2) {
+        // Limpiar la cola primero para evitar duplicados
+        queue.remove(p1);
+        queue.remove(p2);
+
+        // Usar el repositorio para buscar los usuarios
+        User u1 = registroRepository.findById(p1.getUserId()).orElseThrow();
+        User u2 = registroRepository.findById(p2.getUserId()).orElseThrow();
 
         Match match = new Match();
         match.setPlayer1(u1);
@@ -64,13 +73,14 @@ public class MatchmakingService {
         match.setFormat("Standard");
         
         match = matchRepository.save(match);
-        log.info("Match created with ID: {}. Players: {} & {}", match.getId(), u1.getUsername(), u2.getUsername());
 
-        // Initialize board state
-        battleService.initializeMatch(match.getId(), d1Id, d2Id);
-
+        // 3. Inicializar batalla y enviar notificaciones
+        battleService.initializeMatch(match.getId(), p1.getDeckId(), p2.getDeckId());
+        
         notifyMatchFound(u1, match.getId());
         notifyMatchFound(u2, match.getId());
+
+        log.info("PARTIDA CREADA: {} vs {} - ID: {}", u1.getUsername(), u2.getUsername(), match.getId());
     }
 
     private void notifyMatchFound(User user, Long matchId) {

@@ -30,7 +30,7 @@
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] text-purple-200">
-                {{ isOwnProfile ? 'Tu perfil' : 'Perfil de usuario' }}
+              {{ profile.profileTitle || (isOwnProfile ? 'Tu perfil' : 'Perfil de usuario') }}
                 </span>
                 <span class="inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-300">
                 #{{ profile.friendTag || 'Sin friendTag' }}
@@ -198,6 +198,69 @@
                     <input [(ngModel)]="editData().displayName" type="text" placeholder="Tu nombre público..."
                         class="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-sm font-semibold text-white outline-none ring-purple-500/30 transition-all focus:border-purple-500/50 focus:ring-8">
                 </div>
+
+                <div class="space-y-2 profile-title-dropdown-container relative">
+                  <label class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Modificar titulo</label>
+                  <button
+                    type="button"
+                    (click)="toggleProfileTitleDropdown()"
+                    class="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-left text-sm font-semibold text-white outline-none ring-purple-500/30 transition-all hover:border-purple-500/30 hover:bg-white/10 focus:border-purple-500/50 focus:ring-8">
+                    <span class="flex min-w-0 items-center gap-3">
+                      <span class="material-symbols-outlined text-base text-purple-300">military_tech</span>
+                      <span class="truncate" [class.text-zinc-500]="!editData().profileTitle">{{ editData().profileTitle || 'Sin título' }}</span>
+                    </span>
+                    <span class="material-symbols-outlined text-zinc-500 transition-transform duration-200" [class.rotate-180]="isProfileTitleDropdownOpen()">expand_more</span>
+                  </button>
+
+                  @if (isProfileTitleDropdownOpen()) {
+                    <div class="absolute left-0 right-0 top-full z-[100] mt-2 max-h-[260px] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900/95 p-2 backdrop-blur-2xl shadow-2xl shadow-black/60 custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                      <button
+                        type="button"
+                        (click)="selectProfileTitle(null)"
+                        class="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors"
+                        [class.bg-purple-600/20]="!editData().profileTitle"
+                        [class.text-white]="!editData().profileTitle"
+                        [class.text-zinc-300]="editData().profileTitle">
+                        <span>Sin título</span>
+                        @if (!editData().profileTitle) {
+                          <span class="material-symbols-outlined text-base text-purple-300">check</span>
+                        }
+                      </button>
+
+                      @for (title of profileTitleOptions(); track title) {
+                        <button
+                          type="button"
+                          (click)="selectProfileTitle(title)"
+                          class="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-zinc-300 transition-colors hover:bg-purple-600/20 hover:text-white"
+                          [class.bg-purple-600/20]="editData().profileTitle === title"
+                          [class.text-white]="editData().profileTitle === title">
+                          <span class="truncate">{{ title }}</span>
+                          @if (editData().profileTitle === title) {
+                            <span class="material-symbols-outlined text-base text-purple-300">check</span>
+                          }
+                        </button>
+                      }
+
+                      @if (!profileTitleOptions().length) {
+                        <div class="px-4 py-3 text-sm text-zinc-500 italic">Desbloquea logros para elegir un título.</div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Logros destacados</label>
+                  <button
+                    type="button"
+                    (click)="openFeaturedAchievementsEditor()"
+                    class="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-left text-sm font-semibold text-white outline-none ring-purple-500/30 transition-all hover:border-purple-500/30 hover:bg-white/10 focus:border-purple-500/50 focus:ring-8">
+                    <span class="flex min-w-0 items-center gap-3">
+                      <span class="material-symbols-outlined text-base text-purple-300">emoji_events</span>
+                      <span class="truncate text-zinc-400">{{ selectedFeaturedAchievementKeys().length || 0 }} logros seleccionados</span>
+                    </span>
+                    <span class="material-symbols-outlined text-zinc-500 transition-transform duration-200">edit</span>
+                  </button>
+                </div>
                 
                 <div class="space-y-2 country-dropdown-container relative">
                     <label class="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">País</label>
@@ -280,6 +343,51 @@
         <span class="stat-label">Mazos</span>
         <span class="stat-value">{{ profile.decksCount ?? 0 }}</span>
       </div>
+    </div>
+
+    <div class="mt-3 grid gap-3 xl:grid-cols-4">
+      <div class="stat-card min-h-[96px] border-cyan-400/10 bg-cyan-400/5">
+        <span class="stat-label">Puntos totales</span>
+        <span class="stat-value">{{ totalAchievementPoints() }}</span>
+        <p class="mt-1 text-[11px] leading-5 text-zinc-400">La suma de todos los puntos de tus logros desbloqueados.</p>
+      </div>
+
+      <div class="stat-card min-h-[96px] flex flex-col justify-center border-purple-400/10 bg-purple-500/5">
+        <span class="stat-label mb-1">Logros destacados</span>
+        @if (displayedFeaturedAchievements().length) {
+          <div class="grid w-full flex-1 items-center grid-cols-3 gap-2">
+            @for (item of displayedFeaturedAchievements(); track item.achievement.key) {
+              <div class="group relative flex justify-center">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl border transition-all group-hover:-translate-y-0.5 group-hover:border-purple-400/30 group-hover:bg-purple-500/15" [ngClass]="rankColor(item.achievement.rango)">
+                  <span class="material-symbols-outlined text-[22px] leading-none">{{ item.achievement.iconUrl }}</span>
+                </div>
+
+                <div class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 hidden w-56 -translate-x-1/2 rounded-2xl border border-white/10 bg-zinc-950/95 p-3 text-left shadow-2xl shadow-black/60 backdrop-blur-2xl group-hover:block">
+                  <p class="text-sm font-bold text-white">{{ item.achievement.name }}</p>
+                  <p class="mt-1 text-xs leading-5 text-zinc-400">{{ item.achievement.description }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="mt-1 text-[11px] leading-5 text-zinc-400">Aún no hay ningún logro disponible.</p>
+        }
+      </div>
+
+      <div class="stat-card min-h-[96px] border-amber-400/10 bg-amber-400/5">
+        <span class="stat-label">Logros desbloqueados</span>
+        <span class="stat-value">{{ unlockedAchievementTitles.length }} / {{ totalAchievements }}</span>
+        <p class="mt-1 text-[11px] leading-5 text-zinc-400">Los logros que ya forman parte de tu colección.</p>
+      </div>
+
+      <a routerLink="/logros" class="stat-card group min-h-[96px] border-white/10 bg-white/5 transition-all hover:border-purple-400/30 hover:bg-white/10">
+        <span class="stat-label">Ver más</span>
+        <span class="stat-value flex items-center gap-2 text-2xl">
+          <span>Explorar logros</span>
+          <span class="material-symbols-outlined text-2xl text-purple-300 transition-transform group-hover:translate-x-1">arrow_forward</span>
+        </span>
+        <p class="mt-1 text-[11px] leading-5 text-zinc-400">Abre la galería completa de logros y su progreso.</p>
+      </a>
     </div>
   </div>
 </section>
@@ -421,6 +529,75 @@
 
         <div class="mt-8 text-center">
             <span class="text-[9px] font-medium uppercase tracking-[0.3em] text-zinc-700">Sistema de Seguridad Actualizado</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Featured Achievements Selector Modal -->
+  @if (isFeaturedAchievementsEditorOpen()) {
+    <div class="fixed inset-0 z-[110] flex justify-center p-4 overflow-y-auto pt-28 pb-10">
+      <div (click)="closeFeaturedAchievementsEditor()" class="fixed inset-0 bg-black/40 backdrop-blur-2xl"></div>
+      
+      <div class="relative my-auto w-full max-w-md bg-zinc-950/95 border border-purple-500/30 rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+        <div class="mb-6 flex items-center justify-between">
+          <h2 class="text-2xl font-black text-white tracking-tight">Selecciona logros destacados</h2>
+          <button (click)="closeFeaturedAchievementsEditor()" class="p-2 text-zinc-400 hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-xs text-zinc-400">Elige hasta 3 logros desbloqueados para mostrar en tu perfil.</p>
+          <span class="text-[10px] font-bold text-purple-300">{{ selectedFeaturedAchievementKeys().length }}/3</span>
+        </div>
+        
+        <div class="space-y-2 max-h-80 overflow-y-auto">
+          @if (unlockedAchievements.length) {
+            @for (item of unlockedAchievements; track item.achievement.key) {
+              <button
+                (click)="toggleFeaturedAchievement(item.achievement.key)"
+                type="button"
+                [disabled]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && selectedFeaturedAchievementKeys().length >= 3"
+                class="w-full flex items-center gap-4 rounded-xl p-3 transition-all border"
+                [class.border-purple-500/30]="selectedFeaturedAchievementKeys().includes(item.achievement.key)"
+                [class.bg-purple-500/10]="selectedFeaturedAchievementKeys().includes(item.achievement.key)"
+                [class.border-white/5]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && (!selectedFeaturedAchievementKeys().length || selectedFeaturedAchievementKeys().length < 3)"
+                [class.bg-white/5]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && (!selectedFeaturedAchievementKeys().length || selectedFeaturedAchievementKeys().length < 3)"
+                [class.hover:bg-white/10]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && (!selectedFeaturedAchievementKeys().length || selectedFeaturedAchievementKeys().length < 3)"
+                [class.border-zinc-700/50]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && selectedFeaturedAchievementKeys().length >= 3"
+                [class.bg-zinc-900/30]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && selectedFeaturedAchievementKeys().length >= 3"
+                [class.opacity-50]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && selectedFeaturedAchievementKeys().length >= 3"
+                [class.cursor-not-allowed]="!selectedFeaturedAchievementKeys().includes(item.achievement.key) && selectedFeaturedAchievementKeys().length >= 3">
+                
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0" [ngClass]="rankColor(item.achievement.rango)">
+                  <span class="material-symbols-outlined text-lg">{{ item.achievement.iconUrl }}</span>
+                </div>
+                
+                <div class="flex-1 text-left min-w-0">
+                  <p class="text-sm font-bold text-white truncate">{{ item.achievement.name }}</p>
+                  <p class="text-xs text-zinc-400 truncate">{{ item.achievement.description }}</p>
+                </div>
+                
+                @if (selectedFeaturedAchievementKeys().includes(item.achievement.key)) {
+                  <span class="material-symbols-outlined text-purple-300 flex-shrink-0">check_circle</span>
+                } @else {
+                  <span class="material-symbols-outlined text-zinc-500 flex-shrink-0">circle</span>
+                }
+              </button>
+            }
+          } @else {
+            <div class="text-center py-8">
+              <p class="text-sm text-zinc-400">Desbloquea logros para seleccionarlos como destacados.</p>
+            </div>
+          }
+        </div>
+        
+        <div class="flex flex-col gap-3 pt-6">
+          <button (click)="closeFeaturedAchievementsEditor()"
+            class="w-full py-4 rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-600 text-xs font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-purple-900/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
+            Guardar selección
+          </button>
         </div>
       </div>
     </div>

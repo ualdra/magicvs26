@@ -36,11 +36,14 @@ public class DeckService {
     private final RegistroRepository userRepository;
     private final int minDeckCards;
     private final AuthService authService;
-    public DeckService(DeckRepository deckRepository, 
+    private final AchievementService achievementService;
+
+    public DeckService(DeckRepository deckRepository,
                        DeckCardRepository deckCardRepository,
                        CardRepository cardRepository,
                        RegistroRepository userRepository,
                        AuthService authService,
+                       AchievementService achievementService,
                        @Value("${deck.validation.min-cards:60}") int minDeckCards) {
         this.deckRepository = deckRepository;
         this.deckCardRepository = deckCardRepository;
@@ -48,6 +51,7 @@ public class DeckService {
         this.userRepository = userRepository;
         this.minDeckCards = minDeckCards;
         this.authService = authService;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -109,6 +113,10 @@ public DeckResponseDTO createDeck(Long userId, CreateDeckDTO deckDTO, boolean sk
 
     syncDeckCards(deck, deckDTO.getCards());
     Deck savedDeck = deckRepository.save(deck);
+
+    achievementService.increment(user, "FIRST_DECK");
+    achievementService.increment(user, "DECK_5");
+    achievementService.increment(user, "DECK_10");
 
     return DeckResponseDTO.fromEntity(savedDeck);
 }
@@ -211,6 +219,10 @@ public DeckResponseDTO copyDeck(Long deckId, Long currentUserId) {
 
     newDeck.recalculateTotalCards();
     Deck savedDeck = deckRepository.save(newDeck);
+
+    achievementService.increment(currentUser, "FIRST_DECK");
+    achievementService.increment(currentUser, "DECK_5");
+    achievementService.increment(currentUser, "DECK_10");
 
     return DeckResponseDTO.fromEntity(savedDeck);
 }

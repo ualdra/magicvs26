@@ -66,14 +66,25 @@ public class ScryfallService {
         if (onlyStandard) {
             query += " f:standard";
         }
-        String url = SCRYFALL_API_BASE + "/cards/named?fuzzy=" + query;
+        // Agregamos lang:es a la query para obtener la versión en español si existe
+        String url = SCRYFALL_API_BASE + "/cards/named?fuzzy=" + query + "&lang=es";
         try {
             JsonNode root = restTemplate.getForObject(url, JsonNode.class);
             if (root != null) {
                 return saveOrUpdateCard(root);
             }
         } catch (Exception e) {
-            logger.error("Error al importar carta por nombre: {}", name, e);
+            // Si falla en español, intentamos en inglés como fallback
+            logger.warn("No se encontró versión en español para {}, intentando en inglés...", name);
+            String fallbackUrl = SCRYFALL_API_BASE + "/cards/named?fuzzy=" + query;
+            try {
+                JsonNode fallbackRoot = restTemplate.getForObject(fallbackUrl, JsonNode.class);
+                if (fallbackRoot != null) {
+                    return saveOrUpdateCard(fallbackRoot);
+                }
+            } catch (Exception ex) {
+                logger.error("Error al importar carta por nombre (incluso en inglés): {}", name, ex);
+            }
         }
         return null;
     }
@@ -83,7 +94,7 @@ public class ScryfallService {
      */
     @Transactional
     public int importCardsBySet(String setCode, boolean onlyStandard) {
-        String query = "set:" + setCode;
+        String query = "set:" + setCode + " lang:es";
         if (onlyStandard) {
             query += " f:standard";
         }

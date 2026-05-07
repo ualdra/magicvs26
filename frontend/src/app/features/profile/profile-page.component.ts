@@ -7,12 +7,15 @@ import { ProfileDeckListComponent } from './profile-deck-list.component';
 import { ProfileHeaderComponent } from './profile-header.component';
 import { ProfileResponse, ProfileService, ProfileDeckSummary } from './profile.service';
 import { UserService } from '../../core/services/user.service';
+import { AchievementService } from '../../core/services/achievement.service';
+import { UserAchievement } from '../../models/achievement.model';
 
 interface StoredUser {
   id: number;
   username: string;
   email: string;
   displayName?: string | null;
+  profileTitle?: string | null;
   friendTag?: string | null;
   token?: string;
 }
@@ -29,10 +32,17 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly profileService = inject(ProfileService);
   private readonly userService = inject(UserService);
+  private readonly achievementService = inject(AchievementService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profile = signal<ProfileResponse | null>(null);
   readonly decks = signal<ProfileDeckSummary[]>([]);
+  readonly achievements = signal<UserAchievement[]>([]);
+  readonly unlockedAchievementTitles = computed(() => this.achievements()
+    .filter((achievement) => achievement.unlocked)
+    .map((achievement) => achievement.achievement.name));
+  readonly totalAchievements = signal(0);
+  readonly achievementsLoading = signal(false);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly currentTarget = signal<string>('me');
@@ -94,6 +104,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.achievementsLoading.set(true);
+
     this.activeRequest = forkJoin({
       profile: this.profileService.getProfile(target),
       decks: this.profileService.getDecks(target),
@@ -103,11 +115,34 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         this.decks.set(decks);
         this.loading.set(false);
         this.syncStoredUser(profile);
+        this.loadAchievements(target, profile.id);
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(this.resolveErrorMessage(err?.status));
       },
+    });
+  }
+
+  loadAchievementsPublic(target: string, profileId: number): void {
+    this.loadAchievements(target, profileId);
+  }
+
+  private loadAchievements(target: string, profileId: number): void {
+    const userAchievements$ = target === 'me'
+      ? this.achievementService.getMyAchievements()
+      : this.achievementService.getUserAchievements(profileId);
+
+    forkJoin({
+      all: this.achievementService.getAllAchievements(),
+      mine: userAchievements$,
+    }).subscribe({
+      next: ({ all, mine }) => {
+        this.totalAchievements.set(all.length);
+        this.achievements.set(mine);
+        this.achievementsLoading.set(false);
+      },
+      error: () => this.achievementsLoading.set(false),
     });
   }
 
@@ -122,6 +157,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         ...storedUser,
         username: profile.username,
         displayName: profile.displayName ?? storedUser.displayName,
+        profileTitle: profile.profileTitle ?? storedUser.profileTitle,
         friendTag: profile.friendTag ?? storedUser.friendTag,
       });
     }

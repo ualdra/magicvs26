@@ -23,6 +23,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final NotificationStreamService notificationStreamService;
     private final RegistroRepository registroRepository;
+    private final AchievementService achievementService;
 
     @Transactional
     public ChatMessageDto sendMessage(Long senderId, Long receiverId, String content) {
@@ -34,10 +35,18 @@ public class ChatService {
         message = chatMessageRepository.save(message);
         ChatMessageDto dto = ChatMessageDto.fromEntity(message);
 
-        // Fetch sender name for the notification
-        String senderName = registroRepository.findById(senderId)
-                .map(u -> u.getDisplayName() != null ? u.getDisplayName() : u.getUsername())
-                .orElse("Alguien");
+        // Fetch sender for notification and achievements
+        var sender = registroRepository.findById(senderId).orElse(null);
+        String senderName = sender != null
+                ? (sender.getDisplayName() != null ? sender.getDisplayName() : sender.getUsername())
+                : "Alguien";
+
+        if (sender != null) {
+            achievementService.increment(sender, "FIRST_MESSAGE");
+            // Also increment cumulative chat achievements
+            achievementService.increment(sender, "CHAT_100");
+            achievementService.increment(sender, "CHAT_500");
+        }
 
         // Push to receiver via SSE
         Map<String, Object> data = new HashMap<>();

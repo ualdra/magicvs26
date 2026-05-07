@@ -1,9 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 import { FriendshipService } from '../../../core/services/friendship.service';
 import { ProfileService, ProfileResponse, ProfileDeckSummary } from '../../profile/profile.service';
+import { AchievementService } from '../../../core/services/achievement.service';
+import { UserAchievement } from '../../../models/achievement.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
@@ -25,10 +27,20 @@ export class UserProfileComponent implements OnInit {
 
   user = signal<ProfileResponse | null>(null);
   decks = signal<ProfileDeckSummary[]>([]);
+  achievements = signal<UserAchievement[]>([]);
   isLoading = signal(true);
   hasError = signal(false);
   currentUserId = signal<number | null>(null);
   friendshipStatus = signal<'NONE' | 'PENDING' | 'ACCEPTED'>('NONE');
+
+  private achievementService = inject(AchievementService);
+
+  featuredAchievements = computed(() => {
+    const raw = this.user()?.featuredAchievementKeys;
+    const keys = raw ? (() => { try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; } })() : [];
+    if (!keys.length) return [] as UserAchievement[];
+    return this.achievements().filter(a => keys.includes(a.achievement.key));
+  });
 
   ngOnInit(): void {
     this.loadCurrentUserId();
@@ -74,6 +86,11 @@ export class UserProfileComponent implements OnInit {
           next: (deckData) => {
             this.decks.set(deckData);
             this.isLoading.set(false);
+            // Load the user's unlocked achievements to be shown in Insignias
+            this.achievementService.getUserAchievements(Number(id)).subscribe({
+              next: (ach) => this.achievements.set(ach),
+              error: (err) => console.error('Error loading user achievements:', err)
+            });
           },
           error: (err) => {
             console.error('Error loading user decks:', err);
@@ -156,4 +173,52 @@ export class UserProfileComponent implements OnInit {
     };
     return names[code] || code;
   }
+
+  rankColor(rango: string | null | undefined): string {
+    const colors: Record<string, string> = {
+      BRONCE: 'text-amber-600',
+      PLATA: 'text-slate-300',
+      ORO: 'text-yellow-400',
+      PLATINO: 'text-blue-400',
+      DIAMANTE: 'text-white',
+    };
+
+    return (rango && colors[rango]) ?? 'text-zinc-400';
+  }
+
+  profileTitleDisplay = computed(() => {
+    const title = this.user()?.profileTitle;
+    return title || 'Buscador de logros';
+  });
+
+  profileTitleRank = computed(() => {
+    const profileTitle = this.user()?.profileTitle;
+    if (!profileTitle) return null;
+    const matchingAchievement = this.achievements().find(a => a.achievement.name === profileTitle);
+    return matchingAchievement?.achievement.rango || null;
+  });
+
+  profileTitleBgColor = computed(() => {
+    const rango = this.profileTitleRank();
+    const bgColors: Record<string, string> = {
+      BRONCE: 'bg-amber-600/10 border-amber-600/30',
+      PLATA: 'bg-slate-300/10 border-slate-300/30',
+      ORO: 'bg-yellow-400/10 border-yellow-400/30',
+      PLATINO: 'bg-blue-400/10 border-blue-400/30',
+      DIAMANTE: 'bg-white/10 border-white/30',
+    };
+    return (rango && bgColors[rango]) ?? 'bg-primary/20 border-primary/30';
+  });
+
+  profileTitleTextColor = computed(() => {
+    const rango = this.profileTitleRank();
+    const textColors: Record<string, string> = {
+      BRONCE: 'text-amber-600',
+      PLATA: 'text-slate-300',
+      ORO: 'text-yellow-400',
+      PLATINO: 'text-blue-400',
+      DIAMANTE: 'text-white',
+    };
+    return (rango && textColors[rango]) ?? 'text-white';
+  });
 }

@@ -66,6 +66,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                c.edhrecRank AS edhrecRank,
                c.oracleText AS oracleText,
                c.flavorText AS flavorText,
+               firstFace.rawJson AS faceRawJson,
                c.power AS power,
                c.toughness AS toughness
         FROM Card c

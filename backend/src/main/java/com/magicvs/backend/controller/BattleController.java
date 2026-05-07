@@ -1,5 +1,6 @@
 package com.magicvs.backend.controller;
 
+import com.magicvs.backend.dto.MatchResultDTO; 
 import com.magicvs.backend.service.BattleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,5 +27,15 @@ public class BattleController {
     public ResponseEntity<Void> updateBattleState(@PathVariable Long matchId, @RequestBody Object state) {
         battleService.updateGameState(matchId, state);
         return ResponseEntity.ok().build();
+    }
+
+    // NUEVO ENDPOINT: Este es el que quita el "mensaje genérico"
+    @PostMapping("/{matchId}/finish")
+    public ResponseEntity<MatchResultDTO> finishMatch(
+            @PathVariable Long matchId, 
+            @RequestParam Long winnerId) {
+        
+        MatchResultDTO result = battleService.finishMatch(matchId, winnerId);
+        return ResponseEntity.ok(result);
     }
 }

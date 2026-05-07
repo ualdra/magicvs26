@@ -4,6 +4,7 @@ import com.magicvs.backend.model.User;
 import com.magicvs.backend.service.RegistroService;
 import com.magicvs.backend.service.LoginService;
 import com.magicvs.backend.service.AuthService;
+import com.magicvs.backend.service.AchievementService;
 import com.magicvs.backend.repository.RegistroRepository;
 import com.magicvs.backend.dto.UserDirectoryResponseDto;
 import org.springframework.http.HttpStatus;
@@ -24,19 +25,22 @@ public class UserController {
     private final RegistroRepository registroRepository;
     private final com.magicvs.backend.service.RegistrationVerificationService verificationService;
     private final com.magicvs.backend.service.FriendshipService friendshipService;
+    private final AchievementService achievementService;
 
     public UserController(RegistroService registroService, 
                           LoginService loginService, 
                           AuthService authService, 
                           RegistroRepository registroRepository, 
                           com.magicvs.backend.service.RegistrationVerificationService verificationService,
-                          com.magicvs.backend.service.FriendshipService friendshipService) {
+                          com.magicvs.backend.service.FriendshipService friendshipService,
+                          AchievementService achievementService) {
         this.registroService = registroService;
         this.loginService = loginService;
         this.authService = authService;
         this.registroRepository = registroRepository;
         this.verificationService = verificationService;
         this.friendshipService = friendshipService;
+        this.achievementService = achievementService;
     }
 
     @GetMapping("/exists")
@@ -49,8 +53,20 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserDirectoryResponseDto>> getAllUsers(@RequestHeader(name = "Authorization", required = false) String authorization) {
         Long currentUserId = null;
+        User currentUser = null;
         if (authorization != null && authorization.startsWith("Bearer ")) {
             currentUserId = authService.getUserId(authorization.substring(7)).orElse(null);
+            if (currentUserId != null) {
+                currentUser = registroRepository.findById(currentUserId).orElse(null);
+            }
+        }
+
+        if (currentUser != null) {
+            achievementService.increment(currentUser, "USERS_FIRST");
+            achievementService.increment(currentUser, "USERS_10");
+            achievementService.increment(currentUser, "USERS_50");
+            achievementService.increment(currentUser, "USERS_200");
+            achievementService.increment(currentUser, "USERS_1000");
         }
 
         final Long finalCurrentUserId = currentUserId;
@@ -201,7 +217,7 @@ public class UserController {
             resp.email = user.getEmail();
             resp.displayName = user.getDisplayName();
             resp.friendTag = user.getFriendTag();
-            resp.eloRating = user.getEloRating();
+            resp.eloRating = user.getElo();
             resp.friendsCount = user.getFriendsCount();
             resp.isOnline = user.getIsOnline();
             resp.lastSeenAt = user.getLastSeenAt() != null ? user.getLastSeenAt().toString() : null;

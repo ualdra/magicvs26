@@ -6,6 +6,8 @@ export interface ProfileResponse {
   id: number;
   username: string;
   displayName: string | null;
+  profileTitle: string | null;
+  featuredAchievementKeys: string | null;
   avatarUrl: string | null;
   country: string | null;
   bio: string | null;

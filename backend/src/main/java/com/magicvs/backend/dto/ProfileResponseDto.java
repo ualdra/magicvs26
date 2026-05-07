@@ -8,6 +8,8 @@ public class ProfileResponseDto {
 	private String avatarUrl;
 	private String country;
 	private String bio;
+	private String profileTitle;
+	private String featuredAchievementKeys;
 	private Integer eloRating;
 	private Integer gamesPlayed;
 	private Integer gamesWon;
@@ -26,7 +28,7 @@ public class ProfileResponseDto {
 	}
 
 	public ProfileResponseDto(Long id, String username, String displayName, String avatarUrl, String country, String bio,
-							  Integer eloRating, Integer gamesPlayed, Integer gamesWon, Integer gamesLost,
+						  String profileTitle, String featuredAchievementKeys, Integer eloRating, Integer gamesPlayed, Integer gamesWon, Integer gamesLost,
 							  String friendTag, Integer friendsCount, Long decksCount, String email, java.time.LocalDateTime createdAt,
 							  Boolean isOnline, java.time.LocalDateTime lastSeenAt, Boolean manualRegistration, Boolean googleLinked) {
 		this.id = id;
@@ -35,6 +37,8 @@ public class ProfileResponseDto {
 		this.avatarUrl = avatarUrl;
 		this.country = country;
 		this.bio = bio;
+		this.profileTitle = profileTitle;
+		this.featuredAchievementKeys = featuredAchievementKeys;
 		this.eloRating = eloRating;
 		this.gamesPlayed = gamesPlayed;
 		this.gamesWon = gamesWon;
@@ -112,6 +116,22 @@ public class ProfileResponseDto {
 
 	public void setBio(String bio) {
 		this.bio = bio;
+	}
+
+	public String getProfileTitle() {
+		return profileTitle;
+	}
+
+	public void setProfileTitle(String profileTitle) {
+		this.profileTitle = profileTitle;
+	}
+
+	public String getFeaturedAchievementKeys() {
+		return featuredAchievementKeys;
+	}
+
+	public void setFeaturedAchievementKeys(String featuredAchievementKeys) {
+		this.featuredAchievementKeys = featuredAchievementKeys;
 	}
 
 	public Integer getEloRating() {

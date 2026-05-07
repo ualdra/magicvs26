@@ -22,11 +22,14 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final RegistroRepository userRepository;
     private final UserDailyStatsRepository dailyStatsRepository;
+    private final AchievementService achievementService;
 
-    public MatchService(MatchRepository matchRepository, RegistroRepository userRepository, UserDailyStatsRepository dailyStatsRepository) {
+    public MatchService(MatchRepository matchRepository, RegistroRepository userRepository,
+                        UserDailyStatsRepository dailyStatsRepository, AchievementService achievementService) {
         this.matchRepository = matchRepository;
         this.userRepository = userRepository;
         this.dailyStatsRepository = dailyStatsRepository;
+        this.achievementService = achievementService;
     }
 
     public List<MatchHistoryDto> getHistoryForUser(Long userId) {
@@ -113,5 +116,29 @@ public class MatchService {
             dailyStats.setGamesLost(dailyStats.getGamesLost() + 1);
         }
         dailyStatsRepository.save(dailyStats);
+
+        // 3. Comprobar logros de partidas jugadas y victorias
+        achievementService.increment(user, "FIRST_MATCH");
+        achievementService.increment(user, "PLAY_10");
+        achievementService.increment(user, "PLAY_50");
+        achievementService.increment(user, "PLAY_100");
+
+        if (won) {
+            achievementService.increment(user, "FIRST_WIN");
+            achievementService.increment(user, "WIN_10");
+            achievementService.increment(user, "WIN_50");
+            achievementService.increment(user, "WIN_100");
+        }
+
+        checkEloAchievements(user);
+    }
+
+    @Transactional
+    public void checkEloAchievements(User user) {
+        int elo = user.getEloRating();
+        if (elo >= 1400) achievementService.increment(user, "ELO_1400");
+        if (elo >= 1600) achievementService.increment(user, "ELO_1600");
+        if (elo >= 2000) achievementService.increment(user, "ELO_2000");
+        if (elo >= 2400) achievementService.increment(user, "ELO_2400");
     }
 }

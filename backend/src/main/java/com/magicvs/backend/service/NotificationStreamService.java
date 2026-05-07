@@ -1,6 +1,8 @@
 package com.magicvs.backend.service;
 
 import com.magicvs.backend.dto.NotificationResponseDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -12,12 +14,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class NotificationStreamService {
 
+    private static final Logger log = LoggerFactory.getLogger(NotificationStreamService.class);
     private static final long SSE_TIMEOUT_MS = Duration.ofMinutes(30).toMillis();
     private final ConcurrentHashMap<Long, Set<SseEmitter>> userEmitters = new ConcurrentHashMap<>();
 
     public SseEmitter subscribe(Long userId) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         userEmitters.computeIfAbsent(userId, ignored -> ConcurrentHashMap.newKeySet()).add(emitter);
+        log.info("[SSE] subscribe userId={} totalEmitters={}", userId, userEmitters.get(userId).size());
 
         emitter.onCompletion(() -> removeEmitter(userId, emitter));
         emitter.onTimeout(() -> removeEmitter(userId, emitter));
@@ -34,6 +38,7 @@ public class NotificationStreamService {
 
     public void pushNotification(Long userId, NotificationResponseDto notification) {
         Set<SseEmitter> emitters = userEmitters.get(userId);
+        log.info("[SSE] pushNotification userId={} type={} emitters={}", userId, notification.type(), emitters == null ? 0 : emitters.size());
         if (emitters == null || emitters.isEmpty()) {
             return;
         }

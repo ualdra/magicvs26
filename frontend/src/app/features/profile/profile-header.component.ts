@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProfileResponse, ProfileService } from './profile.service';
 import { Country, CountryService } from '../../core/services/country.service';
+import { UserAchievement } from '../../models/achievement.model';
 
 @Component({
   selector: 'app-profile-header',
@@ -20,6 +21,9 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
   @Input() email: string | null = null;
   @Input() registrationDate: string | null = null;
   @Input() isOwnProfile = false;
+  @Input() totalAchievements = 0;
+  @Input() unlockedAchievements: UserAchievement[] = [];
+  @Input() unlockedAchievementTitles: string[] = [];
 
   @Output() profileUpdated = new EventEmitter<ProfileResponse>();
 
@@ -44,6 +48,27 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
 
   // Buffer for editing
   editData = signal<Partial<ProfileResponse>>({});
+  unlockedAchievementsSignal = signal<UserAchievement[]>([]);
+
+  // Display featured achievements: custom selection or first 3 unlocked
+  displayedFeaturedAchievements = computed(() => {
+    const featured = this.selectedFeaturedAchievementKeys();
+    const unlocked = this.unlockedAchievementsSignal();
+    
+    if (featured && featured.length > 0) {
+      // Show achievements in the custom order
+      return unlocked.filter(a => featured.includes(a.achievement.key));
+    } else {
+      // Default: first 3 unlocked
+      return unlocked.slice(0, 3);
+    }
+  });
+
+  totalAchievementPoints = computed(() => {
+    return this.unlockedAchievementsSignal().reduce((total, item) => {
+      return total + (item.achievement.points ?? 0);
+    }, 0);
+  });
 
   // MTG Color Palette
   readonly manaColors = [
@@ -75,6 +100,10 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
   isCountryDropdownOpen = signal(false);
   countrySearch = signal('');
 
+  isProfileTitleDropdownOpen = signal(false);
+  isFeaturedAchievementsEditorOpen = signal(false);
+  selectedFeaturedAchievementKeys = signal<string[]>([]);
+
   countries = signal<Country[]>([]);
 
   ngOnInit(): void {
@@ -86,6 +115,22 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['profile']) {
       this.profileSignal.set(this.profile);
+      // Initialize selected featured achievement keys from profile when viewing other users
+      try {
+        const raw = this.profile?.featuredAchievementKeys;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          this.selectedFeaturedAchievementKeys.set(Array.isArray(parsed) ? parsed : []);
+        } else {
+          this.selectedFeaturedAchievementKeys.set([]);
+        }
+      } catch (e) {
+        this.selectedFeaturedAchievementKeys.set([]);
+      }
+    }
+
+    if (changes['unlockedAchievements']) {
+      this.unlockedAchievementsSignal.set(this.unlockedAchievements ?? []);
     }
   }
 
@@ -118,12 +163,55 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
     if (!target.closest('.country-dropdown-container')) {
       this.isCountryDropdownOpen.set(false);
     }
+    if (!target.closest('.profile-title-dropdown-container')) {
+      this.isProfileTitleDropdownOpen.set(false);
+    }
   }
 
   selectCountry(country: Country): void {
     this.editData.update(d => ({ ...d, country: country.name }));
     this.countrySearch.set(country.name);
     this.isCountryDropdownOpen.set(false);
+  }
+
+  toggleFeaturedAchievement(key: string): void {
+    this.selectedFeaturedAchievementKeys.update(keys => {
+      const idx = keys.indexOf(key);
+      if (idx === -1) {
+        // Add if not present (max 3)
+        if (keys.length < 3) {
+          return [...keys, key];
+        }
+        return keys;
+      } else {
+        // Remove if present
+        return keys.filter((_, i) => i !== idx);
+      }
+    });
+    // Store as JSON string in editData
+    this.editData.update(d => ({
+      ...d,
+      featuredAchievementKeys: JSON.stringify(this.selectedFeaturedAchievementKeys())
+    }));
+  }
+
+  openFeaturedAchievementsEditor(): void {
+    // Initialize from current profile data if available
+    if (this.profile.featuredAchievementKeys) {
+      try {
+        const keys = JSON.parse(this.profile.featuredAchievementKeys);
+        this.selectedFeaturedAchievementKeys.set(Array.isArray(keys) ? keys : []);
+      } catch (e) {
+        this.selectedFeaturedAchievementKeys.set([]);
+      }
+    } else {
+      this.selectedFeaturedAchievementKeys.set([]);
+    }
+    this.isFeaturedAchievementsEditorOpen.set(true);
+  }
+
+  closeFeaturedAchievementsEditor(): void {
+    this.isFeaturedAchievementsEditorOpen.set(false);
   }
 
   selectAvatar(seed: string): void {
@@ -142,6 +230,45 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
     this.isCountryDropdownOpen.set(true);
   }
 
+  toggleProfileTitleDropdown(): void {
+    this.isProfileTitleDropdownOpen.update(v => !v);
+  }
+
+  selectProfileTitle(title: string | null): void {
+    this.editData.update(d => ({ ...d, profileTitle: title }));
+    this.isProfileTitleDropdownOpen.set(false);
+  }
+
+  profileTitleOptions(): string[] {
+    const titles = new Set<string>();
+
+    for (const title of this.unlockedAchievementTitles) {
+      const normalized = title?.trim();
+      if (normalized) {
+        titles.add(normalized);
+      }
+    }
+
+    const currentTitle = this.profileSignal()?.profileTitle?.trim();
+    if (currentTitle) {
+      titles.add(currentTitle);
+    }
+
+    return Array.from(titles);
+  }
+
+  rankColor(rango: string | null | undefined): string {
+    const colors: Record<string, string> = {
+      BRONCE: 'text-amber-600',
+      PLATA: 'text-slate-300',
+      ORO: 'text-yellow-400',
+      PLATINO: 'text-blue-400',
+      DIAMANTE: 'text-white',
+    };
+
+    return (rango && colors[rango]) ?? 'text-zinc-400';
+  }
+
   toggleEdit(): void {
     if (this.isEditing()) {
       this.cancelEdit();
@@ -151,11 +278,25 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
 
       this.editData.set({
         displayName: p.displayName,
+        profileTitle: p.profileTitle,
+        featuredAchievementKeys: p.featuredAchievementKeys,
         avatarUrl: p.avatarUrl,
         country: p.country,
         bio: p.bio
       });
       this.countrySearch.set(p.country || '');
+      
+      // Initialize selected featured achievements
+      if (p.featuredAchievementKeys) {
+        try {
+          const keys = JSON.parse(p.featuredAchievementKeys);
+          this.selectedFeaturedAchievementKeys.set(Array.isArray(keys) ? keys : []);
+        } catch (e) {
+          this.selectedFeaturedAchievementKeys.set([]);
+        }
+      } else {
+        this.selectedFeaturedAchievementKeys.set([]);
+      }
       
       // Attempt to restore seed and color from saved URL
       if (p.avatarUrl) {
@@ -269,6 +410,8 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
           const updatedUser = {
             ...user,
             displayName: updated.displayName,
+            profileTitle: updated.profileTitle,
+            featuredAchievementKeys: updated.featuredAchievementKeys,
             avatarUrl: updated.avatarUrl,
             friendTag: updated.friendTag
           };

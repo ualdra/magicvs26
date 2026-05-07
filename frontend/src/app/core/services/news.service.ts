@@ -11,7 +11,10 @@ export class NewsService {
   private apiUrl = 'http://localhost:8080/api/news';
 
   getNews(): Observable<News[]> {
-    return this.http.get<any[]>(this.apiUrl).pipe(
+    const token = localStorage.getItem('token');
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+    return this.http.get<any[]>(this.apiUrl, headers).pipe(
       map(data => data.map(item => ({
         id: item.id,
         title: item.title,

@@ -54,6 +54,9 @@
           [email]="showPrivateDetails() ? profile()?.email ?? null : null"
           [registrationDate]="profile()?.createdAt ?? null"
           [isOwnProfile]="showPrivateDetails()"
+          [totalAchievements]="totalAchievements()"
+          [unlockedAchievements]="achievements().filter((achievement) => achievement.unlocked)"
+          [unlockedAchievementTitles]="unlockedAchievementTitles()"
         />
 
         <app-profile-deck-list

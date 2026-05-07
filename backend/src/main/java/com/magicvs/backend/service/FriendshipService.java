@@ -25,15 +25,18 @@ public class FriendshipService {
     private final RegistroRepository userRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
+    private final AchievementService achievementService;
 
     public FriendshipService(FriendshipRepository friendshipRepository,
                              RegistroRepository userRepository,
                              NotificationService notificationService,
-                             NotificationRepository notificationRepository) {
+                             NotificationRepository notificationRepository,
+                             AchievementService achievementService) {
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.notificationRepository = notificationRepository;
+        this.achievementService = achievementService;
     }
 
     @Transactional
@@ -102,6 +105,13 @@ public class FriendshipService {
         // Increment friend counts
         incrementFriendCount(sender);
         incrementFriendCount(receiver);
+
+        // Logros de amistad para ambos
+        for (User u : List.of(sender, receiver)) {
+            achievementService.increment(u, "FIRST_FRIEND");
+            achievementService.increment(u, "FRIENDS_5");
+            achievementService.increment(u, "FRIENDS_10");
+        }
 
         // Remove original request notification
         removeFriendRequestNotification(receiverId, senderId);

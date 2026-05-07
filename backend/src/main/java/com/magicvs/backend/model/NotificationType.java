@@ -6,5 +6,6 @@ public enum NotificationType {
     BATTLE_INVITE,
     MATCH_FOUND,
     MESSAGES_READ,
-    SYSTEM
+    SYSTEM,
+    ACHIEVEMENT_UNLOCKED
 }

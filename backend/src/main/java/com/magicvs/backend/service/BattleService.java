@@ -3,9 +3,11 @@ package com.magicvs.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.magicvs.backend.dto.MatchResultDTO;
 import com.magicvs.backend.model.*;
 import com.magicvs.backend.repository.DeckRepository;
 import com.magicvs.backend.repository.MatchRepository;
+import com.magicvs.backend.repository.RegistroRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,6 +23,9 @@ public class BattleService {
 
     private final MatchRepository matchRepository;
     private final DeckRepository deckRepository;
+    private final RegistroRepository registroRepository;
+    private final EloService eloService;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -63,10 +67,64 @@ public class BattleService {
             state.setActionLog(new ArrayList<>());
         }
         state.getActionLog().add(message);
-        // Opcional: limitar el historial a los últimos 50 mensajes para rendimiento
         if (state.getActionLog().size() > 50) {
             state.getActionLog().remove(0);
         }
+    }
+
+    @Transactional
+    public MatchResultDTO finishMatch(Long matchId, Long winnerId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        
+        if ("FINISHED".equals(match.getStatus())) {
+            log.warn("Match {} already finished", matchId);
+            return null; 
+        }
+
+        User p1 = match.getPlayer1();
+        User p2 = match.getPlayer2();
+
+        // Guardar ELOs previos para el DTO informativo
+        int oldEloP1 = p1.getElo();
+        int oldEloP2 = p2.getElo();
+
+        // Determinar ganador y perdedor
+        User winner = p1.getId().equals(winnerId) ? p1 : p2;
+        User loser = p1.getId().equals(winnerId) ? p2 : p1;
+
+        // Calcular nuevos ELOs
+        int newEloWinner = eloService.calculateNewElo(winner, loser, true);
+        int newEloLoser = eloService.calculateNewElo(loser, winner, false);
+
+        // Actualizar entidades
+        winner.setElo(newEloWinner);
+        winner.setGamesPlayed(winner.getGamesPlayed() + 1);
+        loser.setElo(newEloLoser);
+        loser.setGamesPlayed(loser.getGamesPlayed() + 1);
+
+        // Persistir cambios 
+        registroRepository.save(winner);
+        registroRepository.save(loser);
+
+        // Marcar match como finalizado
+        match.setStatus(MatchStatus.FINISHED);
+        matchRepository.save(match);
+
+        // Construir resultado para el Frontend
+        MatchResultDTO result = new MatchResultDTO();
+        result.setPlayer1Id(p1.getId());
+        result.setPlayer2Id(p2.getId());
+        result.setWinnerId(winnerId);
+        result.setEloBeforeP1(oldEloP1);
+        result.setEloAfterP1(p1.getElo());
+        result.setEloBeforeP2(oldEloP2);
+        result.setEloAfterP2(p2.getElo());
+
+        log.info("Match {} finished. Winner: {} (ELO: {} -> {})", 
+                matchId, winner.getUsername(), oldEloP1, newEloWinner);
+        
+        return result;
     }
 
     private PlayerGameState initializePlayerState(User user, Long deckId) {
@@ -90,7 +148,6 @@ public class BattleService {
         
         Collections.shuffle(library);
         
-        // Draw initial 7 cards
         List<CardState> hand = new ArrayList<>();
         for (int i = 0; i < 7 && !library.isEmpty(); i++) {
             hand.add(library.remove(0));
@@ -113,14 +170,12 @@ public class BattleService {
         cs.setCardId(card.getId());
         cs.setName(card.getName());
         
-        // Handle DFC Image: fallback to first face if top-level is null
         String imageUrl = card.getNormalImageUri();
         if (imageUrl == null && card.getFaces() != null && !card.getFaces().isEmpty()) {
             imageUrl = card.getFaces().get(0).getNormalImageUri();
         }
         cs.setImageUrl(imageUrl);
         
-        // Type Line fallback for DFCs
         String typeLine = card.getTypeLine();
         if (typeLine == null && card.getFaces() != null && !card.getFaces().isEmpty()) {
             typeLine = card.getFaces().get(0).getTypeLine();
@@ -129,16 +184,14 @@ public class BattleService {
         cs.setTapped(false);
         cs.setAttacking(false);
         cs.setBlocking(false);
-        cs.setEnteredFieldTurn(0); // Will be set by engine when played
+        cs.setEnteredFieldTurn(0);
 
-        // Oracle Text fallback for DFCs
         String oracleText = card.getOracleText();
         if (oracleText == null && card.getFaces() != null && !card.getFaces().isEmpty()) {
             oracleText = card.getFaces().get(0).getOracleText();
         }
         cs.setOracleText(oracleText);
 
-        // Handle DFC Mana Cost: fallback to first face if top-level is null
         String rawManaCost = card.getManaCost();
         if ((rawManaCost == null || rawManaCost.isEmpty()) && card.getFaces() != null && !card.getFaces().isEmpty()) {
             rawManaCost = card.getFaces().get(0).getManaCost();
@@ -153,7 +206,6 @@ public class BattleService {
         }
         cs.setManaCost(symbols);
 
-        // Power and Toughness
         cs.setPower(card.getPower());
         cs.setToughness(card.getToughness());
         if (cs.getPower() == null && card.getFaces() != null && !card.getFaces().isEmpty()) {
@@ -161,10 +213,9 @@ public class BattleService {
             cs.setToughness(card.getFaces().get(0).getToughness());
         }
 
-        // Handle produced mana
         String producedJson = card.getProducedManaJson();
         if ((producedJson == null || producedJson.equals("[]")) && card.getFaces() != null && !card.getFaces().isEmpty()) {
-            producedJson = card.getFaces().get(0).getColorsJson(); // Fallback to colors if produced is missing
+            producedJson = card.getFaces().get(0).getColorsJson();
         }
         
         List<String> produced = new ArrayList<>();
@@ -175,9 +226,7 @@ public class BattleService {
                     produced.add(n.asText());
                 }
             }
-        } catch (Exception e) {
-            // Ignore parse errors
-        }
+        } catch (Exception e) {}
         cs.setProducedMana(produced);
         
         return cs;
@@ -211,7 +260,7 @@ public class BattleService {
         GameState state = getGameState(matchId);
         if (state == null) return null;
 
-        log.info("Processing action for log: {} from user {}", action.getType(), action.getPlayerId());
+        log.info("Processing action: {} from user {}", action.getType(), action.getPlayerId());
         
         switch (action.getType().toUpperCase()) {
             case "PLAY_CARD":
@@ -236,7 +285,7 @@ public class BattleService {
                 handlePassPriority(state, action.getPlayerId());
                 break;
             case "CONCEDE":
-                handleConcede(state, action.getPlayerId());
+                handleConcede(matchId, state, action.getPlayerId());
                 break;
             default:
                 break;
@@ -246,12 +295,20 @@ public class BattleService {
         return state;
     }
 
-    private void handleConcede(GameState state, String playerId) {
+    private void handleConcede(Long matchId, GameState state, String playerId) {
         String winnerId = playerId.equals(state.getPlayer1().getId()) ? state.getPlayer2().getId() : state.getPlayer1().getId();
         state.setWinnerId(winnerId);
+        
         PlayerGameState concedingPlayer = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
         addToLog(state, concedingPlayer.getUsername() + " se ha rendido.");
         addToLog(state, "--- Partida Finalizada ---");
+
+        // Llamar a la lógica de ELO de tu compañero
+        try {
+            finishMatch(matchId, Long.parseLong(winnerId));
+        } catch (Exception e) {
+            log.error("Failed to finish match with ELO calculation", e);
+        }
     }
 
     private void handleTapCard(GameState state, String playerId, String cardId, String manaProduced) {
@@ -295,7 +352,6 @@ public class BattleService {
 
     private void handlePlayCard(GameState state, String playerId, String cardId) {
         PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
-        // Buscamos la carta en la mano para el log
         CardState card = p.getHand().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
         
         if (card != null) {
@@ -358,6 +414,7 @@ public class BattleService {
         private Object pendingManaChoice;
         private Object pendingTarget;
         private List<String> actionLog;
+        private String winnerId;
 
         public static Class<GameState> getReturnType() {
             return GameState.class;
@@ -369,7 +426,7 @@ public class BattleService {
         private String id;
         private String sourceCardId;
         private String controllerId;
-        private String type; // SPELL, ABILITY, TRIGGER
+        private String type; 
         private String name;
         private CardState card;
         private String imageUrl;
@@ -415,8 +472,8 @@ public class BattleService {
 
     @Data
     public static class CardState {
-        private String id; // Unique instance ID for this match
-        private Long cardId; // Reference to Card entity
+        private String id;
+        private Long cardId;
         private String name;
         private String imageUrl;
         private String type;

@@ -5,15 +5,19 @@ public class UpdateProfileDto {
     private String avatarUrl;
     private String country;
     private String bio;
+    private String profileTitle;
+    private String featuredAchievementKeys;
 
     public UpdateProfileDto() {
     }
 
-    public UpdateProfileDto(String displayName, String avatarUrl, String country, String bio) {
+    public UpdateProfileDto(String displayName, String avatarUrl, String country, String bio, String profileTitle, String featuredAchievementKeys) {
         this.displayName = displayName;
         this.avatarUrl = avatarUrl;
         this.country = country;
         this.bio = bio;
+        this.profileTitle = profileTitle;
+        this.featuredAchievementKeys = featuredAchievementKeys;
     }
 
     public String getDisplayName() {
@@ -46,5 +50,21 @@ public class UpdateProfileDto {
 
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public String getProfileTitle() {
+        return profileTitle;
+    }
+
+    public void setProfileTitle(String profileTitle) {
+        this.profileTitle = profileTitle;
+    }
+
+    public String getFeaturedAchievementKeys() {
+        return featuredAchievementKeys;
+    }
+
+    public void setFeaturedAchievementKeys(String featuredAchievementKeys) {
+        this.featuredAchievementKeys = featuredAchievementKeys;
     }
 }

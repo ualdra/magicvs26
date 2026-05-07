@@ -29,11 +29,13 @@ public class UserProfileService {
     private final RegistroRepository registroRepository;
     private final DeckRepository deckRepository;
     private final AuthService authService;
+    private final AchievementService achievementService;
 
-    public UserProfileService(RegistroRepository registroRepository, DeckRepository deckRepository, AuthService authService) {
+    public UserProfileService(RegistroRepository registroRepository, DeckRepository deckRepository, AuthService authService, AchievementService achievementService) {
         this.registroRepository = registroRepository;
         this.deckRepository = deckRepository;
         this.authService = authService;
+        this.achievementService = achievementService;
     }
 
     public ProfileResponseDto getProfileByUserId(Long userId) {
@@ -59,9 +61,37 @@ public class UserProfileService {
         if (dto.getAvatarUrl() != null) user.setAvatarUrl(dto.getAvatarUrl());
         if (dto.getCountry() != null) user.setCountry(dto.getCountry());
         if (dto.getBio() != null) user.setBio(dto.getBio());
+        if (dto.getProfileTitle() != null) {
+            String requestedTitle = dto.getProfileTitle().trim();
+            if (requestedTitle.isEmpty()) {
+                user.setProfileTitle(null);
+            } else if (!isUnlockedProfileTitle(user, requestedTitle)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El título seleccionado no está desbloqueado");
+            } else {
+                user.setProfileTitle(requestedTitle);
+            }
+        }
+
+        if (dto.getFeaturedAchievementKeys() != null) {
+            String featured = dto.getFeaturedAchievementKeys().trim();
+            if (featured.isEmpty()) {
+                user.setFeaturedAchievementKeys(null);
+            } else {
+                // Validate that all featured achievements are unlocked
+                validateFeaturedAchievements(user, featured);
+                user.setFeaturedAchievementKeys(featured);
+            }
+        }
 
         user.setUpdatedAt(java.time.LocalDateTime.now());
         User saved = registroRepository.save(user);
+
+        // Increment profile-edit achievement
+        try {
+            achievementService.increment(saved, "PROFILE_EDIT");
+        } catch (Exception ignored) {
+            // Don't fail profile update if achievement increment fails
+        }
 
         return toProfileResponse(saved, deckRepository.countByUserId(userId));
     }
@@ -135,6 +165,8 @@ public class UserProfileService {
                 user.getAvatarUrl(),
                 user.getCountry(),
                 user.getBio(),
+                user.getProfileTitle(),
+                user.getFeaturedAchievementKeys(),
                 user.getEloRating(),
                 user.getGamesPlayed(),
                 user.getGamesWon(),
@@ -149,6 +181,39 @@ public class UserProfileService {
                 user.getManualRegistration(),
                 user.getGoogleId() != null
         );
+    }
+
+    private boolean isUnlockedProfileTitle(User user, String requestedTitle) {
+        return achievementService.getUnlockedAchievements(user).stream()
+                .map(achievement -> achievement.getAchievement().getName())
+                .filter(title -> title != null && !title.isBlank())
+                .anyMatch(title -> title.equals(requestedTitle));
+    }
+
+    private void validateFeaturedAchievements(User user, String featuredKeysJson) {
+        try {
+            java.util.List<String> requestedKeys = java.util.Arrays.asList(
+                    featuredKeysJson.replaceAll("[\\[\\]\"]", "").split(",")
+            );
+            requestedKeys = requestedKeys.stream()
+                    .map(String::trim)
+                    .filter(k -> !k.isBlank())
+                    .toList();
+            
+            java.util.Set<String> unlockedKeys = achievementService.getUnlockedAchievements(user).stream()
+                    .map(achievement -> achievement.getAchievement().getKey())
+                    .collect(java.util.stream.Collectors.toSet());
+            
+            for (String key : requestedKeys) {
+                if (!unlockedKeys.contains(key)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                            "El logro '" + key + "' no está desbloqueado");
+                }
+            }
+        } catch (Exception e) {
+            if (e instanceof ResponseStatusException) throw e;
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato inválido de logros destacados");
+        }
     }
 
     private UserDeckSummaryDto toDeckSummary(Deck deck) {

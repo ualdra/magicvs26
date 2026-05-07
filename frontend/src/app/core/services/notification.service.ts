@@ -213,6 +213,8 @@ export class NotificationService {
         return 'Invitación a batalla';
       case 'MATCH_FOUND':
         return '¡Vámonos a la Arena!';
+      case 'ACHIEVEMENT_UNLOCKED':
+        return '¡Logro desbloqueado!';
       default:
         return 'Notificación';
     }
@@ -235,6 +237,13 @@ export class NotificationService {
         return 'Un jugador te ha retado a duelo.';
       case 'MATCH_FOUND':
         return 'Se ha encontrado un rival de tu nivel. ¡Mucha suerte!';
+      case 'ACHIEVEMENT_UNLOCKED': {
+        const name = notification.data?.['achievementName'];
+        const points = notification.data?.['points'];
+        return typeof name === 'string'
+          ? `${name} — +${points} pts`
+          : 'Has conseguido un nuevo logro.';
+      }
       default:
         return 'Tienes actividad reciente en MagicVS.';
     }
