@@ -33,15 +33,15 @@
           type="text"
           [value]="searchQuery()"
           (input)="onSearchChange($any($event.target).value)"
-          placeholder='Nombre de mazo o de una carta que este en el mazo, o maná (p.ej. "poco maná", "midrange", "mucho maná")'
+          placeholder="Nombre del mazo o de una carta que esté en él"
           class="w-full rounded-xl border border-outline-variant bg-surface/80 py-2.5 pl-9 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
         />
       </div>
-      <!-- Color filter + mana keyword chips -->
+      <!-- Color filter + mana curve filters -->
       <div class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
         <p class="mt-0.5 text-sm text-on-surface/65">Tipo de maná: </p>
 
-        <!-- Color buttons (MTG pip style, igual que /profile Identidad) -->
+        <!-- Color buttons (MTG pip style) -->
         <div class="flex items-center gap-2">
           @for (color of manaColors; track color) {
             <button
@@ -64,20 +64,32 @@
 
         <!-- Mana curve quick-filters -->
         <div class="flex flex-wrap gap-1.5">
-          <button (click)="onSearchChange('poco maná')"
-            class="rounded-full border border-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-300 transition hover:opacity-80">
+          <button (click)="setManaFilter('low')"
+            class="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+            [class.border-emerald-400]="true"
+            [class.text-emerald-300]="true"
+            [class.bg-emerald-500/25]="manaFilter() === 'low'"
+            [class.bg-emerald-500/10]="manaFilter() !== 'low'">
             Poco maná
           </button>
-          <button (click)="onSearchChange('midrange')"
-            class="rounded-full border border-amber-400 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-medium text-amber-300 transition hover:opacity-80">
+          <button (click)="setManaFilter('mid')"
+            class="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+            [class.border-amber-400]="true"
+            [class.text-amber-300]="true"
+            [class.bg-amber-500/25]="manaFilter() === 'mid'"
+            [class.bg-amber-500/10]="manaFilter() !== 'mid'">
             Midrange
           </button>
-          <button (click)="onSearchChange('mucho maná')"
-            class="rounded-full border border-rose-400 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-medium text-rose-300 transition hover:opacity-80">
+          <button (click)="setManaFilter('high')"
+            class="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+            [class.border-rose-400]="true"
+            [class.text-rose-300]="true"
+            [class.bg-rose-500/25]="manaFilter() === 'high'"
+            [class.bg-rose-500/10]="manaFilter() !== 'high'">
             Mucho maná
           </button>
-          @if (searchQuery()) {
-            <button (click)="onSearchChange('')"
+          @if (manaFilter()) {
+            <button (click)="setManaFilter(null)"
               class="rounded-full border border-outline-variant/50 px-2.5 py-0.5 text-[10px] text-on-surface/50 transition hover:text-on-surface">
               ✕ Quitar filtro
             </button>

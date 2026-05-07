@@ -59,6 +59,7 @@ export class PublicDecksModalComponent implements OnInit {
   loadError = signal<string | null>(null);
   copyError = signal<string | null>(null);
   searchQuery = signal('');
+  manaFilter = signal<'low' | 'mid' | 'high' | null>(null);
   copyingId = signal<number | null>(null);
   copiedIds = signal<Set<number>>(new Set());
   activeColors = signal<string[]>([]);
@@ -67,31 +68,23 @@ export class PublicDecksModalComponent implements OnInit {
   previewData = signal<PreviewDeck | null>(null);
   loadingPreview = signal(false);
 
-  private static readonly LOW_MANA_KEYWORDS  = ['poco maná', 'poco mana', 'bajo maná', 'bajo mana', 'bajo coste', 'aggro', 'rapido', 'rápido', 'low mana', 'low cost'];
-  private static readonly HIGH_MANA_KEYWORDS = ['mucho maná', 'mucho mana', 'alto maná', 'alto mana', 'alto coste', 'control', 'lento', 'high mana', 'high cost'];
-  private static readonly MID_MANA_KEYWORDS  = ['midrange', 'medio maná', 'medio mana', 'mid mana'];
-
   readonly filteredDecks = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const colors = this.activeColors();
-
-    const isLow  = !!q && PublicDecksModalComponent.LOW_MANA_KEYWORDS.some(k => q.includes(k));
-    const isHigh = !!q && PublicDecksModalComponent.HIGH_MANA_KEYWORDS.some(k => q.includes(k));
-    const isMid  = !!q && PublicDecksModalComponent.MID_MANA_KEYWORDS.some(k => q.includes(k));
+    const mana = this.manaFilter();
 
     return this.decks().filter(deck => {
-      // Color filter: colorless decks always shown; otherwise all selected colors must be present (AND)
       if (colors.length > 0) {
         const deckColors = deck.colorIdentity ?? [];
         if (deckColors.length > 0 && !colors.every(c => deckColors.includes(c))) return false;
       }
 
-      if (!q) return true;
-
       const cmc = deck.averageCmc ?? 0;
-      if (isLow)  return cmc <= 2.0;
-      if (isHigh) return cmc >= 3.5;
-      if (isMid)  return cmc > 2.0 && cmc < 3.5;
+      if (mana === 'low'  && cmc > 2.0)  return false;
+      if (mana === 'high' && cmc < 3.5)  return false;
+      if (mana === 'mid'  && (cmc <= 2.0 || cmc >= 3.5)) return false;
+
+      if (!q) return true;
 
       const matchesName = deck.name.toLowerCase().includes(q);
       const matchesCard = (deck.cardNames ?? []).some(cn => cn.toLowerCase().includes(q));
@@ -199,6 +192,11 @@ export class PublicDecksModalComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
+  }
+
+  setManaFilter(filter: 'low' | 'mid' | 'high' | null): void {
+    this.manaFilter.set(this.manaFilter() === filter ? null : filter);
+    
   }
 
   selectDeck(deck: PublicDeck): void {
