@@ -19,6 +19,7 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   gameState: GameState | null = null;
   private subscription: Subscription | null = null;
   protected readonly Math = Math;
+  public showHistory = false;
   showVictoryModal = false;
   matchId: string | null = null;
   me: any = null;

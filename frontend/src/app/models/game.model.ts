@@ -103,4 +103,5 @@ export interface GameState {
     attackerId: string;
     blockerIds: string[];
   }[];
+  actionLog?: string[];
 }

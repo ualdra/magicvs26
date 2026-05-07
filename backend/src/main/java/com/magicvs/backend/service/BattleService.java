@@ -41,9 +41,13 @@ public class BattleService {
         state.setCurrentPhase("UNTAP");
         state.setTurnCount(1);
         state.setAnimationStatus("IDLE");
+        state.setActionLog(new ArrayList<>());
         
         state.setPlayer1(initializePlayerState(match.getPlayer1(), d1Id));
         state.setPlayer2(initializePlayerState(match.getPlayer2(), d2Id));
+        
+        addToLog(state, "--- ¡Comienza la batalla! ---");
+        addToLog(state, "Turno 1: " + state.getPlayer1().getUsername());
         
         try {
             match.setLiveState(objectMapper.writeValueAsString(state));
@@ -51,6 +55,17 @@ public class BattleService {
             log.info("Initialized game state for match {}", matchId);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize game state for match {}", matchId, e);
+        }
+    }
+
+    private void addToLog(GameState state, String message) {
+        if (state.getActionLog() == null) {
+            state.setActionLog(new ArrayList<>());
+        }
+        state.getActionLog().add(message);
+        // Opcional: limitar el historial a los últimos 50 mensajes para rendimiento
+        if (state.getActionLog().size() > 50) {
+            state.getActionLog().remove(0);
         }
     }
 
@@ -191,6 +206,130 @@ public class BattleService {
         }
     }
 
+    @Transactional
+    public GameState processAction(Long matchId, com.magicvs.backend.dto.BattleAction action) {
+        GameState state = getGameState(matchId);
+        if (state == null) return null;
+
+        log.info("Processing action for log: {} from user {}", action.getType(), action.getPlayerId());
+        
+        switch (action.getType().toUpperCase()) {
+            case "PLAY_CARD":
+                handlePlayCard(state, action.getPlayerId(), (String) action.getPayload().get("cardId"));
+                break;
+            case "TAP_CARD":
+                handleTapCard(state, action.getPlayerId(), (String) action.getPayload().get("cardId"), (String) action.getPayload().get("manaProduced"));
+                break;
+            case "DECLARE_ATTACKER":
+                handleDeclareAttacker(state, action.getPlayerId(), (String) action.getPayload().get("cardId"), (String) action.getPayload().get("targetId"));
+                break;
+            case "DECLARE_BLOCKER":
+                handleDeclareBlocker(state, action.getPlayerId(), (String) action.getPayload().get("cardId"), (String) action.getPayload().get("targetId"));
+                break;
+            case "LIFE_CHANGE":
+                handleLifeChange(state, action.getPlayerId(), (Integer) action.getPayload().get("amount"), (String) action.getPayload().get("targetPlayerId"));
+                break;
+            case "NEXT_PHASE":
+                nextPhase(state);
+                break;
+            case "PASS_PRIORITY":
+                handlePassPriority(state, action.getPlayerId());
+                break;
+            default:
+                break;
+        }
+
+        updateGameState(matchId, state);
+        return state;
+    }
+
+    private void handleTapCard(GameState state, String playerId, String cardId, String manaProduced) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getField().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        
+        if (card != null) {
+            String msg = p.getUsername() + " gira " + card.getName();
+            if (manaProduced != null && !manaProduced.isEmpty()) {
+                msg += " y añade " + manaProduced;
+            }
+            addToLog(state, msg);
+        }
+    }
+
+    private void handleDeclareAttacker(GameState state, String playerId, String cardId, String targetId) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getField().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        
+        if (card != null) {
+            addToLog(state, p.getUsername() + " ataca con " + card.getName() + " a " + (targetId != null ? targetId : "oponente"));
+        }
+    }
+
+    private void handleDeclareBlocker(GameState state, String playerId, String cardId, String targetId) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getField().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        
+        if (card != null) {
+            addToLog(state, p.getUsername() + " bloquea con " + card.getName() + " a " + targetId);
+        }
+    }
+
+    private void handleLifeChange(GameState state, String playerId, Integer amount, String targetPlayerId) {
+        PlayerGameState target = state.getPlayer1().getId().equals(targetPlayerId) ? state.getPlayer1() : state.getPlayer2();
+        if (amount != null) {
+            String verb = amount < 0 ? " pierde " : " gana ";
+            addToLog(state, target.getUsername() + verb + Math.abs(amount) + " de vida.");
+        }
+    }
+
+    private void handlePlayCard(GameState state, String playerId, String cardId) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        // Buscamos la carta en la mano para el log
+        CardState card = p.getHand().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        
+        if (card != null) {
+            addToLog(state, p.getUsername() + " lanza " + card.getName());
+        }
+    }
+
+    private void handlePassPriority(GameState state, String playerId) {
+        addToLog(state, "Jugador " + playerId + " pasa prioridad.");
+    }
+
+    private void nextPhase(GameState state) {
+        String[] phases = {"MULLIGAN", "UNTAP", "UPKEEP", "DRAW", "MAIN 1", "COMBAT", "MAIN 2", "END"};
+        String current = state.getCurrentPhase();
+        int currentIndex = -1;
+        for (int i = 0; i < phases.length; i++) {
+            if (phases[i].equals(current)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= phases.length) {
+            rotateTurn(state);
+        } else {
+            String nextPhase = phases[nextIndex];
+            state.setCurrentPhase(nextPhase);
+            addToLog(state, "Fase: " + nextPhase);
+        }
+    }
+
+    private void rotateTurn(GameState state) {
+        String nextPlayer = state.getActivePlayerId().equals(state.getPlayer1().getId()) 
+                ? state.getPlayer2().getId() 
+                : state.getPlayer1().getId();
+        state.setActivePlayerId(nextPlayer);
+        state.setTurnCount(state.getTurnCount() + 1);
+        state.setCurrentPhase("UNTAP");
+        
+        PlayerGameState active = nextPlayer.equals(state.getPlayer1().getId()) ? state.getPlayer1() : state.getPlayer2();
+        addToLog(state, "--- Turno " + state.getTurnCount() + " (" + active.getUsername() + ") ---");
+        addToLog(state, "Fase: UNTAP");
+    }
+
     @Data
     public static class GameState {
         private String matchId;
@@ -207,6 +346,7 @@ public class BattleService {
         private List<PendingBlockerOrder> pendingBlockerOrders;
         private Object pendingManaChoice;
         private Object pendingTarget;
+        private List<String> actionLog;
 
         public static Class<GameState> getReturnType() {
             return GameState.class;
