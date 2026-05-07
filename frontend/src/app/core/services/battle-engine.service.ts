@@ -109,6 +109,20 @@ export class BattleEngineService {
     this.pollSubscription?.unsubscribe();
   }
 
+  concede(): void {
+    const state = this.gameStateSubject.value;
+    if (!state) return;
+    const myId = this.userService.getCurrentUser()?.id?.toString();
+    
+    this.battleService.processAction(state.matchId, {
+      type: 'CONCEDE',
+      playerId: myId,
+      payload: {}
+    }).subscribe(newState => {
+      this.gameStateSubject.next(newState);
+    });
+  }
+
   async startGame(): Promise<void> {
     const state = this.gameStateSubject.value;
     if (!state) return;

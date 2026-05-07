@@ -24,9 +24,14 @@ export class BattleService {
     console.log('📤 Pushing state to server:', {
       phase: state.currentPhase,
       pendingOrders: state.pendingBlockerOrders?.length || 0,
-      attacker: state.player1.field.find(c => c.orderedBlockers)?.name || state.player2.field.find(c => c.orderedBlockers)?.name
     });
     return this.http.post<void>(`${this.apiUrl}/${matchId}/state`, state);
+  }
+
+  processAction(matchId: string, action: any): Observable<GameState> {
+    return this.http.post<any>(`${this.apiUrl}/${matchId}/action`, action).pipe(
+      map(state => this.mapBackendToFrontend(state, this.userService.getCurrentUser()?.id || ''))
+    );
   }
 
   private mapBackendToFrontend(backend: any, myId: string): GameState {
@@ -46,7 +51,9 @@ export class BattleService {
       player2: this.mapPlayerState(backend.player2),
       landsPlayedThisTurn: backend.landsPlayedThisTurn || 0,
       pendingManaChoice: backend.pendingManaChoice,
-      pendingBlockerOrders: backend.pendingBlockerOrders
+      pendingBlockerOrders: backend.pendingBlockerOrders,
+      actionLog: backend.actionLog || [],
+      winnerId: backend.winnerId
     };
   }
 

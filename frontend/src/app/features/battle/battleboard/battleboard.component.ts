@@ -124,7 +124,9 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   }
 
   onConcede(): void {
-    this.showVictoryModal = true;
+    if (confirm('¿Estás seguro de que quieres conceder la batalla?')) {
+      this.engine.concede();
+    }
   }
 
   getColorCode(color: string): string {

@@ -235,12 +235,23 @@ public class BattleService {
             case "PASS_PRIORITY":
                 handlePassPriority(state, action.getPlayerId());
                 break;
+            case "CONCEDE":
+                handleConcede(state, action.getPlayerId());
+                break;
             default:
                 break;
         }
 
         updateGameState(matchId, state);
         return state;
+    }
+
+    private void handleConcede(GameState state, String playerId) {
+        String winnerId = playerId.equals(state.getPlayer1().getId()) ? state.getPlayer2().getId() : state.getPlayer1().getId();
+        state.setWinnerId(winnerId);
+        PlayerGameState concedingPlayer = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        addToLog(state, concedingPlayer.getUsername() + " se ha rendido.");
+        addToLog(state, "--- Partida Finalizada ---");
     }
 
     private void handleTapCard(GameState state, String playerId, String cardId, String manaProduced) {
