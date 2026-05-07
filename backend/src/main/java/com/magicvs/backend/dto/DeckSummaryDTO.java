@@ -1,6 +1,7 @@
 package com.magicvs.backend.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class DeckSummaryDTO {
 
@@ -11,6 +12,8 @@ public class DeckSummaryDTO {
     private LocalDateTime updatedAt;
     private Boolean isPublic;
     private String mainImageUrl;
+    private List<String> cardNames;
+    private Double averageCmc;
 
     public DeckSummaryDTO() {
     }
@@ -79,5 +82,31 @@ public class DeckSummaryDTO {
 
     public void setMainImageUrl(String mainImageUrl) {
         this.mainImageUrl = mainImageUrl;
+    }
+
+    public List<String> getCardNames() {
+        return cardNames;
+    }
+
+    public void setCardNames(List<String> cardNames) {
+        this.cardNames = cardNames;
+    }
+
+    public Double getAverageCmc() {
+        return averageCmc;
+    }
+
+    public void setAverageCmc(Double averageCmc) {
+        this.averageCmc = averageCmc;
+    }
+
+    private List<String> colorIdentity;
+
+    public List<String> getColorIdentity() {
+        return colorIdentity;
+    }
+
+    public void setColorIdentity(List<String> colorIdentity) {
+        this.colorIdentity = colorIdentity;
     }
 }

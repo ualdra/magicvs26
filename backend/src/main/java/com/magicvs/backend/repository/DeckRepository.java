@@ -15,6 +15,9 @@ public interface DeckRepository extends JpaRepository<Deck, Long> {
     @Query("SELECT d FROM Deck d LEFT JOIN FETCH d.cards c LEFT JOIN FETCH c.card WHERE d.id = :deckId")
     java.util.Optional<Deck> findByIdWithCards(@Param("deckId") Long deckId);
 
+    @Query("SELECT d FROM Deck d LEFT JOIN FETCH d.cards c LEFT JOIN FETCH c.card WHERE d.isPublic = true ORDER BY d.updatedAt DESC")
+    List<Deck> findPublicDecksOrderByUpdatedAtDesc();
+
     boolean existsByIdAndUserId(Long deckId, Long userId);
 
     long countByUserId(Long userId);

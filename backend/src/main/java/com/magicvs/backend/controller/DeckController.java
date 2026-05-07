@@ -71,6 +71,11 @@ public ResponseEntity<DeckResponseDTO> createDeck(
         return ResponseEntity.ok(deckService.getUserDecks(userId));
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<List<DeckSummaryDTO>> getPublicDecks() {
+        return ResponseEntity.ok(deckService.getPublicDecks());
+    }
+
     @DeleteMapping("/{deckId}")
     public ResponseEntity<Void> deleteDeck(
         @PathVariable Long deckId,

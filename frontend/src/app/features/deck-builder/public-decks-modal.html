@@ -1,0 +1,287 @@
+<div
+  class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+  (click)="onBackdropClick($event)"
+>
+  <!-- overflow-hidden es imprescindible: sin él max-height no acota el flex-col y los hijos flex-1 no saben su tamaño -->
+  <div class="modal-panel relative flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-outline-variant/70 bg-surface-container-high/95 shadow-2xl shadow-black/40 backdrop-blur-xl">
+
+    <!-- Header (fixed) -->
+    <div class="flex shrink-0 items-center justify-between border-b border-outline-variant/60 px-6 py-4">
+      <div>
+        <p class="font-headline text-xs uppercase tracking-[0.2em] text-secondary/90">Comunidad</p>
+        <h2 class="mt-1 font-headline text-2xl font-bold text-on-surface">Mazos Públicos</h2>
+        <p class="mt-0.5 text-sm text-on-surface/65">Explora, previsualiza y guarda mazos de otros jugadores</p>
+      </div>
+      <button
+        (click)="close.emit()"
+        class="rounded-xl border border-outline-variant/60 bg-surface/70 p-2 text-on-surface/70 transition hover:bg-surface hover:text-on-surface"
+        aria-label="Cerrar"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Search bar (fixed) -->
+    <div class="shrink-0 border-b border-outline-variant/60 px-6 py-3">
+      <div class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="onSearchChange($any($event.target).value)"
+          placeholder="Nombre del mazo o de una carta que esté en él"
+          class="w-full rounded-xl border border-outline-variant bg-surface/80 py-2.5 pl-9 pr-4 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+      <!-- Color filter + mana curve filters -->
+      <div class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <p class="mt-0.5 text-sm text-on-surface/65">Tipo de maná: </p>
+
+        <!-- Color buttons (MTG pip style) -->
+        <div class="flex items-center gap-2">
+          @for (color of manaColors; track color) {
+            <button
+              (click)="toggleColor(color)"
+              [title]="getManaTitle(color)"
+              class="h-5 w-5 rounded-full border-2 transition-all duration-200 hover:scale-110"
+              [ngClass]="getManaButtonClass(color)"
+            ></button>
+          }
+          @if (activeColors().length > 0) {
+            <button (click)="clearColors()"
+              class="ml-1 rounded-full border border-outline-variant/50 px-2 py-0.5 text-[10px] text-on-surface/50 transition hover:text-on-surface">
+              ✕ Quitar filtro
+            </button>
+          }
+        </div>
+
+        <div class="h-4 w-px bg-outline-variant/50 hidden sm:block"></div>
+        <p class="mt-0.5 text-sm text-on-surface/65">Cantidad de maná: </p>
+
+        <!-- Mana curve quick-filters -->
+        <div class="flex flex-wrap gap-1.5">
+          <button (click)="setManaFilter('low')"
+            class="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+            [class.border-emerald-400]="true"
+            [class.text-emerald-300]="true"
+            [class.bg-emerald-500/25]="manaFilter() === 'low'"
+            [class.bg-emerald-500/10]="manaFilter() !== 'low'">
+            Poco maná
+          </button>
+          <button (click)="setManaFilter('mid')"
+            class="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+            [class.border-amber-400]="true"
+            [class.text-amber-300]="true"
+            [class.bg-amber-500/25]="manaFilter() === 'mid'"
+            [class.bg-amber-500/10]="manaFilter() !== 'mid'">
+            Midrange
+          </button>
+          <button (click)="setManaFilter('high')"
+            class="rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition hover:opacity-80"
+            [class.border-rose-400]="true"
+            [class.text-rose-300]="true"
+            [class.bg-rose-500/25]="manaFilter() === 'high'"
+            [class.bg-rose-500/10]="manaFilter() !== 'high'">
+            Mucho maná
+          </button>
+          @if (manaFilter()) {
+            <button (click)="setManaFilter(null)"
+              class="rounded-full border border-outline-variant/50 px-2.5 py-0.5 text-[10px] text-on-surface/50 transition hover:text-on-surface">
+              ✕ Quitar filtro
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: split layout — flex-1 + overflow-hidden para que cada columna gestione su propio scroll -->
+    <div class="flex min-h-0 flex-1 overflow-hidden">
+
+      <!-- ── LEFT: deck list (scroll independiente) ── -->
+      <div class="flex w-72 shrink-0 flex-col overflow-hidden border-r border-outline-variant/60">
+
+        @if (loadError()) {
+          <div class="m-4 rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{{ loadError() }}</div>
+        }
+
+        @if (loading()) {
+          <div class="flex flex-1 items-center justify-center">
+            <div class="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+          </div>
+        } @else if (filteredDecks().length === 0) {
+          <div class="m-4 rounded-2xl border border-dashed border-outline-variant p-6 text-center text-sm text-on-surface/65">
+            @if (searchQuery()) {
+              Sin resultados para <span class="font-semibold text-on-surface/80">"{{ searchQuery() }}"</span>
+            } @else {
+              No hay mazos públicos todavía.
+            }
+          </div>
+        } @else {
+          <!-- scrollable deck list -->
+          <div class="min-h-0 flex-1 overflow-y-auto">
+            <div class="space-y-1 p-3">
+              @for (deck of filteredDecks(); track deck.id) {
+                <button
+                  (click)="selectDeck(deck)"
+                  class="w-full rounded-2xl border p-3 text-left transition"
+                  [class.border-primary]="selectedDeck()?.id === deck.id"
+                  [class.bg-primary/10]="selectedDeck()?.id === deck.id"
+                  [class.border-outline-variant/50]="selectedDeck()?.id !== deck.id"
+                  [class.bg-surface/40]="selectedDeck()?.id !== deck.id"
+                  [class.hover:bg-surface/60]="selectedDeck()?.id !== deck.id"
+                >
+                  <div class="flex items-center gap-2.5">
+                    @if (deck.mainImageUrl) {
+                      <img [src]="deck.mainImageUrl" [alt]="deck.name" class="h-10 w-8 shrink-0 rounded-md object-cover" />
+                    } @else {
+                      <div class="flex h-10 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container text-on-surface/30 text-xs">?</div>
+                    }
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-semibold text-on-surface">{{ deck.name }}</p>
+                      <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] text-on-surface/55">{{ deck.totalCards }} cartas</span>
+                        <span class="rounded-full border px-1.5 py-px text-[9px] font-semibold" [ngClass]="getManaClass(deck.averageCmc)">
+                          {{ getManaLabel(deck.averageCmc) }} maná
+                        </span>
+                      </div>
+                      <!-- Color identity pips -->
+                      @if (deck.colorIdentity.length > 0) {
+                        <div class="mt-1.5 flex gap-1">
+                          @for (c of deck.colorIdentity; track c) {
+                            <span class="h-3 w-3 rounded-full border-2 inline-block"
+                              [ngClass]="getManaPipClass(c)" [title]="getManaTitle(c)"></span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <!-- subtle "click to preview" hint when not selected -->
+                  @if (selectedDeck()?.id !== deck.id) {
+                    <p class="mt-1.5 text-[10px] text-on-surface/35">Clic para ver cartas →</p>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+          <div class="shrink-0 border-t border-outline-variant/60 px-4 py-2 text-right text-[11px] text-on-surface/45">
+            {{ filteredDecks().length }} mazo{{ filteredDecks().length !== 1 ? 's' : '' }}
+          </div>
+        }
+      </div>
+
+      <!-- ── RIGHT: preview panel ── -->
+      <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+
+        @if (!selectedDeck()) {
+          <div class="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center text-on-surface/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z" />
+            </svg>
+            <p class="text-sm">Selecciona un mazo de la lista<br>para ver sus cartas</p>
+          </div>
+        } @else {
+          <!-- Preview header (fixed inside right panel) -->
+          <div class="shrink-0 border-b border-outline-variant/60 p-5">
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <h3 class="font-headline text-xl font-bold text-on-surface">{{ selectedDeck()!.name }}</h3>
+                <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                  <span class="rounded-full border border-outline-variant/50 bg-surface-container px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-on-surface/60">
+                    {{ selectedDeck()!.format }}
+                  </span>
+                  <span class="rounded-full border border-outline-variant/50 bg-surface-container px-2.5 py-0.5 text-[11px] text-on-surface/60">
+                    {{ selectedDeck()!.totalCards }} cartas
+                  </span>
+                  <span class="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" [ngClass]="getManaClass(selectedDeck()!.averageCmc)">
+                    {{ manaCurveLabel() }} · CMC {{ selectedDeck()!.averageCmc | number:'1.1-1' }}
+                  </span>
+                  <!-- Color identity pips (larger, in preview header) -->
+                  @for (c of selectedDeck()!.colorIdentity; track c) {
+                    <span class="h-4 w-4 rounded-full border-2 inline-block"
+                      [ngClass]="getManaPipClass(c)" [title]="getManaTitle(c)"></span>
+                  }
+                </div>
+              </div>
+
+              <div class="shrink-0 flex flex-col items-end gap-1.5">
+                <button
+                  (click)="copyDeck(selectedDeck()!)"
+                  [disabled]="copyingId() !== null || isCopied(selectedDeck()!.id)"
+                  class="rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+                  [class.bg-primary]="!isCopied(selectedDeck()!.id)"
+                  [class.text-on-primary]="!isCopied(selectedDeck()!.id)"
+                  [class.hover:brightness-110]="!isCopied(selectedDeck()!.id)"
+                  [class.bg-emerald-600]="isCopied(selectedDeck()!.id)"
+                  [class.text-white]="isCopied(selectedDeck()!.id)"
+                >
+                  @if (copyingId() === selectedDeck()!.id) { Guardando... }
+                  @else if (isCopied(selectedDeck()!.id)) { ✓ Guardado }
+                  @else { Guardar en mis mazos }
+                </button>
+                @if (copyError()) {
+                  <p class="text-xs text-rose-300">{{ copyError() }}</p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Card grid (scrollable) -->
+          <div class="min-h-0 flex-1 overflow-y-auto p-5">
+            @if (loadingPreview()) {
+              <div class="flex items-center justify-center py-16">
+                <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                <span class="ml-3 text-sm text-on-surface/65">Cargando cartas...</span>
+              </div>
+            } @else if (!previewData()) {
+              <div class="flex flex-col items-center gap-2 py-12 text-center text-on-surface/50">
+                <p class="text-sm">No se pudieron cargar las cartas de este mazo.</p>
+                <button (click)="retryPreview()" class="mt-2 rounded-xl border border-outline-variant px-3 py-1.5 text-xs transition hover:bg-surface">
+                  Reintentar
+                </button>
+              </div>
+            } @else {
+              <div class="space-y-6">
+                @for (group of groupedPreviewCards(); track group.group) {
+                  <section>
+                    <h4 class="mb-3 font-headline text-xs font-semibold uppercase tracking-[0.14em] text-on-surface/55">
+                      {{ group.group }}
+                      <span class="ml-1 text-on-surface/35">({{ group.cards.length }})</span>
+                    </h4>
+                    <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+                      @for (card of group.cards; track card.cardId) {
+                        <div class="group relative overflow-hidden rounded-xl border border-outline-variant/50 bg-surface/60 transition hover:border-outline-variant hover:bg-surface">
+                          <!-- Card image -->
+                          <div class="relative aspect-[5/7] w-full overflow-hidden bg-surface-container">
+                            <img
+                              [src]="card.cardImage"
+                              [alt]="card.cardName"
+                              class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                            <!-- Quantity badge -->
+                            <div class="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 font-headline text-[11px] font-bold text-white shadow">
+                              {{ card.quantity }}
+                            </div>
+                          </div>
+                          <!-- Card name + cost -->
+                          <div class="px-1.5 py-1">
+                            <p class="truncate text-[10px] font-semibold leading-tight text-on-surface">{{ card.cardName }}</p>
+                            <p class="truncate text-[9px] text-on-surface/45">{{ card.manaCost || '—' }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

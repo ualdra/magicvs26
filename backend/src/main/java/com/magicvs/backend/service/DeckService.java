@@ -179,6 +179,13 @@ public DeckResponseDTO createDeck(String authorization, CreateDeckDTO deckDTO) {
             .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<DeckSummaryDTO> getPublicDecks() {
+        return deckRepository.findPublicDecksOrderByUpdatedAtDesc().stream()
+            .map(this::toDeckSummary)
+            .collect(Collectors.toList());
+    }
+
     /**
      * Elimina un mazo (solo el propietario)
      */
@@ -348,7 +355,7 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
     }
 
     private DeckSummaryDTO toDeckSummary(Deck deck) {
-        return new DeckSummaryDTO(
+        DeckSummaryDTO dto = new DeckSummaryDTO(
             deck.getId(),
             deck.getName(),
             deck.getFormat() != null ? deck.getFormat().name() : DeckFormat.STANDARD.name(),
@@ -357,6 +364,74 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
             deck.getPublic(),
             getBestArtCrop(deck)
         );
+
+        if (deck.getCards() != null && !deck.getCards().isEmpty()) {
+            List<String> cardNames = deck.getCards().stream()
+                .flatMap(dc -> {
+                    List<String> names = new ArrayList<>();
+                    names.add(dc.getCard().getName());
+                    String printed = extractPrintedName(dc.getCard().getRawJson());
+                    if (printed != null && !printed.isBlank() && !printed.equals(dc.getCard().getName())) {
+                        names.add(printed);
+                    }
+                    return names.stream();
+                })
+                .collect(Collectors.toList());
+            dto.setCardNames(cardNames);
+
+            // Exclude lands from CMC average (lands have CMC 0 and would distort results)
+            List<com.magicvs.backend.model.DeckCard> spells = deck.getCards().stream()
+                .filter(dc -> {
+                    String typeLine = dc.getCard().getTypeLine();
+                    return typeLine == null
+                        || (!typeLine.toLowerCase().contains("land")
+                            && !typeLine.toLowerCase().contains("tierra"));
+                })
+                .collect(Collectors.toList());
+
+            double totalCmc = spells.stream()
+                .mapToDouble(dc -> {
+                    double cmc = dc.getCard().getCmc() != null ? dc.getCard().getCmc().doubleValue() : 0.0;
+                    int qty = dc.getQuantity() != null ? dc.getQuantity() : 1;
+                    return cmc * qty;
+                })
+                .sum();
+            int totalSpells = spells.stream()
+                .mapToInt(dc -> dc.getQuantity() != null ? dc.getQuantity() : 1)
+                .sum();
+            dto.setAverageCmc(totalSpells > 0 ? totalCmc / totalSpells : 0.0);
+        } else {
+            dto.setCardNames(java.util.Collections.emptyList());
+            dto.setAverageCmc(0.0);
+        }
+
+        dto.setColorIdentity(buildColorIdentity(deck));
+        return dto;
+    }
+
+    private static final Pattern PRINTED_NAME_PATTERN = Pattern.compile("\"printed_name\"\\s*:\\s*\"([^\"]+)\"");
+
+    private String extractPrintedName(String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) return null;
+        Matcher m = PRINTED_NAME_PATTERN.matcher(rawJson);
+        return m.find() ? m.group(1) : null;
+    }
+
+    private static final List<String> WUBRG_ORDER = java.util.Arrays.asList("W", "U", "B", "R", "G");
+
+    private List<String> buildColorIdentity(Deck deck) {
+        if (deck.getCards() == null || deck.getCards().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        java.util.Set<String> colors = new java.util.HashSet<>();
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"([WUBRG])\"");
+        for (com.magicvs.backend.model.DeckCard dc : deck.getCards()) {
+            String json = dc.getCard().getColorIdentityJson();
+            if (json == null || json.isBlank()) continue;
+            java.util.regex.Matcher m = pattern.matcher(json);
+            while (m.find()) colors.add(m.group(1));
+        }
+        return WUBRG_ORDER.stream().filter(colors::contains).collect(Collectors.toList());
     }
 
     private String getBestArtCrop(Deck deck) {

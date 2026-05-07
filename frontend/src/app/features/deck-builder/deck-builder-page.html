@@ -9,10 +9,21 @@
         </p>
       </div>
 
-      <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 px-4 py-3 text-right">
-        <div class="text-xs uppercase tracking-[0.16em] text-on-surface/60">Formato</div>
-        <div class="mt-1 font-headline text-lg font-semibold text-primary">{{ deckFormatLabel }}</div>
-        <div class="mt-1 text-[11px] uppercase tracking-[0.16em] text-on-surface/55">{{ modeLabel }}</div>
+      <div class="flex items-center gap-3">
+        <button
+          (click)="openPublicDecksModal()"
+            class="flex items-center gap-2 rounded-2xl border border-secondary/40 bg-secondary/10 px-4 py-2.5 text-base font-semibold text-blue-500 transition hover:bg-secondary/20"
+            >
+          <span class="material-symbols-outlined text-lg text-blue-400">
+             public
+          </span>
+         Explorar Mazos Públicos
+        </button>
+        <div class="rounded-2xl border border-outline-variant/60 bg-surface/70 px-4 py-3 text-right">
+          <div class="text-xs uppercase tracking-[0.16em] text-on-surface/60">Formato</div>
+          <div class="mt-1 font-headline text-lg font-semibold text-primary">{{ deckFormatLabel }}</div>
+          <div class="mt-1 text-[11px] uppercase tracking-[0.16em] text-on-surface/55">{{ modeLabel }}</div>
+        </div>
       </div>
     </header>
 
@@ -225,9 +236,15 @@
       </aside>
 
       <main class="min-w-0">
-        <!-- Si queréis centralizar glassmorphism, podéis mover estas clases a utilidades globales del design system -->
         <app-deck-search-panel (cardSelected)="onCardSelected($event)"></app-deck-search-panel>
       </main>
     </div>
   </div>
 </div>
+
+@if (showPublicDecksModal) {
+  <app-public-decks-modal
+    (close)="closePublicDecksModal()"
+    (deckCopied)="onPublicDeckCopied($event)"
+  ></app-public-decks-modal>
+}
