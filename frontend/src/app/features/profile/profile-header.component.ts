@@ -4,6 +4,11 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProfileResponse, ProfileService } from './profile.service';
 import { Country, CountryService } from '../../core/services/country.service';
+import { BlockService } from '../../core/services/block.service';
+import { FriendshipService } from '../../core/services/friendship.service';
+import { ChatService } from '../../core/services/chat.service';
+import { ToastService } from '../../core/services/toast.service';
+import { UserService } from '../../core/services/user.service';
 import { UserAchievement } from '../../models/achievement.model';
 
 @Component({
@@ -16,6 +21,11 @@ import { UserAchievement } from '../../models/achievement.model';
 export class ProfileHeaderComponent implements OnInit, OnChanges {
   private readonly profileService = inject(ProfileService);
   private readonly countryService = inject(CountryService);
+  private readonly blockService = inject(BlockService);
+  private readonly friendshipService = inject(FriendshipService);
+  private readonly chatService = inject(ChatService);
+  private readonly toastService = inject(ToastService);
+  private readonly userService = inject(UserService);
 
   @Input({ required: true }) profile!: ProfileResponse;
   @Input() email: string | null = null;
@@ -32,6 +42,7 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
 
   isEditing = signal(false);
   isSaving = signal(false);
+  isBlocked = signal(false);
 
   // Password Change Modal states
   isPasswordModalOpen = signal(false);
@@ -115,6 +126,7 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['profile']) {
       this.profileSignal.set(this.profile);
+      this.loadBlockedState();
       // Initialize selected featured achievement keys from profile when viewing other users
       try {
         const raw = this.profile?.featuredAchievementKeys;
@@ -475,5 +487,100 @@ export class ProfileHeaderComponent implements OnInit, OnChanges {
     return new Intl.DateTimeFormat('es-ES', {
       dateStyle: 'medium',
     }).format(date);
+  }
+
+  // Métodos para acciones en perfiles de otros usuarios
+  sendMessage(): void {
+    // Por ahora mostrar mensaje, luego integrar con chat
+    this.toastService.showInfo('Función de chat próximamente disponible');
+  }
+
+  addFriend(): void {
+    const currentUser = this.userService.getStoredUser();
+    if (!currentUser) {
+      this.toastService.showError('Debes iniciar sesión para agregar amigos');
+      return;
+    }
+
+    this.friendshipService.sendFriendRequest(this.profile.id).subscribe({
+      next: (response) => {
+        this.toastService.showSuccess(response.message || 'Solicitud de amistad enviada');
+        // Actualizar el estado del perfil si es necesario
+        this.profileUpdated.emit(this.profile);
+      },
+      error: (error) => {
+        console.error('Error sending friend request:', error);
+        this.toastService.showError(error.error?.message || 'Error al enviar solicitud de amistad');
+      }
+    });
+  }
+
+  blockUser(): void {
+    const currentUser = this.userService.getStoredUser();
+    if (!currentUser) {
+      this.toastService.showError('Debes iniciar sesión para bloquear usuarios');
+      return;
+    }
+
+    if (confirm(`¿Estás seguro de que quieres bloquear a ${this.profile.displayName || this.profile.username}? Esto eliminará la amistad si existe.`)) {
+      this.blockService.blockUser(this.profile.id).subscribe({
+        next: (response) => {
+          this.toastService.showSuccess(response.message || 'Usuario bloqueado correctamente');
+          this.isBlocked.set(true);
+          this.loadBlockedState();
+          this.profileUpdated.emit(this.profile);
+        },
+        error: (error) => {
+          console.error('Error blocking user:', error);
+          this.toastService.showError(error.error?.error || error.message || 'Error al bloquear usuario');
+        }
+      });
+    }
+  }
+
+  unblockUser(): void {
+    const currentUser = this.userService.getStoredUser();
+    if (!currentUser) {
+      this.toastService.showError('Debes iniciar sesión para desbloquear usuarios');
+      return;
+    }
+
+    if (confirm(`¿Quieres desbloquear a ${this.profile.displayName || this.profile.username}?`)) {
+      this.blockService.unblockUser(this.profile.id).subscribe({
+        next: (response) => {
+          this.toastService.showSuccess(response.message || 'Usuario desbloqueado correctamente');
+          this.isBlocked.set(false);
+          this.loadBlockedState();
+          this.profileUpdated.emit(this.profile);
+        },
+        error: (error) => {
+          console.error('Error unblocking user:', error);
+          this.toastService.showError(error.error?.error || 'Error al desbloquear usuario');
+        }
+      });
+    }
+  }
+
+  // Método para verificar si el usuario actual tiene bloqueado a este perfil
+  isBlockedByCurrentUser(): boolean {
+    return this.isBlocked();
+  }
+
+  private loadBlockedState(): void {
+    const profile = this.profileSignal();
+    const currentUser = this.userService.getStoredUser();
+
+    if (!profile || !currentUser || this.isOwnProfile) {
+      this.isBlocked.set(false);
+      return;
+    }
+
+    this.blockService.isUserBlocked(profile.id).subscribe({
+      next: (blocked) => this.isBlocked.set(blocked),
+      error: (error) => {
+        console.error('Error checking blocked status:', error);
+        this.isBlocked.set(false);
+      }
+    });
   }
 }

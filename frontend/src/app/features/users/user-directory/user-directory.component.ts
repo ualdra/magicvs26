@@ -6,6 +6,7 @@ import { PublicUser } from '../../../models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { FriendshipService } from '../../../core/services/friendship.service';
+import { BlockService } from '../../../core/services/block.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
 
 @Component({
@@ -19,9 +20,11 @@ export class UserDirectoryComponent implements OnInit {
   private userService = inject(UserService);
   private toastService = inject(ToastService);
   private friendshipService = inject(FriendshipService);
+  private blockService = inject(BlockService);
   private confirmService = inject(ConfirmService);
 
   users = signal<PublicUser[]>([]);
+  blockedUserIds = signal<number[]>([]);
   isLoading = signal(true);
   hasError = signal(false);
   currentUserId = signal<number | null>(null);
@@ -69,6 +72,7 @@ export class UserDirectoryComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadBlockedUsers();
     this.loadCurrentUserId();
   }
 
@@ -100,6 +104,61 @@ export class UserDirectoryComponent implements OnInit {
         this.hasError.set(true);
         this.isLoading.set(false);
       }
+    });
+  }
+
+  loadBlockedUsers(): void {
+    this.blockService.getBlockedUsers().subscribe({
+      next: (blockedUsers) => {
+        this.blockedUserIds.set(blockedUsers.map((user: any) => user.id));
+      },
+      error: (err) => {
+        console.error('Error loading blocked users:', err);
+      }
+    });
+  }
+
+  isBlocked(userId: number): boolean {
+    return this.blockedUserIds().includes(userId);
+  }
+
+  unblockUser(user: PublicUser, event: MouseEvent): void {
+    event.stopPropagation();
+
+    this.confirmService.confirm(`¿Estás seguro de que quieres desbloquear a ${user.displayName || user.username}?`).then((confirmed) => {
+      if (!confirmed) return;
+
+      this.blockService.unblockUser(user.id).subscribe({
+        next: () => {
+          this.toastService.show('Usuario desbloqueado correctamente', 'success');
+          this.loadBlockedUsers();
+          this.loadUsers();
+        },
+        error: (error) => {
+          console.error('Error unblocking user:', error);
+          this.toastService.show('Error al desbloquear usuario', 'error');
+        }
+      });
+    });
+  }
+
+  blockUser(user: PublicUser, event: MouseEvent): void {
+    event.stopPropagation();
+
+    this.confirmService.confirm(`¿Estás seguro de que quieres bloquear a ${user.displayName || user.username}? Esto eliminará la amistad si existe.`).then((confirmed) => {
+      if (!confirmed) return;
+
+      this.blockService.blockUser(user.id).subscribe({
+        next: () => {
+          this.toastService.show('Usuario bloqueado correctamente', 'success');
+          this.loadBlockedUsers();
+          this.loadUsers();
+        },
+        error: (error) => {
+          console.error('Error blocking user:', error);
+          this.toastService.show('Error al bloquear usuario', 'error');
+        }
+      });
     });
   }
 
