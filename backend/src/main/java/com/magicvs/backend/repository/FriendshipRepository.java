@@ -1,12 +1,13 @@
 package com.magicvs.backend.repository;
 
 import com.magicvs.backend.model.Friendship;
-import com.magicvs.backend.model.FriendshipStatus;
 import com.magicvs.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,5 +26,12 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     boolean existsByUserAndFriend(User user, User friend);
     
+    // ---SISTEMA DE BLOQUEO ---
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Friendship f WHERE (f.user = :u1 AND f.friend = :u2) OR (f.user = :u2 AND f.friend = :u1)")
+    void deleteFriendshipBetween(@Param("u1") User u1, @Param("u2") User u2);
+
     void deleteByUserAndFriend(User user, User friend);
 }

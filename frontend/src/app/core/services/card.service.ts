@@ -181,7 +181,12 @@ export class CardService {
 
     return legalities.reduce((result: Card['legalities'], entry: any) => {
       const format = entry.formatName?.toLowerCase();
-      const status = entry.legalityStatus || 'No legal';
+      
+      // Mapeamos lo que viene del backend (ej: "not_legal") a lo que quiere el modelo (ej: "Not Legal")
+      let status: "Legal" | "Banned" | "Not Legal" = 'Not Legal';
+      
+      if (entry.legalityStatus === 'legal' || entry.legalityStatus === 'Legal') status = 'Legal';
+      if (entry.legalityStatus === 'banned' || entry.legalityStatus === 'Banned') status = 'Banned';
 
       if (format in result) {
         (result as any)[format] = status;

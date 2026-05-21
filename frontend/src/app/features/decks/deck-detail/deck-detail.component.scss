@@ -10,25 +10,6 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.opening-hand-scene {
-  position: relative;
-  width: min(100%, 552px);
-  height: 500px;
-}
-
-.opening-hand-card {
-  aspect-ratio: 5 / 7;
-  transform-origin: center top;
-  pointer-events: none;
-}
-
-.opening-hand-card-title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
 .group:hover .group-hover\:scale-110 {
   transform: scale(1.1);
 }
