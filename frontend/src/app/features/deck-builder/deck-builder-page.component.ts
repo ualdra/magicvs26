@@ -5,12 +5,11 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeckBuilderService, Card, DeckCard } from '../../core/services/deck-builder.service';
 import { DeckSearchPanelComponent } from './deck-search-panel.component';
-import { PublicDecksModalComponent } from './public-decks-modal.component';
 
 @Component({
   selector: 'app-deck-builder-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DeckSearchPanelComponent, PublicDecksModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, DeckSearchPanelComponent],
   templateUrl: './deck-builder-page.html',
   styleUrls: ['./deck-builder-page.scss']
 })
@@ -37,7 +36,6 @@ export class DeckBuilderPageComponent {
   loadingDeck = false;
   notificationMessage: string | null = null;
   notificationType: 'success' | 'error' | 'info' = 'success';
-  showPublicDecksModal = false;
   private notificationTimer?: number;
   private flippedDeckCardIds = new Set<number>();
 
@@ -304,19 +302,6 @@ export class DeckBuilderPageComponent {
 
     return 'Otros';
   }
-  openPublicDecksModal(): void {
-    this.showPublicDecksModal = true;
-  }
-
-  closePublicDecksModal(): void {
-    this.showPublicDecksModal = false;
-  }
-
-  onPublicDeckCopied(event: { deckId: number; deckName: string }): void {
-    this.showPublicDecksModal = false;
-    this.showNotification(`"${event.deckName}" guardado en tus mazos.`, 'success');
-  }
-
   copyCurrentDeck(): void {
     if (!this.editingDeckId) return;
 

@@ -56,6 +56,9 @@
           </span>
         </div>
 
+        <!-- Friends List Component -->
+        <app-friends-list (friendSelected)="onFriendSelected($event)"></app-friends-list>
+
         <button
           type="button"
           class="chat-trigger group relative p-0.5 rounded-xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300"

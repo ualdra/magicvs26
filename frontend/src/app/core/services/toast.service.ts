@@ -25,6 +25,22 @@ export class ToastService {
     }, duration);
   }
 
+  showInfo(message: string, duration: number = 4000): void {
+    this.show(message, 'info', duration);
+  }
+
+  showSuccess(message: string, duration: number = 4000): void {
+    this.show(message, 'success', duration);
+  }
+
+  showError(message: string, duration: number = 4000): void {
+    this.show(message, 'error', duration);
+  }
+
+  showWarning(message: string, duration: number = 4000): void {
+    this.show(message, 'warning', duration);
+  }
+
   remove(id: number): void {
     this.toastsSignal.update(toasts => toasts.filter(t => t.id !== id));
   }

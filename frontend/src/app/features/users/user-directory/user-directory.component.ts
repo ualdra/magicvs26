@@ -6,6 +6,7 @@ import { PublicUser } from '../../../models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { FriendshipService } from '../../../core/services/friendship.service';
+import { BlockService } from '../../../core/services/block.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
 
 @Component({
@@ -19,9 +20,11 @@ export class UserDirectoryComponent implements OnInit {
   private userService = inject(UserService);
   private toastService = inject(ToastService);
   private friendshipService = inject(FriendshipService);
+  private blockService = inject(BlockService);
   private confirmService = inject(ConfirmService);
 
   users = signal<PublicUser[]>([]);
+  blockedUserIds = signal<number[]>([]);
   isLoading = signal(true);
   hasError = signal(false);
   currentUserId = signal<number | null>(null);
@@ -35,22 +38,11 @@ export class UserDirectoryComponent implements OnInit {
 
   filteredUsers = computed(() => {
     let list = [...this.users()];
-    const search = this.searchTerm().trim();
-    const usernameSearch = search.toLowerCase();
-    const friendTagSearch = search.startsWith('#') ? search.slice(1).toUpperCase() : '';
-    const isValidFriendTagSearch = /^#[a-zA-Z0-9]{6}$/.test(search);
+    const search = this.searchTerm().toLowerCase().trim();
 
     // Filter by search term
     if (search) {
-      list = list.filter(u => {
-        const username = u.username.toLowerCase();
-        const friendTag = (u.friendTag || '').toUpperCase();
-
-        const matchesUsername = username.includes(usernameSearch);
-        const matchesFriendTag = isValidFriendTagSearch && friendTag === friendTagSearch;
-
-        return matchesUsername || matchesFriendTag;
-      });
+      list = list.filter(u => u.username.toLowerCase().includes(search));
     }
 
     // Sort users
@@ -78,12 +70,9 @@ export class UserDirectoryComponent implements OnInit {
     return list;
   });
 
-  isFriendTagSearch = computed(() => /^#/.test(this.searchTerm().trim()));
-
-  isValidFriendTagSearch = computed(() => /^#[a-zA-Z0-9]{6}$/.test(this.searchTerm().trim()));
-
   ngOnInit(): void {
     this.loadUsers();
+    this.loadBlockedUsers();
     this.loadCurrentUserId();
   }
 
@@ -115,6 +104,61 @@ export class UserDirectoryComponent implements OnInit {
         this.hasError.set(true);
         this.isLoading.set(false);
       }
+    });
+  }
+
+  loadBlockedUsers(): void {
+    this.blockService.getBlockedUsers().subscribe({
+      next: (blockedUsers) => {
+        this.blockedUserIds.set(blockedUsers.map((user: any) => user.id));
+      },
+      error: (err) => {
+        console.error('Error loading blocked users:', err);
+      }
+    });
+  }
+
+  isBlocked(userId: number): boolean {
+    return this.blockedUserIds().includes(userId);
+  }
+
+  unblockUser(user: PublicUser, event: MouseEvent): void {
+    event.stopPropagation();
+
+    this.confirmService.confirm(`¿Estás seguro de que quieres desbloquear a ${user.displayName || user.username}?`).then((confirmed) => {
+      if (!confirmed) return;
+
+      this.blockService.unblockUser(user.id).subscribe({
+        next: () => {
+          this.toastService.show('Usuario desbloqueado correctamente', 'success');
+          this.loadBlockedUsers();
+          this.loadUsers();
+        },
+        error: (error) => {
+          console.error('Error unblocking user:', error);
+          this.toastService.show('Error al desbloquear usuario', 'error');
+        }
+      });
+    });
+  }
+
+  blockUser(user: PublicUser, event: MouseEvent): void {
+    event.stopPropagation();
+
+    this.confirmService.confirm(`¿Estás seguro de que quieres bloquear a ${user.displayName || user.username}? Esto eliminará la amistad si existe.`).then((confirmed) => {
+      if (!confirmed) return;
+
+      this.blockService.blockUser(user.id).subscribe({
+        next: () => {
+          this.toastService.show('Usuario bloqueado correctamente', 'success');
+          this.loadBlockedUsers();
+          this.loadUsers();
+        },
+        error: (error) => {
+          console.error('Error blocking user:', error);
+          this.toastService.show('Error al bloquear usuario', 'error');
+        }
+      });
     });
   }
 

@@ -3,7 +3,7 @@
   <section class="mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
     <div>
       <h2 class="text-4xl font-headline font-bold text-on-surface uppercase tracking-tighter mb-2">Directorio de Invocadores</h2>
-      <p class="text-zinc-500 font-body max-w-md">Analiza a tus rivales, encuentra compañeros de gremio y escala en el ranking global. Busca por nombre o tag de amigo.</p>
+      <p class="text-zinc-500 font-body max-w-md">Analiza a tus rivales, encuentra compañeros de gremio y escala en el ranking global.</p>
     </div>
     
     <div class="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
@@ -81,7 +81,12 @@
               </div>
             </div>
             <div>
-              <h3 class="font-headline font-bold text-lg text-white group-hover:text-primary transition-colors uppercase">{{ user.displayName || user.username }}</h3>
+              <div class="flex items-center gap-2">
+                <h3 class="font-headline font-bold text-lg text-white group-hover:text-primary transition-colors uppercase">{{ user.displayName || user.username }}</h3>
+                @if (isBlocked(user.id)) {
+                  <span class="text-[9px] font-bold uppercase tracking-[0.16em] px-2 py-1 rounded-full bg-red-500/15 text-red-300">Bloqueado</span>
+                }
+              </div>
               <div class="flex items-center gap-2">
                 <span class="text-[10px] font-headline uppercase tracking-tighter text-tertiary-fixed bg-tertiary/10 px-2 py-0.5 rounded">
                   ELO: {{ user.elo }}
@@ -116,6 +121,26 @@
                 </button>
               }
 
+              @if (user.id !== currentUserId()) {
+                @if (isBlocked(user.id)) {
+                  <button type="button"
+                          (click)="unblockUser(user, $event)"
+                          class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition-all active:scale-90 shadow-lg"
+                          title="Desbloquear usuario"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">lock_open</span>
+                  </button>
+                } @else {
+                  <button type="button"
+                          (click)="blockUser(user, $event)"
+                          class="flex items-center justify-center w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 transition-all active:scale-90 shadow-lg"
+                          title="Bloquear usuario"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">block</span>
+                  </button>
+                }
+              }
+
               <button [routerLink]="['/users', user.id]" class="flex items-center justify-center w-10 h-10 bg-surface-container-high hover:bg-secondary text-white rounded-xl transition-all active:scale-90 shadow-lg border border-white/5 group">
                 <span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">visibility</span>
               </button>
@@ -133,10 +158,10 @@
         <span class="material-symbols-outlined text-4xl text-zinc-600">person_search</span>
       </div>
       <h3 class="text-xl font-headline font-bold text-on-surface uppercase tracking-widest mb-2">
-        {{ searchTerm() ? (isFriendTagSearch() ? 'Tag de amigo incompleto' : 'No hay coincidencias') : 'Sin resultados' }}
+        {{ searchTerm() ? 'No hay coincidencias' : 'Sin resultados' }}
       </h3>
       <p class="text-zinc-500 font-body max-w-sm mb-8">
-        {{ searchTerm() ? (isFriendTagSearch() ? 'Para buscar por tag usa # seguido de 6 caracteres alfanuméricos, por ejemplo #A1B2C3.' : 'No hemos encontrado invocadores que coincidan con "' + searchTerm() + '".') : 'No se encontraron invocadores en la base de datos.' }}
+        {{ searchTerm() ? 'No hemos encontrado invocadores que coincidan con "' + searchTerm() + '".' : 'No se encontraron invocadores en la base de datos.' }}
       </p>
       @if (searchTerm()) {
         <button (click)="searchTerm.set('')" class="bg-primary/10 border border-primary/20 text-primary px-8 py-3 rounded-lg font-headline text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition-all">

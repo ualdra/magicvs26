@@ -121,8 +121,8 @@
             <span class="w-2 h-2 rounded-full" 
                   [ngClass]="{
                     'bg-green-500 shadow-[0_0_8px_#22c55e]': card.legalities[format] === 'Legal',
-                    'bg-rose-500 shadow-[0_0_8px_#f43f5e]': card.legalities[format] === 'Prohibida' || card.legalities[format] === 'Banned',
-                    'bg-zinc-600': card.legalities[format] === 'No legal' || card.legalities[format] === 'Not Legal'
+                    'bg-rose-500 shadow-[0_0_8px_#f43f5e]': card.legalities[format] === 'Banned',
+                    'bg-zinc-600': card.legalities[format] === 'Not Legal'
                   }"></span>
             <span class="text-zinc-400">{{ format }}:</span>
             <span [class.text-white]="card.legalities[format] === 'Legal'">{{ card.legalities[format] }}</span>

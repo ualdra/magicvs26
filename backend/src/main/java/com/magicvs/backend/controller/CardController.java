@@ -163,9 +163,9 @@ public class CardController {
             .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, favoritesOnly, userId, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
-                cardService.resolveDisplayName(card.getName(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
+                resolveDisplayName(card.getName(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
                 resolveDisplayManaCost(card.getManaCost(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
-                cardService.resolveDisplayType(card.getTypeLine(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
+                resolveDisplayType(card.getTypeLine(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
                 resolveImageUrl(
                     card.getNormalImageUri(),
                     card.getSmallImageUri(),
@@ -175,14 +175,14 @@ public class CardController {
                 resolveBackImageUrl(card.getBackFaceNormalImageUri(), card.getBackFaceSmallImageUri()),
                 isDoubleFacedCard(card.getName(), card.getBackFaceNormalImageUri(), card.getBackFaceSmallImageUri()),
                         resolveColors(card.getColorsJson(), card.getManaCost()),
-                        cardService.resolveDisplayRarity(card.getRarity()),
+                        card.getRarity(),
                         card.getSetName(),
                         card.getReleasedAt() != null ? card.getReleasedAt().toString() : null,
                         card.getArtist(),
                         card.getCollectorNumber(),
                         card.getEdhrecRank(),
-                        cardService.resolveDisplayOracleText(card.getOracleText(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
-                        cardService.resolveDisplayFlavorText(card.getFlavorText(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
+                        card.getOracleText(),
+                        card.getFlavorText(),
                         card.getPower() != null && card.getToughness() != null ? card.getPower() + "/" + card.getToughness() : null
                 ));
 
@@ -332,7 +332,18 @@ public class CardController {
         return colors;
     }
 
+    private static String resolveDisplayName(String defaultName, String rawJson) {
+        String localized = extractStringFromRawJson(rawJson, "printed_name");
+        return (localized != null && !localized.isBlank()) ? localized : defaultName;
+    }
 
+    private static String resolveDisplayType(String defaultTypeLine, String rawJson) {
+        String localized = extractStringFromRawJson(rawJson, "printed_type_line");
+        if (localized != null && !localized.isBlank()) {
+            return localized;
+        }
+        return defaultTypeLine == null ? "" : defaultTypeLine;
+    }
 
     private static String resolveDisplayManaCost(String defaultManaCost, String rawJson) {
         String localized = extractStringFromRawJson(rawJson, "printed_mana_cost");

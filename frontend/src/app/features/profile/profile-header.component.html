@@ -56,6 +56,29 @@
                   Eliminar Cuenta
                 </button>
               </div>
+            } @else {
+              <!-- Botones para perfiles de otros usuarios -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button (click)="sendMessage()" class="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300 transition-all hover:bg-purple-600/20 hover:text-white">
+                  <span class="material-symbols-outlined text-sm">chat</span>
+                  Enviar Mensaje
+                </button>
+                <button (click)="addFriend()" class="flex items-center gap-2 rounded-xl border border-green-500/30 bg-green-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-green-300 transition-all hover:bg-green-600/20 hover:text-white">
+                  <span class="material-symbols-outlined text-sm">person_add</span>
+                  Agregar Amigo
+                </button>
+                @if (isBlockedByCurrentUser()) {
+                  <button (click)="unblockUser()" class="flex items-center gap-2 rounded-xl border border-yellow-500/30 bg-yellow-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-yellow-300 transition-all hover:bg-yellow-600/20 hover:text-white">
+                    <span class="material-symbols-outlined text-sm">lock_open</span>
+                    Desbloquear Usuario
+                  </button>
+                } @else {
+                  <button (click)="blockUser()" class="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-600/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-red-300 transition-all hover:bg-red-600/20 hover:text-white">
+                    <span class="material-symbols-outlined text-sm">block</span>
+                    Bloquear Usuario
+                  </button>
+                }
+              </div>
             }
           </div>
 

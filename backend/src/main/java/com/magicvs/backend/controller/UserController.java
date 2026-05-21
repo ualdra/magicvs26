@@ -85,6 +85,66 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Obtiene la lista de amigos de un usuario con filtros opcionales.
+     */
+    @GetMapping("/{userId}/friends")
+    public ResponseEntity<List<UserDirectoryResponseDto>> getUserFriends(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Boolean onlineOnly,
+            @RequestHeader(name = "Authorization", required = false) String authorization) {
+        
+        Long currentUserId = null;
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            currentUserId = authService.getUserId(authorization.substring(7)).orElse(null);
+        }
+        
+        // Obtener amigos (el servicio valida privacidad/bloqueos)
+        List<UserDirectoryResponseDto> friends = friendshipService.getFriendsOfUser(userId, currentUserId);
+        
+        // FILTRADO: Solo online si se solicita
+        if (Boolean.TRUE.equals(onlineOnly)) {
+            friends = friends.stream()
+                    .filter(UserDirectoryResponseDto::getIsOnline)
+                    .collect(Collectors.toList());
+        }
+        
+        // ORDENAMIENTO: Aplicar según criterio
+        String sortCriteria = sort != null ? sort.toLowerCase() : "none";
+        switch (sortCriteria) {
+            case "online":
+                friends.sort((a, b) -> Boolean.compare(b.getIsOnline(), a.getIsOnline()));
+                break;
+            case "recent":
+                friends.sort((a, b) -> {
+                    java.time.LocalDateTime aTime = a.getLastSeenAt();
+                    java.time.LocalDateTime bTime = b.getLastSeenAt();
+                    if (aTime == null) aTime = java.time.LocalDateTime.now();
+                    if (bTime == null) bTime = java.time.LocalDateTime.now();
+                    return bTime.compareTo(aTime);
+                });
+                break;
+            case "elo":
+                friends.sort((a, b) -> Integer.compare(
+                        b.getElo() != null ? b.getElo() : 0,
+                        a.getElo() != null ? a.getElo() : 0
+                ));
+                break;
+            // "none" o default: mantener orden original
+        }
+        
+        // LÍMITE: Restringir resultados si se solicita
+        if (limit != null && limit > 0) {
+            friends = friends.stream()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        }
+        
+        return ResponseEntity.ok(friends);
+    }
+
     // ---- Endpoints expuestos para Registro y Login ----
 
     @PostMapping("/register")

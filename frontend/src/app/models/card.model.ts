@@ -20,11 +20,11 @@ export interface Card {
   flavorText?: string;
   powerToughness?: string;
   legalities: {
-    [key: string]: string | undefined;
-    standard: string;
-    pioneer: string;
-    modern: string;
-    commander: string;
+    [key: string]: 'Legal' | 'Banned' | 'Not Legal' | undefined;
+    standard: 'Legal' | 'Banned' | 'Not Legal';
+    pioneer: 'Legal' | 'Banned' | 'Not Legal';
+    modern: 'Legal' | 'Banned' | 'Not Legal';
+    commander: 'Legal' | 'Banned' | 'Not Legal';
   };
   price: number;
   edhrecRank?: number;
