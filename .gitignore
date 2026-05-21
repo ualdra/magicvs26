@@ -50,3 +50,7 @@ Desktop.ini
 
 /scripts-bbdd
 /scratch
+
+# Card images
+frontend/src/assets/cards/*
+!frontend/src/assets/cards/.gitkeep

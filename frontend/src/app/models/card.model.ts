@@ -10,6 +10,7 @@ export interface CardFace {
 
 export interface Card {
   id: string;
+  scryfallId?: string;
   name: string;
   imageUrl: string;
   imageUrl2: string;

@@ -84,6 +84,7 @@ export class CardService {
   private mapSearchCardToCard(card: any): Card {
     return {
       id: String(card.id),
+      scryfallId: card.scryfallId,
       name: card.name || '',
       imageUrl: card.imageUrl || '',
       imageUrl2: card.backImageUrl || '',
@@ -124,8 +125,9 @@ export class CardService {
   private mapBackendCardToCard(card: any): Card {
     return {
       id: String(card.id),
+      scryfallId: card.scryfallId,
       name: card.name || '',
-      imageUrl: card.normalImageUri || card.smallImageUri || card.largeImageUri || card.pngImageUri || '',
+      imageUrl: card.imageUrl || card.normalImageUri || card.smallImageUri || card.largeImageUri || card.pngImageUri || '',
       imageUrl2: card.backImageUri || '',
       manaCost: this.parseManaCost(card.manaCost),
       type: card.typeLine || card.layout || '',

@@ -25,6 +25,8 @@ services:
       DECK_MIN_CARDS: ${DECK_MIN_CARDS:-60}
     ports:
       - "8080:8080"
+    volumes:
+      - ./frontend/src/assets/cards:/app/cards
     depends_on:
       - postgres
 

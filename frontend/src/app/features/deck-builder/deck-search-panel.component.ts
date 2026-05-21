@@ -8,6 +8,7 @@ import { BehaviorSubject, Subject, of } from 'rxjs';
 
 interface Card {
   id: number;
+  scryfallId?: string;
   name: string;
   manaCost: string;
   type: string;

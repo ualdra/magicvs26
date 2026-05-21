@@ -1,4 +1,5 @@
 export interface GalleryCard {
+  scryfallId?: string;
   name: string;
   imageUrl: string;
 }

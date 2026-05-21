@@ -22,10 +22,10 @@
           <div class="flip-inner w-full h-full" [class.is-flipped]="isFlipped">
             <!-- Front Face -->
             <img
-              [src]="(card.faces && card.faces.length > 0 ? card.faces[0].imageUrl : card.imageUrl) || defaultImageUrl"
+              [src]="card.scryfallId ? '/assets/cards/' + card.scryfallId + '.jpg' : ((card.faces && card.faces.length > 0 ? card.faces[0].imageUrl : card.imageUrl) || defaultImageUrl)"
               [alt]="card.name"
               class="card-face face-front w-full h-full rounded-2xl shadow-2xl shadow-primary/20"
-              (error)="$any($event.target).src = defaultImageUrl"
+              (error)="$any($event.target).src = (card.faces && card.faces.length > 0 ? card.faces[0].imageUrl : card.imageUrl) || defaultImageUrl"
             />
             <!-- Back Face (if exists) -->
             @if (card.imageUrl2 || (card.faces && card.faces.length > 1)) {

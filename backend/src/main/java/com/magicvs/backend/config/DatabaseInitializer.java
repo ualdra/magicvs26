@@ -4,6 +4,7 @@ import com.magicvs.backend.repository.CardRepository;
 import com.magicvs.backend.repository.MetaDeckRepository;
 import com.magicvs.backend.service.ScryfallService;
 import com.magicvs.backend.service.MetaScrapingService;
+import com.magicvs.backend.service.ImageDownloadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -18,15 +19,18 @@ public class DatabaseInitializer implements CommandLineRunner {
     private final ScryfallService scryfallService;
     private final MetaDeckRepository metaDeckRepository;
     private final MetaScrapingService metaScrapingService;
+    private final ImageDownloadService imageDownloadService;
 
     public DatabaseInitializer(CardRepository cardRepository, 
                                ScryfallService scryfallService,
                                MetaDeckRepository metaDeckRepository,
-                               MetaScrapingService metaScrapingService) {
+                               MetaScrapingService metaScrapingService,
+                               ImageDownloadService imageDownloadService) {
         this.cardRepository = cardRepository;
         this.scryfallService = scryfallService;
         this.metaDeckRepository = metaDeckRepository;
         this.metaScrapingService = metaScrapingService;
+        this.imageDownloadService = imageDownloadService;
     }
 
     @Override
@@ -42,6 +46,9 @@ public class DatabaseInitializer implements CommandLineRunner {
         } else {
             logger.info("Base de datos de cartas ya poblada con {} registros. Omitiendo importación inicial.", cardRepository.count());
         }
+
+        // Siempre intentar descargar imágenes faltantes en segundo plano tras validar las cartas
+        imageDownloadService.downloadMissingImagesAsync();
 
         if (metaDeckRepository.count() == 0) {
             logger.info("Base de datos de Metajuego vacía. Iniciando scraping automático inicial de MTGGoldfish...");

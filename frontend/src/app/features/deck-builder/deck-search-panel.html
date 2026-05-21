@@ -112,7 +112,7 @@
               <div class="card-flip-scene">
                 <div class="card-flip-inner" [class.is-flipped]="isCardFlipped(card)">
                   <img
-                    [src]="card.imageUrl"
+                    [src]="card.scryfallId ? '/assets/cards/' + card.scryfallId + '.jpg' : card.imageUrl"
                     [alt]="card.name + ' (frontal)'"
                     (error)="onImageError($event)"
                     class="card-image card-face-front"

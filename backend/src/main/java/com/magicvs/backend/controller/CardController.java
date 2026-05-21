@@ -116,6 +116,18 @@ public class CardController {
         return detailOpt.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/all-images")
+    public ResponseEntity<List<Map<String, String>>> getAllImages() {
+        List<Map<String, String>> images = cardRepository.findAll().stream()
+                .filter(c -> c.getScryfallId() != null && c.getNormalImageUri() != null)
+                .map(c -> Map.of(
+                        "scryfallId", c.getScryfallId().toString(),
+                        "url", c.getNormalImageUri()
+                ))
+                .toList();
+        return ResponseEntity.ok(images);
+    }
+
     /**
      * Busca cartas por nombre con paginacion
      * GET /api/cards/search?name=query&page=0&size=24
@@ -163,7 +175,8 @@ public class CardController {
             .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, favoritesOnly, userId, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
-                resolveDisplayName(card.getName(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
+                        card.getScryfallId(),
+                cardService.resolveDisplayName(card.getName(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
                 resolveDisplayManaCost(card.getManaCost(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
                 resolveDisplayType(card.getTypeLine(), card.getFaceRawJson() != null ? card.getFaceRawJson() : card.getRawJson()),
                 resolveImageUrl(
@@ -369,6 +382,7 @@ public class CardController {
 
     static class CardSearchResponse {
         private Long id;
+        private java.util.UUID scryfallId;
         private String name;
         private String manaCost;
         private String type;
@@ -386,9 +400,10 @@ public class CardController {
         private String flavorText;
         private String powerToughness;
 
-        public CardSearchResponse(Long id, String name, String manaCost, String type, String imageUrl, String backImageUrl, boolean doubleFaced, List<String> colors, String rarity,
+        public CardSearchResponse(Long id, java.util.UUID scryfallId, String name, String manaCost, String type, String imageUrl, String backImageUrl, boolean doubleFaced, List<String> colors, String rarity,
                                   String setName, String releasedAt, String artist, String collectorNumber, Integer edhrecRank, String oracleText, String flavorText, String powerToughness) {
             this.id = id;
+            this.scryfallId = scryfallId;
             this.name = name;
             this.manaCost = manaCost;
             this.type = type;
@@ -408,6 +423,9 @@ public class CardController {
         }
 
         // Getters and Setters
+        public java.util.UUID getScryfallId() { return scryfallId; }
+        public void setScryfallId(java.util.UUID scryfallId) { this.scryfallId = scryfallId; }
+        
         public String getSetName() { return setName; }
         public String getReleasedAt() { return releasedAt; }
         public String getArtist() { return artist; }
