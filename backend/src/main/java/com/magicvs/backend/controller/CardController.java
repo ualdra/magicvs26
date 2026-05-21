@@ -355,7 +355,8 @@ public class CardController {
         if (localized != null && !localized.isBlank()) {
             return localized;
         }
-        return defaultTypeLine == null ? "" : defaultTypeLine;
+        // Fallback: traducción dinámica al español
+        return CardService.translateTypeLine(defaultTypeLine);
     }
 
     private static String resolveDisplayManaCost(String defaultManaCost, String rawJson) {

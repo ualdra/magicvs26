@@ -113,9 +113,15 @@ public class MetaScrapingService {
                         dbCard.ifPresent(c -> {
                             Map<String, String> imgData = new HashMap<>();
                             imgData.put("name", cName);
+                            if (c.getScryfallId() != null) {
+                                imgData.put("scryfallId", c.getScryfallId().toString());
+                            }
                             String imageUrl = c.getArtCropUri() != null ? c.getArtCropUri() : c.getNormalImageUri();
                             if (imageUrl != null) {
                                 imgData.put("imageUrl", imageUrl);
+                                gallery.add(imgData);
+                            } else if (c.getScryfallId() != null) {
+                                // Aunque no tengamos URL remota, si hay ID local, añadimos igualmente
                                 gallery.add(imgData);
                             }
                         });

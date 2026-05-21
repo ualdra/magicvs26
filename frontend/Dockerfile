@@ -1,11 +1,13 @@
-FROM node:20-alpine AS build
+FROM node:20 AS build
 WORKDIR /app
-# Copiamos todo, incluyendo el node_modules generado en Windows y el esbuild-linux.tgz
+
+# Copiar archivos de dependencias primero para aprovechar la caché de Docker
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+# Copiar el resto del código del frontend
 COPY . .
-# Extraemos el binario de Linux manualmente en la carpeta de dependencias donde Angular espera encontrarlo
-RUN mkdir -p node_modules/@esbuild/linux-x64 && tar -xzf esbuild-linux.tgz -C node_modules/@esbuild/linux-x64 --strip-components=1
-# Usamos node directamente para llamar a ng.js porque el .bin/ng copiado de Windows no funciona en Linux
-RUN node node_modules/@angular/cli/bin/ng.js build
+RUN npm run build
 
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
