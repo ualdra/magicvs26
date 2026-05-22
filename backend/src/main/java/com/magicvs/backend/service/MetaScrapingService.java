@@ -4,6 +4,7 @@ import com.magicvs.backend.model.Card;
 import com.magicvs.backend.model.MetaDeck;
 import com.magicvs.backend.repository.CardRepository;
 import com.magicvs.backend.repository.MetaDeckRepository;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -27,6 +29,8 @@ public class MetaScrapingService {
 
     private static final Logger log = LoggerFactory.getLogger(MetaScrapingService.class);
     private static final String MTG_GOLDFISH_BASE_URL = "https://www.mtggoldfish.com";
+    private static final String BROWSER_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
 
     @Autowired
     private MetaDeckRepository metaDeckRepository;
@@ -48,14 +52,13 @@ public class MetaScrapingService {
         log.info("Iniciando escaneo del metajuego en MTGGoldfish (solicitado: {} días)... {}", days, url);
 
         try {
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                    .header("Accept-Language", "en-US,en;q=0.9")
-                    .get();
+            Document doc = fetchDocument(url);
 
             Elements tiles = doc.select(".archetype-tile");
             if (tiles.isEmpty()) {
-                log.warn("No se encontraron mazos en MTGGoldfish. Puede que la sintaxis HTML haya cambiado o Cloudflare bloqueó la petición.");
+                if (preserveExistingMetagame("No se encontraron mazos en MTGGoldfish. Puede que la sintaxis HTML haya cambiado o el sitio haya bloqueado la petición.", null)) {
+                    return;
+                }
                 return;
             }
 
@@ -132,10 +135,7 @@ public class MetaScrapingService {
                     deck.setGalleryJson(objectMapper.writeValueAsString(gallery));
                     
                     try {
-                        Document subDoc = Jsoup.connect(deck.getFullListUrl())
-                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                                .header("Accept-Language", "en-US,en;q=0.9")
-                                .get();
+                        Document subDoc = fetchDocument(deck.getFullListUrl());
 
                         List<Map<String, Object>> mainboard = new ArrayList<>();
                         
@@ -198,8 +198,11 @@ public class MetaScrapingService {
                         deck.setMainboardJson(objectMapper.writeValueAsString(mainboard));
 
                         Thread.sleep(750);
+                    } catch (HttpStatusException subpageEx) {
+                        log.warn("MTGGoldfish bloqueó la sub-lista de {} con HTTP {}. Se guardará el arquetipo sin lista completa.",
+                                deck.getName(), subpageEx.getStatusCode());
                     } catch (Exception subpageEx) {
-                        log.error("No se pudo extraer la sub-lista profunda de {}: {}", deck.getName(), subpageEx.getMessage());
+                        log.warn("No se pudo extraer la sub-lista profunda de {}: {}", deck.getName(), subpageEx.getMessage());
                     }
 
                     newDecks.add(deck);
@@ -212,9 +215,42 @@ public class MetaScrapingService {
             metaDeckRepository.saveAll(newDecks);
             log.info("Metajuego sincronizado exitosamente. {} mazos guardados.", newDecks.size());
 
+        } catch (HttpStatusException e) {
+            String message = "MTGGoldfish respondió HTTP " + e.getStatusCode() + " al consultar " + e.getUrl();
+            if (preserveExistingMetagame(message, e)) {
+                return;
+            }
+            log.error("{} y no hay metajuego previo que conservar.", message, e);
+            throw new TransientIngestionException(message, e);
         } catch (Exception e) {
             log.error("Fallo crítico durante el scraping de MTGGoldfish: {}", e.getMessage(), e);
             throw new TransientIngestionException("Fallo crítico durante el scraping de MTGGoldfish", e);
         }
+    }
+
+    private Document fetchDocument(String url) throws IOException {
+        return Jsoup.connect(url)
+                .userAgent(BROWSER_USER_AGENT)
+                .referrer("https://www.google.com/")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9,es;q=0.8")
+                .header("Cache-Control", "no-cache")
+                .header("Pragma", "no-cache")
+                .header("Upgrade-Insecure-Requests", "1")
+                .timeout(20_000)
+                .followRedirects(true)
+                .get();
+    }
+
+    private boolean preserveExistingMetagame(String reason, Exception cause) {
+        long existingDecks = metaDeckRepository.count();
+        if (existingDecks > 0) {
+            String causeMessage = cause == null ? "" : " Causa: " + cause.getClass().getSimpleName() + ": " + cause.getMessage();
+            log.warn("{} Conservando {} mazos existentes.{}", reason, existingDecks, causeMessage);
+            return true;
+        }
+
+        log.warn("{} No hay mazos existentes que conservar.", reason);
+        return false;
     }
 }
