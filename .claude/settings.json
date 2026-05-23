@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:4200/main-IQS5WRSW.js)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(curl -s http://localhost:8080/api/users -H \"Authorization: Bearer Yi9ULMejFz_sjmMH-faT4Ma3lnPbCRpM\")"
+    ]
+  }
+}

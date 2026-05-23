@@ -3,6 +3,7 @@ export interface PublicUser {
   username: string;
   displayName?: string | null;
   elo: number;
+  puntos?: number;
   friendTag?: string;
   avatarUrl?: string | null;
   bio?: string;
@@ -22,6 +23,7 @@ export interface PublicUser {
     colors: string[];
     imageUrl: string | null;
   }>;
+  achievementPoints?: number;
   isOnline?: boolean;
   lastSeenAt?: string | null;
   friendshipStatus?: 'NONE' | 'PENDING' | 'ACCEPTED';

@@ -9,18 +9,22 @@ public class UserDirectoryResponseDto {
     private String username;
     private String displayName;
     private Integer elo;
+    private Integer puntos;
     private String avatarUrl;
     private boolean isOnline;
     private LocalDateTime lastSeenAt;
     private String friendshipStatus;
+    private Integer achievementPoints;
 
     public UserDirectoryResponseDto() {}
+  
+    public UserDirectoryResponseDto(Long id, String username, String displayName, Integer elo, Integer puntos, String avatarUrl, String friendTag, boolean isOnline, LocalDateTime lastSeenAt, String friendshipStatus) {
 
-    public UserDirectoryResponseDto(Long id, String username, String displayName, Integer elo, String avatarUrl, boolean isOnline, LocalDateTime lastSeenAt, String friendshipStatus) {
         this.id = id;
         this.username = username;
         this.displayName = displayName;
         this.elo = elo;
+        this.puntos = puntos;
         this.avatarUrl = avatarUrl;
         this.isOnline = isOnline;
         this.lastSeenAt = lastSeenAt;
@@ -33,6 +37,7 @@ public class UserDirectoryResponseDto {
             user.getUsername(),
             user.getDisplayName(),
             user.getElo(),
+            user.getPuntos(),
             user.getAvatarUrl(),
             Boolean.TRUE.equals(user.getIsOnline()),
             user.getLastSeenAt(),
@@ -52,6 +57,9 @@ public class UserDirectoryResponseDto {
     public Integer getElo() { return elo; }
     public void setElo(Integer elo) { this.elo = elo; }
 
+    public Integer getPuntos() { return puntos; }
+    public void setPuntos(Integer puntos) { this.puntos = puntos; }
+
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 
@@ -63,4 +71,7 @@ public class UserDirectoryResponseDto {
 
     public String getFriendshipStatus() { return friendshipStatus; }
     public void setFriendshipStatus(String friendshipStatus) { this.friendshipStatus = friendshipStatus; }
+
+    public Integer getAchievementPoints() { return achievementPoints; }
+    public void setAchievementPoints(Integer achievementPoints) { this.achievementPoints = achievementPoints; }
 }

@@ -31,7 +31,7 @@ export class UserDirectoryComponent implements OnInit {
 
   // Filters & Sorting
   searchTerm = signal('');
-  sortBy = signal<'username' | 'elo'>('elo');
+  sortBy = signal<'username' | 'elo' | 'puntos'>('puntos');
   sortOrder = signal<'asc' | 'desc'>('desc');
   
   // No longer using mock followedUsers set
@@ -50,14 +50,18 @@ export class UserDirectoryComponent implements OnInit {
       const field = this.sortBy();
       const order = this.sortOrder();
 
-      let valA = field === 'username' ? a.username.toLowerCase() : a.elo;
-      let valB = field === 'username' ? b.username.toLowerCase() : b.elo;
+      const valA = field === 'username'
+        ? a.username.toLowerCase()
+        : (field === 'elo' ? (a.elo ?? 0) : (a.achievementPoints ?? 0));
+      const valB = field === 'username'
+        ? b.username.toLowerCase()
+        : (field === 'elo' ? (b.elo ?? 0) : (b.achievementPoints ?? 0));
 
       if (valA < valB) return order === 'asc' ? -1 : 1;
       if (valA > valB) return order === 'asc' ? 1 : -1;
 
-      // Tie-breaker: sort by username ASC if ELO is the same
-      if (field === 'elo') {
+      // Tie-breaker: sort by username ASC for numeric fields
+      if (field !== 'username') {
         const nameA = a.username.toLowerCase();
         const nameB = b.username.toLowerCase();
         if (nameA < nameB) return -1;
@@ -173,7 +177,7 @@ export class UserDirectoryComponent implements OnInit {
 
   onSortChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
-    this.sortBy.set(select.value as 'username' | 'elo');
+    this.sortBy.set(select.value as 'username' | 'elo' | 'puntos');
   }
 
   toggleFriendship(user: PublicUser): void {

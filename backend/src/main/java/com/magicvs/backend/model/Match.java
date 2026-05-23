@@ -81,6 +81,18 @@ public class Match {
         if (this.status == null) {
             this.status = MatchStatus.WAITING;
         }
+        if (this.eloBeforeP1 == null) {
+            this.eloBeforeP1 = 0;
+        }
+        if (this.eloBeforeP2 == null) {
+            this.eloBeforeP2 = 0;
+        }
+        if (this.eloAfterP1 == null) {
+            this.eloAfterP1 = 0;
+        }
+        if (this.eloAfterP2 == null) {
+            this.eloAfterP2 = 0;
+        }
     }
 
     public Long getId() { return id; }
@@ -95,17 +107,17 @@ public class Match {
     public Long getWinnerId() { return winnerId; }
     public void setWinnerId(Long winnerId) { this.winnerId = winnerId; }
 
-    public int getEloBeforeP1() { return eloBeforeP1; }
-    public void setEloBeforeP1(int eloBeforeP1) { this.eloBeforeP1 = eloBeforeP1; }
+    public int getEloBeforeP1() { return eloBeforeP1 != null ? eloBeforeP1 : 0; }
+    public void setEloBeforeP1(Integer eloBeforeP1) { this.eloBeforeP1 = eloBeforeP1; }
 
-    public int getEloBeforeP2() { return eloBeforeP2; }
-    public void setEloBeforeP2(int eloBeforeP2) { this.eloBeforeP2 = eloBeforeP2; }
+    public int getEloBeforeP2() { return eloBeforeP2 != null ? eloBeforeP2 : 0; }
+    public void setEloBeforeP2(Integer eloBeforeP2) { this.eloBeforeP2 = eloBeforeP2; }
 
-    public int getEloAfterP1() { return eloAfterP1; }
-    public void setEloAfterP1(int eloAfterP1) { this.eloAfterP1 = eloAfterP1; }
+    public int getEloAfterP1() { return eloAfterP1 != null ? eloAfterP1 : 0; }
+    public void setEloAfterP1(Integer eloAfterP1) { this.eloAfterP1 = eloAfterP1; }
 
-    public int getEloAfterP2() { return eloAfterP2; }
-    public void setEloAfterP2(int eloAfterP2) { this.eloAfterP2 = eloAfterP2; }
+    public int getEloAfterP2() { return eloAfterP2 != null ? eloAfterP2 : 0; }
+    public void setEloAfterP2(Integer eloAfterP2) { this.eloAfterP2 = eloAfterP2; }
 
     public Integer getEloChange() { return eloChange; }
     public void setEloChange(Integer eloChange) { this.eloChange = eloChange; }
