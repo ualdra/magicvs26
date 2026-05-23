@@ -121,9 +121,9 @@
                   <div class="mb-2 text-xs uppercase tracking-[0.14em] text-on-surface/65">Identidad de color</div>
                   <div class="flex flex-wrap gap-2">
                     @for (color of deckColors(); track color) {
-                      <span [ngClass]="getColorClass(color)" class="rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize">
-                        {{ color }}
-                      </span>
+                      <img [src]="'https://svgs.scryfall.io/card-symbols/' + colorNameToCode(color) + '.svg'"
+                           [alt]="color" [title]="color | titlecase"
+                           class="w-6 h-6" />
                     }
                   </div>
                 </div>
@@ -172,7 +172,15 @@
                             <div class="min-w-0 flex-1">
                               <p class="truncate text-sm font-semibold text-on-surface">{{ card.cardName }}</p>
                               <div class="flex items-center gap-2">
-                                <p class="truncate text-[11px] text-on-surface/60">{{ card.manaCost || 'Sin coste' }}</p>
+                                <div class="flex flex-wrap gap-0.5 items-center min-h-[1rem]">
+                                  @if (card.manaCost) {
+                                    @for (sym of (card.manaCost | manaCost); track $index) {
+                                      <img [src]="'https://svgs.scryfall.io/card-symbols/' + sym + '.svg'" [alt]="sym" class="w-4 h-4" />
+                                    }
+                                  } @else {
+                                    <span class="text-[11px] text-on-surface/60">Sin coste</span>
+                                  }
+                                </div>
                                 <div class="flex items-center gap-1 ml-auto mr-1">
                                   <button (click)="onUpdateQuantity(card.cardId, card.quantity - 1)" class="qty-btn" aria-label="Reducir cantidad">-</button>
                                   <span class="text-xs font-bold text-on-surface w-4 text-center">{{ card.quantity }}</span>

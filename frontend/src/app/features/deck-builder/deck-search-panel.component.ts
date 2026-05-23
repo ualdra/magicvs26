@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { catchError, debounceTime, distinctUntilChanged, finalize, switchMap, timeout } from 'rxjs/operators';
 import { BehaviorSubject, Subject, of } from 'rxjs';
+import { ManaCostPipe } from '../../shared/pipes/mana-cost.pipe';
 
 interface Card {
   id: number;
@@ -36,7 +37,7 @@ interface SearchState {
 @Component({
   selector: 'app-deck-search-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ManaCostPipe],
   templateUrl: './deck-search-panel.html',
   styleUrls: ['./deck-search-panel.scss']
 })

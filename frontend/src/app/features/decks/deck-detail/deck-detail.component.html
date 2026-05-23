@@ -82,7 +82,13 @@
                         <p class="text-[11px] font-bold text-white truncate leading-tight">{{ card.cardName }}</p>
                         <div class="flex items-center justify-between mt-1">
                           <span class="text-[10px] text-white/60 font-mono">x{{ card.quantity }}</span>
-                          <span class="text-[9px] px-1.5 py-0.5 bg-white/10 rounded-md text-white/80 font-mono">{{ card.manaCost }}</span>
+                          <span class="flex flex-wrap gap-px items-center">
+                            @if (card.manaCost) {
+                              @for (sym of (card.manaCost | manaCost); track $index) {
+                                <img [src]="'https://svgs.scryfall.io/card-symbols/' + sym + '.svg'" [alt]="sym" class="w-3.5 h-3.5" />
+                              }
+                            }
+                          </span>
                         </div>
                       </div>
                     </div>

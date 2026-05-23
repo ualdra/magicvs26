@@ -47,9 +47,11 @@
             <button
               (click)="toggleColor(color)"
               [title]="getManaTitle(color)"
-              class="h-5 w-5 rounded-full border-2 transition-all duration-200 hover:scale-110"
+              class="h-6 w-6 rounded-full border-2 transition-all duration-200 hover:scale-110 flex items-center justify-center overflow-hidden p-0"
               [ngClass]="getManaButtonClass(color)"
-            ></button>
+            >
+              <img [src]="'https://svgs.scryfall.io/card-symbols/' + color + '.svg'" [alt]="color" class="w-full h-full" />
+            </button>
           }
           @if (activeColors().length > 0) {
             <button (click)="clearColors()"
@@ -152,8 +154,8 @@
                       @if (deck.colorIdentity.length > 0) {
                         <div class="mt-1.5 flex gap-1">
                           @for (c of deck.colorIdentity; track c) {
-                            <span class="h-3 w-3 rounded-full border-2 inline-block"
-                              [ngClass]="getManaPipClass(c)" [title]="getManaTitle(c)"></span>
+                            <img [src]="'https://svgs.scryfall.io/card-symbols/' + c + '.svg'"
+                                 [alt]="c" [title]="getManaTitle(c)" class="h-4 w-4" />
                           }
                         </div>
                       }
@@ -201,8 +203,8 @@
                   </span>
                   <!-- Color identity pips (larger, in preview header) -->
                   @for (c of selectedDeck()!.colorIdentity; track c) {
-                    <span class="h-4 w-4 rounded-full border-2 inline-block"
-                      [ngClass]="getManaPipClass(c)" [title]="getManaTitle(c)"></span>
+                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + c + '.svg'"
+                         [alt]="c" [title]="getManaTitle(c)" class="h-5 w-5" />
                   }
                 </div>
               </div>
@@ -270,7 +272,15 @@
                           <!-- Card name + cost -->
                           <div class="px-1.5 py-1">
                             <p class="truncate text-[10px] font-semibold leading-tight text-on-surface">{{ card.cardName }}</p>
-                            <p class="truncate text-[9px] text-on-surface/45">{{ card.manaCost || '—' }}</p>
+                            <div class="flex flex-wrap gap-px items-center min-h-[12px]">
+                              @if (card.manaCost) {
+                                @for (sym of (card.manaCost | manaCost); track $index) {
+                                  <img [src]="'https://svgs.scryfall.io/card-symbols/' + sym + '.svg'" [alt]="sym" class="w-3 h-3" />
+                                }
+                              } @else {
+                                <span class="text-[9px] text-on-surface/45">—</span>
+                              }
+                            </div>
                           </div>
                         </div>
                       }

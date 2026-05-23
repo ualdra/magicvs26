@@ -176,20 +176,17 @@
         <!-- OPPONENT MANA POOL -->
         <div class="mana-pool-grid grid grid-cols-3 gap-1.5 pointer-events-auto mr-2">
           @for (mana of [
-            { key: 'white', color: '#fcd34d', icon: 'brightness_low' },
-            { key: 'blue', color: '#3b82f6', icon: 'water_drop' },
-            { key: 'black', color: '#a855f7', icon: 'skull' },
-            { key: 'red', color: '#ef4444', icon: 'local_fire_department' },
-            { key: 'green', color: '#22c55e', icon: 'park' },
-            { key: 'colorless', color: '#94a3b8', icon: 'diamond' }
+            { key: 'white', code: 'W' },
+            { key: 'blue', code: 'U' },
+            { key: 'black', code: 'B' },
+            { key: 'red', code: 'R' },
+            { key: 'green', code: 'G' },
+            { key: 'colorless', code: 'C' }
           ]; track mana.key) {
             <div class="mana-icon-wrapper flex flex-col items-center opacity-40 transition-opacity" [class.active]="opponent.manaPool && opponent.manaPool[mana.key] > 0">
               <span class="mana-count mb-0.5">{{ opponent.manaPool ? opponent.manaPool[mana.key] : 0 }}</span>
-              <div class="mana-circle" 
-                   [style.background-color]="mana.color"
-                   [style.border-color]="mana.color"
-                   style="color: rgba(0,0,0,0.8)">
-                <span class="material-symbols-outlined !text-[12px] font-bold">{{ mana.icon }}</span>
+              <div class="mana-circle">
+                <img [src]="'https://svgs.scryfall.io/card-symbols/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
               </div>
             </div>
           }
@@ -423,15 +420,14 @@
             <div class="text-white/60 text-sm font-bold uppercase tracking-widest mb-12 animate-slide-up">Restante: {{ pay.remainingGeneric }}</div>
             
             <div class="flex gap-4 max-w-2xl flex-wrap justify-center animate-scale-in">
-              @for (poolKey of ['white', 'blue', 'black', 'red', 'green', 'colorless']; track poolKey) {
-                @if (me.manaPool[poolKey] > 0) {
-                  <button (click)="engine.payGenericMana(poolKey)"
-                          class="mana-choice-btn w-20 h-20 rounded-full flex flex-col items-center justify-center gap-1 transition-all hover:scale-110 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-2 border-white/20 hover:border-white/50 relative"
-                          [style.background-color]="getColorCode(poolKey === 'colorless' ? 'C' : poolKey.charAt(0))">
-                    <span class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full text-xs font-black flex items-center justify-center border border-white/20">
-                      {{ me.manaPool[poolKey] }}
+              @for (pool of [{name:'white',code:'W'},{name:'blue',code:'U'},{name:'black',code:'B'},{name:'red',code:'R'},{name:'green',code:'G'},{name:'colorless',code:'C'}]; track pool.name) {
+                @if (me.manaPool[pool.name] > 0) {
+                  <button (click)="engine.payGenericMana(pool.name)"
+                          class="mana-choice-btn w-20 h-20 rounded-full flex flex-col items-center justify-center gap-1 transition-all hover:scale-110 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-2 border-white/20 hover:border-white/50 relative overflow-hidden p-0">
+                    <span class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full text-xs font-black flex items-center justify-center border border-white/20 z-10">
+                      {{ me.manaPool[pool.name] }}
                     </span>
-                    <span class="material-symbols-outlined text-black text-3xl font-bold">{{ getColorIcon(poolKey === 'colorless' ? 'C' : poolKey.charAt(0)) }}</span>
+                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + pool.code + '.svg'" [alt]="pool.name" class="w-full h-full" />
                   </button>
                 }
               }
@@ -495,9 +491,8 @@
               @for (color of choice.options; track color) {
                 <div class="flex flex-col items-center gap-4 group">
                   <button (click)="engine.resolveManaChoice(color)"
-                          class="mana-choice-btn w-24 h-24 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-2 border-white/20 hover:border-white/50"
-                          [style.background-color]="getColorCode(color)">
-                    <span class="material-symbols-outlined text-black text-5xl font-bold">{{ getColorIcon(color) }}</span>
+                          class="mana-choice-btn w-24 h-24 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-2 border-white/20 hover:border-white/50 overflow-hidden p-0">
+                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + color + '.svg'" [alt]="getColorName(color)" class="w-full h-full" />
                   </button>
                   <span class="text-white/60 font-bold uppercase tracking-widest text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                     {{ getColorName(color) }}
@@ -519,19 +514,18 @@
           
           <div class="flex gap-6 mb-16 animate-scale-in">
             @for (mana of [
-              { key: 'white', color: '#fcd34d', icon: 'brightness_low' },
-              { key: 'blue', color: '#3b82f6', icon: 'water_drop' },
-              { key: 'black', color: '#a855f7', icon: 'skull' },
-              { key: 'red', color: '#ef4444', icon: 'local_fire_department' },
-              { key: 'green', color: '#22c55e', icon: 'park' },
-              { key: 'colorless', color: '#94a3b8', icon: 'diamond' }
+              { key: 'white', code: 'W' },
+              { key: 'blue', code: 'U' },
+              { key: 'black', code: 'B' },
+              { key: 'red', code: 'R' },
+              { key: 'green', code: 'G' },
+              { key: 'colorless', code: 'C' }
             ]; track mana.key) {
               @if (me.manaPool && me.manaPool[mana.key] > 0) {
                 <div class="flex flex-col items-center gap-3 group">
                   <button (click)="engine.payGenericMana($any(mana.key))"
-                          class="w-20 h-20 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/20 hover:border-white/50"
-                          [style.background-color]="mana.color">
-                    <span class="material-symbols-outlined text-black text-4xl font-bold">{{ mana.icon }}</span>
+                          class="w-20 h-20 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/20 hover:border-white/50 overflow-hidden p-0">
+                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
                   </button>
                   <span class="text-white font-black text-xl">{{ me.manaPool[mana.key] }}</span>
                 </div>
@@ -560,20 +554,17 @@
           <!-- MANA POOL -->
           <div class="mana-pool-grid grid grid-cols-3 gap-1.5 pointer-events-auto mr-2">
             @for (mana of [
-              { key: 'white', color: '#fcd34d', icon: 'brightness_low' },
-              { key: 'blue', color: '#3b82f6', icon: 'water_drop' },
-              { key: 'black', color: '#a855f7', icon: 'skull' },
-              { key: 'red', color: '#ef4444', icon: 'local_fire_department' },
-              { key: 'green', color: '#22c55e', icon: 'park' },
-              { key: 'colorless', color: '#94a3b8', icon: 'diamond' }
+              { key: 'white', code: 'W' },
+              { key: 'blue', code: 'U' },
+              { key: 'black', code: 'B' },
+              { key: 'red', code: 'R' },
+              { key: 'green', code: 'G' },
+              { key: 'colorless', code: 'C' }
             ]; track mana.key) {
               <div class="mana-icon-wrapper flex flex-col items-center opacity-40 transition-opacity" [class.active]="me.manaPool && me.manaPool[mana.key] > 0">
                 <span class="mana-count mb-0.5">{{ me.manaPool ? me.manaPool[mana.key] : 0 }}</span>
-                <div class="mana-circle" 
-                     [style.background-color]="mana.color"
-                     [style.border-color]="mana.color"
-                     style="color: rgba(0,0,0,0.8)">
-                  <span class="material-symbols-outlined !text-[12px] font-bold">{{ mana.icon }}</span>
+                <div class="mana-circle">
+                  <img [src]="'https://svgs.scryfall.io/card-symbols/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
                 </div>
               </div>
             }

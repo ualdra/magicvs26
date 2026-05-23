@@ -2,6 +2,7 @@ import { Component, EventEmitter, inject, OnInit, Output, signal, computed } fro
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DeckBuilderService } from '../../core/services/deck-builder.service';
+import { ManaCostPipe } from '../../shared/pipes/mana-cost.pipe';
 
 function sortDecksAlpha(a: { name: string; averageCmc: number }, b: { name: string; averageCmc: number }): number {
   const nameCompare = a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
@@ -44,7 +45,7 @@ interface PreviewDeck {
 @Component({
   selector: 'app-public-decks-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ManaCostPipe],
   templateUrl: './public-decks-modal.html',
   styleUrls: ['./public-decks-modal.scss']
 })

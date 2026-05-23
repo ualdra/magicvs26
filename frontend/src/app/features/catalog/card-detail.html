@@ -60,17 +60,9 @@
           <div class="flex items-center gap-4">
             <div class="flex gap-2">
               @for (cost of displayFace.manaCost; track $index) {
-                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/5"
-                     [ngClass]="{
-                       'bg-surface-container-high text-on-surface': !['W','U','B','R','G'].includes(cost),
-                       'bg-white text-black': cost === 'W',
-                       'bg-[#0E68AB] text-white': cost === 'U',
-                       'bg-[#150B00] text-white border-white/20': cost === 'B',
-                       'bg-[#D3202A] text-white': cost === 'R',
-                       'bg-[#00733E] text-white': cost === 'G'
-                     }">
-                  {{ cost }}
-                </div>
+                <img [src]="'https://svgs.scryfall.io/card-symbols/' + cost + '.svg'"
+                     [alt]="cost"
+                     class="w-10 h-10" />
               }
             </div>
             <button

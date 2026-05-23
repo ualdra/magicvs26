@@ -3,11 +3,12 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DeckBuilderService, Deck, DeckCard } from '../../../core/services/deck-builder.service';
 import { finalize } from 'rxjs';
+import { ManaCostPipe } from '../../../shared/pipes/mana-cost.pipe';
 
 @Component({
   selector: 'app-deck-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ManaCostPipe],
   templateUrl: './deck-detail.component.html',
   styleUrl: './deck-detail.component.scss'
 })
