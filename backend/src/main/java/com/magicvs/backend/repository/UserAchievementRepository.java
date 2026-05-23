@@ -4,6 +4,8 @@ import com.magicvs.backend.model.Achievement;
 import com.magicvs.backend.model.User;
 import com.magicvs.backend.model.UserAchievement;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,4 +24,7 @@ public interface UserAchievementRepository extends JpaRepository<UserAchievement
     List<UserAchievement> findByUserAndEarnedAtIsNotNull(User user);
 
     long deleteByAchievement(Achievement achievement);
+
+    @Query("SELECT COALESCE(SUM(ua.achievement.points), 0) FROM UserAchievement ua WHERE ua.user.id = :userId AND ua.earnedAt IS NOT NULL")
+    Integer sumAchievementPointsByUserId(@Param("userId") Long userId);
 }

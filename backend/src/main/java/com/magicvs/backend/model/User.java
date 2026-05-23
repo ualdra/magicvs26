@@ -56,6 +56,9 @@ public class User {
     @Column(name = "friend_tag", unique = true, length = 16)
     private String friendTag;
 
+    @Column(name = "points")
+    private Integer puntos = 0;
+
     @Column(name = "friends_count", nullable = false)
     private Integer friendsCount = 0;
 
@@ -93,6 +96,7 @@ public class User {
         if (this.gamesPlayed == null) this.gamesPlayed = 0;
         if (this.gamesWon == null) this.gamesWon = 0;
         if (this.gamesLost == null) this.gamesLost = 0;
+        if (this.puntos == null) this.puntos = 0;
         if (this.friendsCount == null) this.friendsCount = 0;
         if (this.active == null) this.active = true;
         if (this.isOnline == null) this.isOnline = false;
@@ -157,6 +161,8 @@ public class User {
 
     public Integer getGamesLost() { return gamesLost; }
     public void setGamesLost(Integer gamesLost) { this.gamesLost = gamesLost; }
+    public Integer getPuntos() { return puntos; }
+    public void setPuntos(Integer puntos) { this.puntos = puntos; }
     public String getProfileTitle() {
         return profileTitle;
     }

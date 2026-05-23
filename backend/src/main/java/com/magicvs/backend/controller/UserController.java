@@ -6,6 +6,7 @@ import com.magicvs.backend.service.LoginService;
 import com.magicvs.backend.service.AuthService;
 import com.magicvs.backend.service.AchievementService;
 import com.magicvs.backend.repository.RegistroRepository;
+import com.magicvs.backend.repository.UserAchievementRepository;
 import com.magicvs.backend.dto.UserDirectoryResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +27,16 @@ public class UserController {
     private final com.magicvs.backend.service.RegistrationVerificationService verificationService;
     private final com.magicvs.backend.service.FriendshipService friendshipService;
     private final AchievementService achievementService;
+    private final UserAchievementRepository userAchievementRepository;
 
-    public UserController(RegistroService registroService, 
-                          LoginService loginService, 
-                          AuthService authService, 
-                          RegistroRepository registroRepository, 
+    public UserController(RegistroService registroService,
+                          LoginService loginService,
+                          AuthService authService,
+                          RegistroRepository registroRepository,
                           com.magicvs.backend.service.RegistrationVerificationService verificationService,
                           com.magicvs.backend.service.FriendshipService friendshipService,
-                          AchievementService achievementService) {
+                          AchievementService achievementService,
+                          UserAchievementRepository userAchievementRepository) {
         this.registroService = registroService;
         this.loginService = loginService;
         this.authService = authService;
@@ -41,6 +44,7 @@ public class UserController {
         this.verificationService = verificationService;
         this.friendshipService = friendshipService;
         this.achievementService = achievementService;
+        this.userAchievementRepository = userAchievementRepository;
     }
 
     @GetMapping("/exists")
@@ -79,6 +83,7 @@ public class UserController {
                     } else {
                         dto.setFriendshipStatus("NONE");
                     }
+                    dto.setAchievementPoints(userAchievementRepository.sumAchievementPointsByUserId(u.getId()));
                     return dto;
                 })
                 .collect(Collectors.toList());
