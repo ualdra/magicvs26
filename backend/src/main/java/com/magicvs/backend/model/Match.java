@@ -25,13 +25,13 @@ public class Match {
 
     // --- LÓGICA DE ELO ---
     @Transient
-    private int eloBeforeP1;
+    private Integer eloBeforeP1;
     @Transient
-    private int eloBeforeP2;
+    private Integer eloBeforeP2;
     @Transient
-    private int eloAfterP1;
+    private Integer eloAfterP1;
     @Transient
-    private int eloAfterP2;
+    private Integer eloAfterP2;
     private Integer eloChange; // Diferencia neta opcional
 
     // --- ESTADO Y FORMATO ---
@@ -62,8 +62,8 @@ public class Match {
     public Match() {}
 
     public Match(User player1, User player2, Long winnerId,
-                 int eloBeforeP1, int eloBeforeP2,
-                 int eloAfterP1, int eloAfterP2) {
+                 Integer eloBeforeP1, Integer eloBeforeP2,
+                 Integer eloAfterP1, Integer eloAfterP2) {
         this.player1 = player1;
         this.player2 = player2;
         this.winnerId = winnerId;

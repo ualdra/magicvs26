@@ -120,6 +120,11 @@ export class MetaComponent implements OnInit {
     deck.showFullList = !deck.showFullList;
   }
 
+  manaSymbolUrl(color: string): string {
+    const normalized = String(color || '').trim().toUpperCase();
+    return `https://svgs.scryfall.io/card-symbols/${normalized}.svg`;
+  }
+
   importMetaDeck(deck: MetaDeck): void {
     const token = localStorage.getItem('token');
     if (!token) {

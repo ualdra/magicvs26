@@ -3,7 +3,7 @@
   <section class="mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
     <div>
       <h2 class="text-4xl font-headline font-bold text-on-surface uppercase tracking-tighter mb-2">Directorio de Invocadores</h2>
-      <p class="text-zinc-500 font-body max-w-md">Analiza a tus rivales, encuentra compañeros de gremio y escala en el ranking global.</p>
+      <p class="text-zinc-500 font-body max-w-md">Analiza a tus rivales, encuentra compañeros de gremio y escala en el ranking global. Puedes buscar invocadores por nombre, tag (#) amigo o filtro.</p>
     </div>
     
     <div class="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
@@ -165,7 +165,7 @@
         {{ searchTerm() ? 'No hay coincidencias' : 'Sin resultados' }}
       </h3>
       <p class="text-zinc-500 font-body max-w-sm mb-8">
-        {{ searchTerm() ? 'No hemos encontrado invocadores que coincidan con "' + searchTerm() + '".' : 'No se encontraron invocadores en la base de datos.' }}
+        {{ searchTerm() ? 'No hemos encontrado invocadores que coincidan con "' + searchTerm() + '". Si estás buscando por tag amigo, asegúrate de que esté completo.' : 'No se encontraron invocadores en la base de datos.' }}
       </p>
       @if (searchTerm()) {
         <button (click)="searchTerm.set('')" class="bg-primary/10 border border-primary/20 text-primary px-8 py-3 rounded-lg font-headline text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition-all">
