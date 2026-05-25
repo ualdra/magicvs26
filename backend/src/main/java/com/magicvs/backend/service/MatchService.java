@@ -23,13 +23,16 @@ public class MatchService {
     private final RegistroRepository userRepository;
     private final UserDailyStatsRepository dailyStatsRepository;
     private final AchievementService achievementService;
+    private final com.magicvs.backend.repository.FriendshipRepository friendshipRepository;
 
     public MatchService(MatchRepository matchRepository, RegistroRepository userRepository,
-            UserDailyStatsRepository dailyStatsRepository, AchievementService achievementService) {
+            UserDailyStatsRepository dailyStatsRepository, AchievementService achievementService,
+            com.magicvs.backend.repository.FriendshipRepository friendshipRepository) {
         this.matchRepository = matchRepository;
         this.userRepository = userRepository;
         this.dailyStatsRepository = dailyStatsRepository;
         this.achievementService = achievementService;
+        this.friendshipRepository = friendshipRepository;
     }
 
     public List<MatchHistoryDto> getHistoryForUser(Long userId) {
@@ -40,6 +43,25 @@ public class MatchService {
                 .map(m -> mapToDto(m, userId))
                 .collect(Collectors.toList());
     }
+
+    public List<MatchHistoryDto> getActiveMatchesForFriends(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        List<com.magicvs.backend.model.Friendship> friends = friendshipRepository.findAcceptedFriendsForUser(user);
+        
+        List<Long> friendIds = friends.stream()
+            .map(f -> f.getUser().getId().equals(userId) ? f.getFriend().getId() : f.getUser().getId())
+            .collect(Collectors.toList());
+            
+        if (friendIds.isEmpty()) {
+            return List.of();
+        }
+        
+        List<Match> matches = matchRepository.findActiveMatchesByFriendIds(friendIds);
+        return matches.stream()
+                .map(m -> mapToDto(m, userId))
+                .collect(Collectors.toList());
+    }
+
 
     private MatchHistoryDto mapToDto(Match match, Long currentUserId) {
         MatchHistoryDto dto = new MatchHistoryDto();

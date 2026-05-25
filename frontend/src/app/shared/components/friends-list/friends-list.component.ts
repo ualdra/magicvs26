@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild, ElementRef, inject, HostListener, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { FriendshipService } from '../../../core/services/friendship.service';
 import { BlockService } from '../../../core/services/block.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { MatchService } from '../../../core/services/match.service';
 
 interface Friend {
   id: number;
@@ -43,10 +44,39 @@ export class FriendsListComponent implements OnInit {
   private readonly friendshipService = inject(FriendshipService);
   private readonly blockService = inject(BlockService);
   private readonly toastService = inject(ToastService);
+  private readonly matchService = inject(MatchService);
+  private readonly router = inject(Router);
+
+  activeMatchIds: Record<number, string> = {};
 
   ngOnInit() {
     this.loadFriends();
     this.loadBlockedUsers();
+    // Poll active matches periodically
+    setInterval(() => this.loadActiveMatches(), 5000);
+  }
+
+  loadActiveMatches() {
+    if (!this.userService.getStoredUser()?.id) return;
+    this.matchService.getActiveFriendsMatches().subscribe({
+      next: (matches: any[]) => {
+        const newActiveMatches: Record<number, string> = {};
+        for (const match of matches) {
+          // Si tenemos que matchear por username porque MatchHistoryDto tiene PlayerDto(username, avatarUrl)
+          // Necesitamos encontrar el amigo correspondiente.
+          // Wait, MatchHistoryDto en backend devuelve el username del player1 y player2.
+          const p1 = this.friends.find(f => f.username === match.player1.username);
+          if (p1) newActiveMatches[p1.id] = match.id.toString();
+          
+          if (match.player2) {
+            const p2 = this.friends.find(f => f.username === match.player2.username);
+            if (p2) newActiveMatches[p2.id] = match.id.toString();
+          }
+        }
+        this.activeMatchIds = newActiveMatches;
+      },
+      error: () => {} // silent fail for polling
+    });
   }
 
   loadFriends() {
@@ -63,6 +93,7 @@ export class FriendsListComponent implements OnInit {
       next: (friends) => {
         this.friends = friends;
         this.separateOnlineOffline();
+        this.loadActiveMatches(); // fetch matches right after friends load
         this.isLoading = false;
       },
       error: (err) => {
@@ -136,6 +167,12 @@ export class FriendsListComponent implements OnInit {
     event.stopPropagation();
     this.selectFriend(friend);
     // El parent component (MainLayout) manejará la apertura del chat
+  }
+
+  spectateMatch(matchId: string, friendId: number, event: MouseEvent) {
+    event.stopPropagation();
+    this.isDropdownOpen = false;
+    this.router.navigate(['/spectator', matchId], { queryParams: { friendId } });
   }
 
   blockUser(friend: Friend, event: MouseEvent) {

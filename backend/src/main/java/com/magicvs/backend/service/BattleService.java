@@ -242,6 +242,45 @@ public class BattleService {
         }
     }
 
+    public GameState getSpectatorState(Long userId, Long matchId, Long friendId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        
+        GameState state = getGameState(matchId);
+        if (state == null) return null;
+        
+        // Determinar quién es el amigo en el estado (player1 o player2)
+        String friendIdStr = friendId.toString();
+        
+        if (state.getPlayer1() != null && !state.getPlayer1().getId().equals(friendIdStr)) {
+            // Player1 NO es el amigo, ocultar su mano
+            for (CardState card : state.getPlayer1().getHand()) {
+                hideCard(card);
+            }
+        }
+        
+        if (state.getPlayer2() != null && !state.getPlayer2().getId().equals(friendIdStr)) {
+            // Player2 NO es el amigo, ocultar su mano
+            for (CardState card : state.getPlayer2().getHand()) {
+                hideCard(card);
+            }
+        }
+        
+        return state;
+    }
+
+    private void hideCard(CardState card) {
+        card.setCardId(null);
+        card.setName("Unknown Card");
+        card.setImageUrl("https://static.wikia.nocookie.net/mtgsalvation_gamepedia/images/f/f8/Magic_card_back.jpg");
+        card.setType("Unknown");
+        card.setOracleText("");
+        card.setManaCost(new ArrayList<>());
+        card.setPower("");
+        card.setToughness("");
+        card.setProducedMana(new ArrayList<>());
+    }
+
     // --- CLASES DTO / INNER CLASSES ---
 
     @Data

@@ -44,6 +44,7 @@ export const routes: Routes = [
       { path: 'users/:id', component: UserProfileComponent },
       { path: 'arena', component: MatchBrowserComponent, canActivate: [authGuard] },
       { path: 'battle/:id', component: BattleboardComponent, canActivate: [authGuard] },
+      { path: 'spectator/:id', loadComponent: () => import('./features/spectator/spectator.component').then(m => m.SpectatorComponent), canActivate: [authGuard] },
       { path: 'reset-password/:token', component: ResetPassword },
       { path: 'logros', component: AchievementsPageComponent }
     ]

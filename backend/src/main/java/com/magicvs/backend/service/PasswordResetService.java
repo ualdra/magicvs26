@@ -54,6 +54,7 @@ public class PasswordResetService {
     }
 
     private void sendResetTokenEmail(User user, String token) {
+        String resetUrl = "http://localhost:4200/reset-password/" + token;
         try {
             String fromAddress = System.getenv("SMTP_FROM") != null ? System.getenv("SMTP_FROM") : "noreply@magicvs.local";
             MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -62,8 +63,6 @@ public class PasswordResetService {
             helper.setTo(user.getEmail());
             helper.setFrom(fromAddress);
             helper.setSubject("🔑 Recupera tu acceso a MagicVS");
-
-            String resetUrl = "http://localhost:4200/reset-password/" + token;
 
             String htmlContent = "<!DOCTYPE html><html><head>" +
                     "<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>" +

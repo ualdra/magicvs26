@@ -61,4 +61,12 @@ export class MatchService {
       map(matches => matches.find(m => m.id === id))
     );
   }
+
+  getActiveFriendsMatches(): Observable<Match[]> {
+    return this.http.get<Match[]>(`${this.apiUrl}/friends/active`, { headers: this.getHeaders() });
+  }
+
+  getSpectatorState(matchId: string, friendId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${matchId}/spectate?friendId=${friendId}`, { headers: this.getHeaders() });
+  }
 }

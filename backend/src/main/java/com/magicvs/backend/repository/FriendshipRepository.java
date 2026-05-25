@@ -18,10 +18,10 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
     @Query("SELECT f FROM Friendship f WHERE (f.user = :u1 AND f.friend = :u2) OR (f.user = :u2 AND f.friend = :u1)")
     Optional<Friendship> findByUsers(@Param("u1") User u1, @Param("u2") User u2);
 
-    @Query("SELECT f FROM Friendship f WHERE f.friend = :user AND f.status = 'PENDING'")
+    @Query("SELECT f FROM Friendship f WHERE f.friend = :user AND f.status = com.magicvs.backend.model.FriendshipStatus.PENDING")
     List<Friendship> findPendingRequestsForUser(@Param("user") User user);
 
-    @Query("SELECT f FROM Friendship f WHERE (f.user = :user OR f.friend = :user) AND f.status = 'ACCEPTED'")
+    @Query("SELECT f FROM Friendship f WHERE (f.user = :user OR f.friend = :user) AND f.status = com.magicvs.backend.model.FriendshipStatus.ACCEPTED")
     List<Friendship> findAcceptedFriendsForUser(@Param("user") User user);
 
     boolean existsByUserAndFriend(User user, User friend);

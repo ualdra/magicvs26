@@ -19,8 +19,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/magicvs
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SMTP_USER: "noreplymagicvs@gmail.com"
-      SMTP_PASS: "qhxmzwbsoozavefg"
+      SMTP_HOST: "smtp-relay.brevo.com"
+      SMTP_PORT: "587"
+      SMTP_USER: "ac716e001@smtp-brevo.com"
+      SMTP_PASS: "${SMTP_PASS}"
       SMTP_FROM: "noreplymagicvs@gmail.com"
       DECK_MIN_CARDS: ${DECK_MIN_CARDS:-60}
     ports:

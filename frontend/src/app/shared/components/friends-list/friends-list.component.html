@@ -124,6 +124,16 @@
 
                 <!-- Actions (visible on hover) -->
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  @if (activeMatchIds[friend.id]) {
+                    <button
+                      type="button"
+                      (click)="spectateMatch(activeMatchIds[friend.id], friend.id, $event)"
+                      class="p-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 hover:text-orange-300 transition-all animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.4)]"
+                      title="Espectar partida"
+                    >
+                      <span class="material-symbols-outlined text-base">visibility</span>
+                    </button>
+                  }
                   <button
                     type="button"
                     [routerLink]="['/profile', friend.id]"
