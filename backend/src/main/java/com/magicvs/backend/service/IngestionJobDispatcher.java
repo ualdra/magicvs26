@@ -5,11 +5,14 @@ import com.magicvs.backend.model.IngestionJobType;
 import com.magicvs.backend.model.News;
 import com.magicvs.backend.repository.NewsRepository;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+@Slf4j
 @Service
 @Profile("worker")
 public class IngestionJobDispatcher {
@@ -101,5 +104,11 @@ public class IngestionJobDispatcher {
     private boolean bool(JsonNode payload, String field, boolean fallback) {
         JsonNode value = payload.get(field);
         return value == null || value.isNull() ? fallback : value.asBoolean();
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void scheduledSyncNews() {
+        log.info("Ejecutando sincronización programada de noticias...");
+        syncNews();
     }
 }

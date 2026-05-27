@@ -158,9 +158,15 @@
           <!-- Hover overlay -->
           <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 pointer-events-none">
             <h3 class="font-headline text-lg font-bold text-white">{{ card.name }}</h3>
-            <div class="flex justify-between items-center mt-2">
+            <div class="flex items-center gap-4 mt-2">
               <span class="text-xs text-primary-fixed uppercase tracking-tighter font-label">{{ rarityLabel(card.rarity) }}</span>
-              <span class="text-sm font-bold text-secondary">{{ getManaCostString(card.manaCost) }}</span>
+              @if (card.manaCost?.length) {
+                <div class="flex gap-0.5 ml-auto">
+                  @for (sym of card.manaCost; track $index) {
+                    <img [src]="'assets/mana/' + sym.replace(/[{}]/g,'').replace('/','') + '.svg'" [alt]="sym" class="w-4 h-4" />
+                  }
+                </div>
+              }
             </div>
           </div>
 
@@ -225,11 +231,9 @@
             <div class="flex justify-between items-start gap-4">
               <h2 class="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter">{{ hoveredCard().name }}</h2>
               <div class="flex gap-1.5 flex-wrap justify-end">
-                @for (cost of hoveredCard().manaCost; track $index) {
-                  <img [src]="'assets/mana/' + cost + '.svg'"
-                       [alt]="cost"
-                       class="w-7 h-7" />
-                }
+              @for (cost of hoveredCard().manaCost; track $index) {
+                <img [src]="'assets/mana/' + cost.replace(/[{}]/g,'').replace('/','') + '.svg'" [alt]="cost" class="w-7 h-7" />
+              }
               </div>
             </div>
 
