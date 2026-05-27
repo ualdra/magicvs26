@@ -74,7 +74,6 @@ public class Match {
         this.eloBeforeP2 = eloBeforeP2;
         this.eloAfterP1 = eloAfterP1;
         this.eloAfterP2 = eloAfterP2;
-        this.status = MatchStatus.FINISHED;
         this.finishedAt = LocalDateTime.now();
     }
 

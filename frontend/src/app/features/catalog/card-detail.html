@@ -60,7 +60,7 @@
           <div class="flex items-center gap-4">
             <div class="flex gap-2">
               @for (cost of displayFace.manaCost; track $index) {
-                <img [src]="'https://svgs.scryfall.io/card-symbols/' + cost + '.svg'"
+                <img [src]="'assets/mana/' + cost + '.svg'"
                      [alt]="cost"
                      class="w-10 h-10" />
               }

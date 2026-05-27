@@ -281,7 +281,7 @@ export class MainLayout {
       case 'BATTLE_INVITE':
         return 'sports_martial_arts';
       case 'MATCH_FOUND':
-        return 'arena';
+        return 'sports_esports';
       default:
         return 'notifications';
     }

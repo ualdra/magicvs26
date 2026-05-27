@@ -356,7 +356,9 @@ public DeckResponseDTO copyDeck(Long deckId, String authorization) {
 
     private boolean isBasicLand(Card card) {
         String typeLine = card.getTypeLine();
-        return typeLine != null && typeLine.toLowerCase().contains("basic land");
+        if (typeLine == null) return false;
+        String lower = typeLine.toLowerCase();
+        return lower.contains("basic land") || lower.contains("tierra básica");
     }
 
     private DeckSummaryDTO toDeckSummary(Deck deck) {

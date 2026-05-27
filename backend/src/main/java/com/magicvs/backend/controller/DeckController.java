@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/decks")
-@CrossOrigin(origins = "http://localhost:4200")
 public class DeckController {
 
     private final DeckService deckService;

@@ -37,7 +37,7 @@
             class="w-10 h-10 rounded-full border transition-all flex items-center justify-center group"
             [title]="mana">
             <img
-              [src]="'https://svgs.scryfall.io/card-symbols/' + mana + '.svg'"
+              [src]="'assets/mana/' + mana + '.svg'"
               [alt]="mana"
               class="w-6 h-6 group-hover:scale-110 transition-transform"
               [class.opacity-50]="!activeMana().includes(mana)" />
@@ -226,7 +226,7 @@
               <h2 class="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter">{{ hoveredCard().name }}</h2>
               <div class="flex gap-1.5 flex-wrap justify-end">
                 @for (cost of hoveredCard().manaCost; track $index) {
-                  <img [src]="'https://svgs.scryfall.io/card-symbols/' + cost + '.svg'"
+                  <img [src]="'assets/mana/' + cost + '.svg'"
                        [alt]="cost"
                        class="w-7 h-7" />
                 }

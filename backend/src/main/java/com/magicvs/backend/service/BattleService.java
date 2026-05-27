@@ -46,9 +46,13 @@ public class BattleService {
         state.setCurrentPhase("UNTAP");
         state.setTurnCount(1);
         state.setAnimationStatus("IDLE");
+        state.setActionLog(new ArrayList<>());
         
         state.setPlayer1(initializePlayerState(match.getPlayer1(), d1Id));
         state.setPlayer2(initializePlayerState(match.getPlayer2(), d2Id));
+        
+        addToLog(state, "--- ¡Comienza la batalla! ---");
+        addToLog(state, "Turno 1: " + state.getPlayer1().getUsername());
         
         try {
             match.setLiveState(objectMapper.writeValueAsString(state));
@@ -56,6 +60,16 @@ public class BattleService {
             log.info("Initialized game state for match {}", matchId);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize game state for match {}", matchId, e);
+        }
+    }
+
+    private void addToLog(GameState state, String message) {
+        if (state.getActionLog() == null) {
+            state.setActionLog(new ArrayList<>());
+        }
+        state.getActionLog().add(message);
+        if (state.getActionLog().size() > 50) {
+            state.getActionLog().remove(0);
         }
     }
 
@@ -93,6 +107,26 @@ public class BattleService {
         // Persistir cambios 
         registroRepository.save(winner);
         registroRepository.save(loser);
+
+        // Persistir ELO en la entidad Match
+        match.setEloBeforeP1(oldEloP1);
+        match.setEloAfterP1(newEloWinner);
+        match.setEloBeforeP2(oldEloP2);
+        match.setEloAfterP2(newEloLoser);
+        match.setEloChange(Math.abs(newEloWinner - oldEloP1));
+
+        // Guardar ganador y arquetipos de mazo en la partida
+        match.setWinnerId(winnerId);
+        if (match.getDeckArchetype1() == null && match.getDeck1Id() != null) {
+            deckRepository.findById(match.getDeck1Id()).ifPresent(deck -> {
+                match.setDeckArchetype1(deck.getName());
+            });
+        }
+        if (match.getDeckArchetype2() == null && match.getDeck2Id() != null) {
+            deckRepository.findById(match.getDeck2Id()).ifPresent(deck -> {
+                match.setDeckArchetype2(deck.getName());
+            });
+        }
 
         // Marcar match como finalizado
         match.setWinnerId(winnerId);
@@ -149,9 +183,11 @@ public class BattleService {
         pState.setHand(hand);
         pState.setField(new ArrayList<>());
         pState.setGraveyard(new ArrayList<>());
+        pState.setExile(new ArrayList<>());
         pState.setLibraryCount(library.size());
         pState.setHandCount(hand.size());
         pState.setGraveyardCount(0);
+        pState.setExileCount(0);
 
         return pState;
     }
@@ -221,12 +257,49 @@ public class BattleService {
         } catch (Exception e) {}
         cs.setProducedMana(produced);
         
+        // Inicializar propiedades avanzadas por defecto
+        cs.setIsToken(false);
+        cs.setIsDoubleFaced(card.getLayout() != null && card.getLayout().equals("transform"));
+        cs.setCurrentFaceIndex(0);
+        cs.setCounters(new java.util.HashMap<>());
+        cs.setAttachedToCardId(null);
+        cs.setAttachedCardIds(new ArrayList<>());
+        cs.setTempPowerModifier(0);
+        cs.setTempToughnessModifier(0);
+        cs.setCrewed(false);
+        cs.setHasSummoningSickness(true);
+        cs.setExileOnResolution(false);
+
+        // Adventure detection
+        boolean isAdventure = card.getLayout() != null && card.getLayout().equals("adventure");
+        cs.setIsAdventure(isAdventure);
+        if (isAdventure && card.getFaces() != null && card.getFaces().size() > 1) {
+            CardFace adventureFace = card.getFaces().get(1);
+            cs.setAdventureName(adventureFace.getName());
+
+            List<String> advSymbols = new ArrayList<>();
+            String advMana = adventureFace.getManaCost();
+            if (advMana != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\{[^}]+\\}").matcher(advMana);
+                while (m.find()) {
+                    advSymbols.add(m.group());
+                }
+            }
+            cs.setAdventureManaCost(advSymbols);
+            cs.setAdventureType(adventureFace.getTypeLine());
+            cs.setAdventureOracleText(adventureFace.getOracleText());
+        }
+        
         return cs;
     }
 
     @Transactional
     public void updateGameState(Long matchId, Object state) {
         Match match = matchRepository.findById(matchId).orElseThrow();
+        if (match.getStatus() == MatchStatus.FINISHED) {
+            log.warn("Attempted to update state for finished match {}", matchId);
+            return;
+        }
         try {
             match.setLiveState(objectMapper.writeValueAsString(state));
             matchRepository.save(match);
@@ -275,30 +348,164 @@ public class BattleService {
         }
     }
 
+    @Transactional
+    public GameState processAction(Long matchId, com.magicvs.backend.dto.BattleAction action) {
+        GameState state = getGameState(matchId);
+        if (state == null) return null;
+
+        Match match = matchRepository.findById(matchId).orElse(null);
+        if (match == null) return null;
+        boolean validPlayer = (match.getPlayer1() != null && match.getPlayer1().getId().toString().equals(action.getPlayerId()))
+                           || (match.getPlayer2() != null && match.getPlayer2().getId().toString().equals(action.getPlayerId()));
+        if (!validPlayer) {
+            log.warn("Rejected action {} from player {} not in match {}", action.getType(), action.getPlayerId(), matchId);
+            return null;
+        }
+
+        log.info("Processing action: {} from user {}", action.getType(), action.getPlayerId());
+        
+        switch (action.getType().toUpperCase()) {
+            case "PLAY_CARD":
+                handlePlayCard(state, action.getPlayerId(), (String) action.getPayload().get("cardId"));
+                break;
+            case "TAP_CARD":
+                handleTapCard(state, action.getPlayerId(), (String) action.getPayload().get("cardId"), (String) action.getPayload().get("manaProduced"));
+                break;
+            case "DECLARE_ATTACKER":
+                handleDeclareAttacker(state, action.getPlayerId(), (String) action.getPayload().get("cardId"), (String) action.getPayload().get("targetId"));
+                break;
+            case "DECLARE_BLOCKER":
+                handleDeclareBlocker(state, action.getPlayerId(), (String) action.getPayload().get("cardId"), (String) action.getPayload().get("targetId"));
+                break;
+            case "LIFE_CHANGE":
+                handleLifeChange(state, action.getPlayerId(), (Integer) action.getPayload().get("amount"), (String) action.getPayload().get("targetPlayerId"));
+                break;
+            case "NEXT_PHASE":
+                nextPhase(state);
+                break;
+            case "PASS_PRIORITY":
+                handlePassPriority(state, action.getPlayerId());
+                break;
+            case "CONCEDE":
+                handleConcede(matchId, state, action.getPlayerId());
+                break;
+            default:
+                break;
+        }
+
+        updateGameState(matchId, state);
+        return state;
+    }
+
+    private void handleConcede(Long matchId, GameState state, String playerId) {
+        String winnerId = playerId.equals(state.getPlayer1().getId()) ? state.getPlayer2().getId() : state.getPlayer1().getId();
+        state.setWinnerId(winnerId);
+        
+        PlayerGameState concedingPlayer = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        addToLog(state, concedingPlayer.getUsername() + " se ha rendido.");
+        addToLog(state, "--- Partida Finalizada ---");
+
+        try {
+            MatchResultDTO result = finishMatch(matchId, Long.parseLong(winnerId));
+            if (result == null) {
+                log.warn("Match {} already finished, concede ignored", matchId);
+                return;
+            }
+        } catch (Exception e) {
+            log.error("Failed to finish match with ELO calculation", e);
+            state.setWinnerId(null);
+            addToLog(state, "Error al finalizar la partida. Reintente.");
+            return;
+        }
+    }
+
+    private void handleTapCard(GameState state, String playerId, String cardId, String manaProduced) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getField().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        if (card != null) {
+            card.setTapped(!card.isTapped());
+            String msg = p.getUsername() + (card.isTapped() ? " gira " : " endereza ") + card.getName();
+            if (manaProduced != null && !manaProduced.isEmpty()) msg += " y añade " + manaProduced;
+            addToLog(state, msg);
+        }
+    }
+
+    private void handleDeclareAttacker(GameState state, String playerId, String cardId, String targetId) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getField().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        if (card != null) {
+            card.setAttacking(!card.isAttacking());
+            card.setAttackingTargetId(targetId);
+            addToLog(state, p.getUsername() + (card.isAttacking() ? " ataca con " : " detiene ataque de ") + card.getName());
+        }
+    }
+
+    private void handleDeclareBlocker(GameState state, String playerId, String cardId, String targetId) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getField().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        if (card != null) {
+            card.setBlocking(!card.isBlocking());
+            card.setBlockingTargetId(targetId);
+            addToLog(state, p.getUsername() + " bloquea con " + card.getName());
+        }
+    }
+
+    private void handleLifeChange(GameState state, String playerId, Integer amount, String targetPlayerId) {
+        PlayerGameState target = state.getPlayer1().getId().equals(targetPlayerId) ? state.getPlayer1() : state.getPlayer2();
+        if (amount != null) {
+            target.setHp(Math.max(0, target.getHp() + amount));
+            addToLog(state, target.getUsername() + (amount < 0 ? " pierde " : " gana ") + Math.abs(amount) + " de vida. HP: " + target.getHp());
+        }
+    }
+
+    private void handlePlayCard(GameState state, String playerId, String cardId) {
+        PlayerGameState p = state.getPlayer1().getId().equals(playerId) ? state.getPlayer1() : state.getPlayer2();
+        CardState card = p.getHand().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+        if (card != null) {
+            p.getHand().remove(card);
+            p.getField().add(card);
+            addToLog(state, p.getUsername() + " lanza " + card.getName() + " desde la mano al campo.");
+        }
+    }
+
+    private void handlePassPriority(GameState state, String playerId) {
+        state.setPassedCount(state.getPassedCount() + 1);
+        addToLog(state, "Jugador " + playerId + " pasa prioridad (passedCount=" + state.getPassedCount() + ").");
+    }
+
+    private void nextPhase(GameState state) {
+        String[] phases = {"UNTAP", "UPKEEP", "DRAW", "MAIN 1", "COMBAT", "MAIN 2", "END"};
+        int currentIndex = -1;
+        for (int i = 0; i < phases.length; i++) {
+            if (phases[i].equals(state.getCurrentPhase())) { currentIndex = i; break; }
+        }
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= phases.length) {
+            String nextPlayer = state.getActivePlayerId().equals(state.getPlayer1().getId()) ? state.getPlayer2().getId() : state.getPlayer1().getId();
+            state.setActivePlayerId(nextPlayer);
+            state.setTurnCount(state.getTurnCount() + 1);
+            state.setCurrentPhase("UNTAP");
+            PlayerGameState active = nextPlayer.equals(state.getPlayer1().getId()) ? state.getPlayer1() : state.getPlayer2();
+            addToLog(state, "--- Turno " + state.getTurnCount() + " (" + active.getUsername() + ") ---");
+            addToLog(state, "Fase: UNTAP");
+        } else {
+            state.setCurrentPhase(phases[nextIndex]);
+            addToLog(state, "Fase: " + phases[nextIndex]);
+        }
+    }
+
     public GameState getSpectatorState(Long userId, Long matchId, Long friendId) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
-        
         GameState state = getGameState(matchId);
         if (state == null) return null;
-        
-        // Determinar quién es el amigo en el estado (player1 o player2)
         String friendIdStr = friendId.toString();
-        
         if (state.getPlayer1() != null && !state.getPlayer1().getId().equals(friendIdStr)) {
-            // Player1 NO es el amigo, ocultar su mano
-            for (CardState card : state.getPlayer1().getHand()) {
-                hideCard(card);
-            }
+            for (CardState card : state.getPlayer1().getHand()) hideCard(card);
         }
-        
         if (state.getPlayer2() != null && !state.getPlayer2().getId().equals(friendIdStr)) {
-            // Player2 NO es el amigo, ocultar su mano
-            for (CardState card : state.getPlayer2().getHand()) {
-                hideCard(card);
-            }
+            for (CardState card : state.getPlayer2().getHand()) hideCard(card);
         }
-        
         return state;
     }
 
@@ -332,6 +539,8 @@ public class BattleService {
         private List<PendingBlockerOrder> pendingBlockerOrders;
         private Object pendingManaChoice;
         private Object pendingTarget;
+        private List<String> actionLog;
+        private String winnerId;
 
         public static Class<GameState> getReturnType() {
             return GameState.class;
@@ -368,9 +577,11 @@ public class BattleService {
         private List<CardState> hand;
         private List<CardState> field;
         private List<CardState> graveyard;
+        private List<CardState> exile;
         private int libraryCount;
         private int handCount;
         private int graveyardCount;
+        private int exileCount;
         private int mulliganCount;
         @com.fasterxml.jackson.annotation.JsonProperty("isReady")
         private boolean isReady;
@@ -401,6 +612,8 @@ public class BattleService {
         private boolean isTapped;
         @com.fasterxml.jackson.annotation.JsonProperty("isAttacking")
         private boolean isAttacking;
+        @com.fasterxml.jackson.annotation.JsonProperty("attackingTargetId")
+        private String attackingTargetId;
         @com.fasterxml.jackson.annotation.JsonProperty("isBlocking")
         private boolean isBlocking;
         private String blockingTargetId;
@@ -410,5 +623,25 @@ public class BattleService {
         private int damageTaken;
         private List<String> orderedBlockers;
         private List<String> producedMana;
+
+        // Propiedades avanzadas
+        private Boolean isToken;
+        private Boolean isDoubleFaced;
+        private Integer currentFaceIndex;
+        private java.util.Map<String, Integer> counters;
+        private String attachedToCardId;
+        private List<String> attachedCardIds;
+        private Integer tempPowerModifier;
+        private Integer tempToughnessModifier;
+        private Boolean crewed;
+        private Boolean hasSummoningSickness;
+        private Boolean exileOnResolution;
+
+        // Adventure
+        private Boolean isAdventure;
+        private String adventureName;
+        private List<String> adventureManaCost;
+        private String adventureType;
+        private String adventureOracleText;
     }
 }

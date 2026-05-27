@@ -122,7 +122,7 @@ export class MetaComponent implements OnInit {
 
   manaSymbolUrl(color: string): string {
     const normalized = String(color || '').trim().toUpperCase();
-    return `https://svgs.scryfall.io/card-symbols/${normalized}.svg`;
+    return `assets/mana/${normalized}.svg`;
   }
 
   importMetaDeck(deck: MetaDeck): void {

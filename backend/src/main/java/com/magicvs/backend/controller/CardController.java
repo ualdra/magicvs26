@@ -39,7 +39,6 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/cards")
-@CrossOrigin(origins = "http://localhost:4200")
 public class CardController {
 
     private static final String IMAGE_FALLBACK = "https://placehold.co/488x680/111827/e5e7eb?text=MagicVS";

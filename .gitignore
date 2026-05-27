@@ -50,7 +50,17 @@ Desktop.ini
 
 /scripts-bbdd
 /scratch
+CONTEXT.md
+DESIGN.md
+SWAGGER.md
+/implementaciones
+PENDIENTE.md
+rulings-20260521090039.json
+/scratch
+/scripts
+opencode.json
 
 # Card images
 frontend/src/assets/cards/*
 !frontend/src/assets/cards/.gitkeep
+

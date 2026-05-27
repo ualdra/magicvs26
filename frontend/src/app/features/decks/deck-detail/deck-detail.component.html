@@ -85,7 +85,7 @@
                           <span class="flex flex-wrap gap-px items-center">
                             @if (card.manaCost) {
                               @for (sym of (card.manaCost | manaCost); track $index) {
-                                <img [src]="'https://svgs.scryfall.io/card-symbols/' + sym + '.svg'" [alt]="sym" class="w-3.5 h-3.5" />
+                                <img [src]="'assets/mana/' + sym + '.svg'" [alt]="sym" class="w-3.5 h-3.5" />
                               }
                             }
                           </span>

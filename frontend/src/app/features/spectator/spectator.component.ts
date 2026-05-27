@@ -128,7 +128,7 @@ export class SpectatorComponent implements OnInit, OnDestroy {
   }
 
   goToMenu(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/arena']);
   }
 
   // Disable interactions
@@ -148,7 +148,9 @@ export class SpectatorComponent implements OnInit, OnDestroy {
   onMulligan(): void {}
   onKeep(): void {}
   onTapCard(cardId: string): void {}
-  onConcede(): void {}
+  onConcede(): void {
+    this.goToMenu();
+  }
   toggleBlockerOrderSelection(id: string): void {}
   submitBlockerOrder(): void {}
   isBlockerSelected(id: string): boolean { return false; }

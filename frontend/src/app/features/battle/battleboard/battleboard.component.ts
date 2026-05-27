@@ -19,7 +19,11 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   gameState: GameState | null = null;
   private subscription: Subscription | null = null;
   protected readonly Math = Math;
-  showVictoryModal = false;
+  showLog = false;
+  showExile = false;
+  showOpponentExile = false;
+  showGrave = false;
+  localWinnerId: string | null = null;
   matchId: string | null = null;
   me: any = null;
   opponent: any = null;
@@ -28,8 +32,10 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   // Animation states
   private prevDamageMap = new Map<string, number>();
   private prevFieldIds = new Set<string>();
+  private processedAnimEvents = new Set<string>();
   hittingCards = new Set<string>();
   dyingCards: any[] = [];
+  animatingCards = new Map<string, string>();
   lastDamageTaken = new Map<string, number>();
 
   onHoverCard(card: any): void {
@@ -53,7 +59,14 @@ export class BattleboardComponent implements OnInit, OnDestroy {
 
   getNonLands(cards: any[]): any[] {
     const lands = this.getLands(cards);
-    return cards?.filter(c => !lands.find(l => l.id === c.id)) || [];
+    return cards?.filter(c => {
+      if (lands.find(l => l.id === c.id)) {
+        const isAnim = (c.isAnimated) || ((c.type || '').toLowerCase().includes('creature') && (c.type || '').toLowerCase().includes('land'));
+        if (isAnim) return true;
+        return false;
+      }
+      return true;
+    }) || [];
   }
 
   constructor(
@@ -75,7 +88,10 @@ export class BattleboardComponent implements OnInit, OnDestroy {
             this.me = this.engine.me();
             this.opponent = this.engine.opponent();
             
-            // Restore selection from synced state if we are the observer
+            if (state?.winnerId && !this.localWinnerId) {
+              this.localWinnerId = state.winnerId;
+            }
+            
             if (state?.pendingBlockerOrders?.length && (state.pendingBlockerOrders[0] as any).currentSelection) {
                this.selectedBlockerIds = [...(state.pendingBlockerOrders[0] as any).currentSelection];
             }
@@ -96,7 +112,7 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   onPlayCard(cardId: string): void {
     this.onClearHover();
     const me = this.engine.me();
-    if (this.gameState?.currentPhase === GamePhase.MULLIGAN) {
+    if (this.gameState?.currentPhase === GamePhase.MULLIGAN || (me && (me as any)._dropping)) {
       this.engine.dropCardToBottom(cardId);
     } else if (this.gameState?.currentPhase === GamePhase.END && me && me.hand.length > 7) {
       this.engine.discardCard(cardId);
@@ -123,7 +139,15 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   }
 
   onConcede(): void {
-    this.showVictoryModal = true;
+    this.engine.handleConcede();
+  }
+
+  toggleLog(): void {
+    this.showLog = !this.showLog;
+  }
+
+  get actionLog(): string[] {
+    return this.gameState?.actionLog || [];
   }
 
   getColorCode(color: string): string {
@@ -185,14 +209,14 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     return map[color.toUpperCase()] || 'Desconocido';
   }
 
-  getRemainingToughness(card: any, player: any): number {
+  getRemainingToughness(card: any, player: any): string {
     const t = this.engine.getModifiedToughness(card, player);
-    const d = card.damageTaken || 0;
-    return t - d;
+    const d = typeof card.damageTaken === 'number' ? card.damageTaken : 0;
+    return String(t - d);
   }
 
   goToMenu(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/arena']);
   }
 
   private processStateChanges(state: GameState | null): void {
@@ -201,7 +225,21 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     const currentField = [...(state.player1?.field || []), ...(state.player2?.field || [])];
     const currentIds = new Set(currentField.map(c => c.id));
 
-    // 1. Detect Hits
+    // 1. Process animation events from engine
+    if (state.animationEvents) {
+      for (const evt of state.animationEvents) {
+        if (!this.processedAnimEvents.has(evt.id)) {
+          this.processedAnimEvents.add(evt.id);
+          this.animatingCards.set(evt.cardId, evt.type);
+          setTimeout(() => {
+            this.animatingCards.delete(evt.cardId);
+            this.cdr.detectChanges();
+          }, evt.duration);
+        }
+      }
+    }
+
+    // 2. Detect Hits
     currentField.forEach(card => {
       const currentDamage = card.damageTaken || 0;
       const prevDamage = this.prevDamageMap.get(card.id) || 0;
@@ -211,7 +249,7 @@ export class BattleboardComponent implements OnInit, OnDestroy {
       this.prevDamageMap.set(card.id, currentDamage);
     });
 
-    // 2. Detect Deaths (was in field, now is in graveyard)
+    // 3. Detect Deaths (was in field, now is in graveyard)
     const p1GraveIds = new Set((state.player1?.graveyard || []).map(c => c.id));
     const p2GraveIds = new Set((state.player2?.graveyard || []).map(c => c.id));
 
@@ -250,8 +288,50 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     }, 850);
   }
 
+  isAnimating(cardId: string, type: string): boolean {
+    return this.animatingCards.get(cardId) === type;
+  }
+
+  getCardClasses(card: any): string {
+    let cls = 'card-battle-mode';
+    if (card.isTapped) cls += ' tapped';
+    if (card.isAttacking) cls += ' attacking';
+    if (card.isBlocking) cls += ' blocking';
+    if (this.isHitting(card.id)) cls += ' animate-hit';
+    if (card.isAttacking && !card.blockingTargetId) cls += ' ring-4';
+    const pt = this.gameState?.pendingTarget;
+    if (pt) {
+      const isMyCard = this.me && this.me.field?.some((c: any) => c.id === card.id);
+      if (pt.validTargets === 'CREATURE' || pt.validTargets === 'ANY' || (pt.validTargets === 'MY_CREATURE' && isMyCard)) {
+        cls += ' targetable-glow';
+      }
+    }
+
+    const animType = this.animatingCards.get(card.id);
+    if (animType) cls += ' animate-' + animType;
+    if (card.isAttacking) cls += ' ring-primary';
+    return cls;
+  }
+
   isHitting(cardId: string): boolean {
     return this.hittingCards.has(cardId);
+  }
+
+  getEloChange(): number | null {
+    const r = this.engine.lastMatchResult;
+    if (!r) return null;
+    const myId = this.engine.me()?.id;
+    const myIdStr = myId?.toString();
+    const isWinner = r.winnerId?.toString() === myIdStr;
+    if (r.player1Id?.toString() === myIdStr) {
+      const raw = r.eloAfterP1 - r.eloBeforeP1;
+      return isWinner ? Math.abs(raw) : -Math.abs(raw);
+    }
+    if (r.player2Id?.toString() === myIdStr) {
+      const raw = r.eloAfterP2 - r.eloBeforeP2;
+      return isWinner ? Math.abs(raw) : -Math.abs(raw);
+    }
+    return null;
   }
 
   getRecentDamage(cardId: string): number {

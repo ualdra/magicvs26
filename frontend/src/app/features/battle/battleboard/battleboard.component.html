@@ -3,29 +3,59 @@
         style="background-image: url('assets/art/arene-bg.webp'); font-family: 'Inter', sans-serif;">
     
     <!-- VICTORY / DEFEAT OVERLAY -->
-    @if (gameState.winnerId) {
-      <div class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl animate-fade-in">
+    @if (gameState.winnerId || localWinnerId) {
+      <div class="fixed inset-0 z-[350] flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl animate-fade-in">
         <div class="relative">
           <!-- Glow effect -->
-          <div [class]="'absolute inset-0 blur-[100px] opacity-50 ' + (gameState.winnerId === me.id ? 'bg-primary' : 'bg-red-600')"></div>
+          <div [class]="'absolute inset-0 blur-[100px] opacity-50 ' + ((localWinnerId ?? gameState.winnerId) === me.id ? 'bg-primary' : 'bg-red-600')"></div>
           
           <div class="relative flex flex-col items-center text-center">
-            @if (gameState.winnerId === me.id) {
+            @if ((localWinnerId ?? gameState.winnerId) === me.id) {
               <div class="text-8xl font-black font-headline text-white uppercase tracking-tighter mb-2 animate-victory drop-shadow-2xl">¡Victoria!</div>
-              <div class="text-primary text-xl font-black uppercase tracking-[0.4em] mb-12">Has dominado el campo de batalla</div>
-            } @else if (gameState.winnerId === 'DRAW') {
+              <div class="text-primary text-xl font-black uppercase tracking-[0.4em] mb-6">Has dominado el campo de batalla</div>
+              <div class="bg-black/40 rounded-xl px-8 py-3 border border-white/5 mb-8 inline-flex items-center gap-6">
+                <div class="text-left">
+                  <div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">ELO ganado</div>
+                  <div class="text-2xl font-black font-headline text-green-400">
+                    @if (getEloChange() !== null) {
+                      {{ (getEloChange()! > 0 ? '+' : '') + getEloChange()! }}
+                    } @else {
+                      <span class="elo-loading"><span></span><span></span><span></span></span>
+                    }
+                  </div>
+                </div>
+                <div class="text-left">
+                  <div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Rival</div>
+                  <div class="text-lg font-bold text-white">{{ gameState.winnerId === gameState.player1.id ? gameState.player2.username : gameState.player1.username }}</div>
+                </div>
+              </div>
+            } @else if ((localWinnerId ?? gameState.winnerId) === 'DRAW') {
                 <div class="text-8xl font-black font-headline text-white uppercase tracking-tighter mb-2 drop-shadow-2xl">¡Empate!</div>
                 <div class="text-zinc-400 text-xl font-black uppercase tracking-[0.4em] mb-12">Nadie sobrevive hoy</div>
             } @else {
               <div class="text-8xl font-black font-headline text-white uppercase tracking-tighter mb-2 drop-shadow-2xl text-red-600">Derrota</div>
-              <div class="text-red-400/60 text-xl font-black uppercase tracking-[0.4em] mb-12">Has caído en combate</div>
+              <div class="text-red-400/60 text-xl font-black uppercase tracking-[0.4em] mb-6">Has caído en combate</div>
+              <div class="bg-black/40 rounded-xl px-8 py-3 border border-white/5 mb-8 inline-flex items-center gap-6">
+                <div class="text-left">
+                  <div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">ELO perdido</div>
+                  <div class="text-2xl font-black font-headline text-red-400">
+                    @if (getEloChange() !== null) {
+                      {{ getEloChange() }}
+                    } @else {
+                      <span class="elo-loading"><span></span><span></span><span></span></span>
+                    }
+                  </div>
+                </div>
+                <div class="text-left">
+                  <div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Ganador</div>
+                  <div class="text-lg font-bold text-white">{{ gameState.winnerId === gameState.player1.id ? gameState.player1.username : gameState.player2.username }}</div>
+                </div>
+              </div>
             }
 
-            <div class="flex gap-4">
-               <button (click)="goToMenu()" class="bg-white hover:bg-zinc-200 text-black px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-2xl">
-                 Volver al menú
-               </button>
-            </div>
+            <button (click)="goToMenu()" class="bg-white hover:bg-zinc-200 text-black px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95 shadow-2xl">
+              Volver al menú
+            </button>
           </div>
         </div>
       </div>
@@ -86,7 +116,7 @@
 
     <!-- SHUFFLING OVERLAY -->
     @if (gameState.animationStatus === 'SHUFFLING') {
-      <div class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+      <div class="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
         <div class="relative w-32 h-44 mb-6">
           <div class="absolute inset-0 bg-zinc-800 rounded-xl border-2 border-primary/40 shadow-[0_0_30px_rgba(142,68,173,0.3)] animate-pulse"></div>
           <div class="absolute inset-0 flex items-center justify-center">
@@ -99,8 +129,8 @@
     }
 
     <!-- MULLIGAN DECISION OVERLAY -->
-    @if (gameState.currentPhase === 'MULLIGAN_DECIDING' && me && !me.isReady) {
-      <div class="fixed inset-x-0 top-24 z-[100] flex flex-col items-center animate-fade-in pointer-events-none">
+    @if (gameState.currentPhase === 'MULLIGAN_DECIDING' && me && !me.isReady && !$any(me)._dropping) {
+      <div class="fixed inset-x-0 top-24 z-[300] flex flex-col items-center animate-fade-in pointer-events-none">
         <div class="bg-zinc-900/95 border border-white/10 p-6 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.6)] flex items-center gap-8 max-w-2xl pointer-events-auto backdrop-blur-md">
           <div class="flex flex-col">
             <h2 class="text-xl font-black font-headline text-white uppercase tracking-tight leading-none">¿Te quedas esta mano?</h2>
@@ -116,12 +146,12 @@
     }
 
     <!-- MULLIGAN DROP CARDS INSTRUCTION -->
-    @if (gameState.currentPhase === 'MULLIGAN' && me && !me.isReady) {
-      <div class="fixed inset-x-0 top-24 z-[100] flex flex-col items-center animate-fade-in pointer-events-none">
+    @if (me && $any(me)._dropping && !me.isReady) {
+      <div class="fixed inset-x-0 top-24 z-[300] flex flex-col items-center animate-fade-in pointer-events-none">
         <div class="bg-primary/20 border border-primary/40 px-10 py-5 rounded-[2rem] backdrop-blur-lg animate-bounce-subtle flex flex-col items-center shadow-xl">
           <div class="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1">Mulligan confirmado</div>
           <div class="text-xl font-black text-white font-headline uppercase leading-none">
-            Suelta {{ Math.max(0, me.mulliganCount - (7 - me.hand.length)) }} cartas al fondo
+            Suelta {{ Math.min(7, me.mulliganCount) }} carta(s) al fondo ({{ me.hand.length }} en mano)
           </div>
           <div class="text-[10px] text-zinc-400 mt-2 uppercase tracking-widest">Haz clic en las cartas de tu mano</div>
         </div>
@@ -129,7 +159,7 @@
     }
 
     <!-- WAITING FOR OPPONENT OVERLAY -->
-    @if ((gameState.currentPhase === 'MULLIGAN' || gameState.currentPhase === 'MULLIGAN_DECIDING') && me && opponent && me.isReady && !opponent.isReady) {
+    @if ((gameState.currentPhase === 'MULLIGAN_DECIDING' || (me && $any(me)._dropping)) && me && opponent && me.isReady && !opponent.isReady) {
       <div class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/10">
         <div class="bg-zinc-900/90 p-8 rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center">
           <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -160,7 +190,8 @@
         <!-- OPPONENT DECK & GRAVEYARD -->
         <div class="flex gap-4 pointer-events-auto mr-4">
           <div class="flex flex-col items-center group">
-            <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-primary/40 group-hover:-translate-y-1">
+            <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-zinc-500/40 group-hover:-translate-y-1 cursor-pointer"
+                 (click)="showGrave = !showGrave">
               <span class="text-[9px] text-zinc-500 uppercase font-black">C</span>
               <span class="text-xs text-white font-black leading-none mt-1">{{ opponent.graveyard?.length || 0 }}</span>
             </div>
@@ -169,6 +200,12 @@
             <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-primary/40 group-hover:-translate-y-1">
               <span class="text-[9px] text-zinc-500 uppercase font-black">M</span>
               <span class="text-xs text-white font-black leading-none mt-1">{{ opponent.libraryCount }}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center group">
+            <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-purple-500/40 group-hover:-translate-y-1">
+              <span class="text-[9px] text-purple-400 uppercase font-black">E</span>
+              <span class="text-xs text-white font-black leading-none mt-1">{{ opponent.exileCount || 0 }}</span>
             </div>
           </div>
         </div>
@@ -186,7 +223,7 @@
             <div class="mana-icon-wrapper flex flex-col items-center opacity-40 transition-opacity" [class.active]="opponent.manaPool && opponent.manaPool[mana.key] > 0">
               <span class="mana-count mb-0.5">{{ opponent.manaPool ? opponent.manaPool[mana.key] : 0 }}</span>
               <div class="mana-circle">
-                <img [src]="'https://svgs.scryfall.io/card-symbols/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
+                <img [src]="'assets/mana/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
               </div>
             </div>
           }
@@ -195,7 +232,7 @@
 
       <!-- THE STACK VISUALIZATION -->
       @if (gameState.stack.length > 0) {
-        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[150] flex flex-col items-center gap-4 pointer-events-none">
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[250] flex flex-col items-center gap-4 pointer-events-none">
           <div class="text-white/40 text-[10px] font-black uppercase tracking-[0.5em] mb-4 italic">Hechizos en resolución</div>
           
           <div class="flex flex-col-reverse gap-4">
@@ -238,16 +275,9 @@
           <div class="permanents-row">
             @for (card of getNonLands(opponent.field); track card.id) {
               <div class="card-zoom-container" (mouseenter)="onHoverCard(card)" (mouseleave)="onClearHover()" (click)="onTapCard(card.id)">
-                <div class="card-battle-mode" 
-                     [class.tapped]="card.isTapped"
-                     [class.attacking]="card.isAttacking"
-                     [class.blocking]="card.isBlocking"
-                     [class.animate-hit]="isHitting(card.id)"
-                     [class.ring-4]="card.isAttacking && !card.blockingTargetId"
-                     [class.ring-primary]="card.isAttacking"
+                <div [className]="getCardClasses(card)" 
                      [style.box-shadow]="card.blockingTargetId ? '0 0 30px 5px rgba(59, 130, 246, 0.8)' : (card.isAttacking ? '0 0 20px rgba(var(--primary-rgb), 0.5)' : 'none')"
-                     [style.border-radius]="'12px'"
-                     [class.targetable-glow]="gameState.pendingTarget && (gameState.pendingTarget.validTargets === 'CREATURE' || gameState.pendingTarget.validTargets === 'ANY')">
+                     [style.border-radius]="'12px'">
                   
                   @if (isHitting(card.id)) {
                     <div class="damage-number">-{{ getRecentDamage(card.id) }}</div>
@@ -330,16 +360,9 @@
               <div class="card-zoom-container" 
                    (mouseenter)="onHoverCard(card)" (mouseleave)="onClearHover()"
                     (click)="onTapCard(card.id)">
-                <div class="card-battle-mode" 
-                     [class.tapped]="card.isTapped"
-                     [class.attacking]="card.isAttacking"
-                     [class.blocking]="card.isBlocking"
-                     [class.animate-hit]="isHitting(card.id)"
-                     [class.ring-4]="card.isAttacking && !card.blockingTargetId"
-                     [class.ring-primary]="card.isAttacking"
+                <div [className]="getCardClasses(card)" 
                      [style.box-shadow]="card.blockingTargetId ? '0 0 30px 5px rgba(59, 130, 246, 0.8)' : (card.isAttacking ? '0 0 20px rgba(var(--primary-rgb), 0.5)' : 'none')"
-                     [style.border-radius]="'12px'"
-                     [class.targetable-glow]="gameState.pendingTarget && (gameState.pendingTarget.validTargets === 'CREATURE' || gameState.pendingTarget.validTargets === 'ANY')">
+                     [style.border-radius]="'12px'">
                   
                   @if (isHitting(card.id)) {
                     <div class="damage-number">-{{ getRecentDamage(card.id) }}</div>
@@ -415,7 +438,7 @@
       <!-- PREMIUM PAYMENT OVERLAY -->
       @if (gameState.pendingPayment; as pay) {
         @if (gameState.activePlayerId === me.id) {
-          <div class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+          <div class="fixed inset-0 z-[350] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
             <div class="text-white font-black text-2xl uppercase tracking-[0.3em] mb-4 animate-slide-up">Pagar Maná Genérico</div>
             <div class="text-white/60 text-sm font-bold uppercase tracking-widest mb-12 animate-slide-up">Restante: {{ pay.remainingGeneric }}</div>
             
@@ -427,7 +450,7 @@
                     <span class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full text-xs font-black flex items-center justify-center border border-white/20 z-10">
                       {{ me.manaPool[pool.name] }}
                     </span>
-                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + pool.code + '.svg'" [alt]="pool.name" class="w-full h-full" />
+                    <img [src]="'assets/mana/' + pool.code + '.svg'" [alt]="pool.name" class="w-full h-full" />
                   </button>
                 }
               }
@@ -443,7 +466,7 @@
 
       <!-- MULTI-BLOCKING ORDER OVERLAY -->
       @if (gameState.pendingBlockerOrders && gameState.pendingBlockerOrders.length > 0) {
-        <div class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
+        <div class="fixed inset-0 z-[350] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
             <div class="text-white font-black text-2xl uppercase tracking-[0.3em] mb-2 animate-slide-up text-center">Orden de Daño</div>
             <div class="text-white/60 text-sm font-bold uppercase tracking-widest mb-12 animate-slide-up text-center">Haz clic en los bloqueadores en el orden que quieres destruirlos</div>
             
@@ -484,21 +507,20 @@
       <!-- PREMIUM MANA SELECTION OVERLAY -->
       @if (gameState.pendingManaChoice; as choice) {
         @if (choice.playerId === me.id) {
-          <div class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
-            <div class="text-white font-black text-2xl uppercase tracking-[0.3em] mb-12 animate-slide-up">Elige un color de maná</div>
-            
-            <div class="flex gap-8 animate-scale-in">
-              @for (color of choice.options; track color) {
-                <div class="flex flex-col items-center gap-4 group">
+          <div class="fixed inset-0 z-[350] flex flex-col items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl animate-fade-in">
+            <div class="relative max-w-sm w-full mx-auto px-8 text-center">
+              <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+                <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                <span class="text-secondary font-black text-[10px] uppercase tracking-[0.3em]">Elige Color</span>
+              </div>
+              <div class="flex justify-center gap-4">
+                @for (color of choice.options; track color) {
                   <button (click)="engine.resolveManaChoice(color)"
-                          class="mana-choice-btn w-24 h-24 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-2 border-white/20 hover:border-white/50 overflow-hidden p-0">
-                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + color + '.svg'" [alt]="getColorName(color)" class="w-full h-full" />
+                          class="w-24 h-24 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-2 border-white/20 hover:border-white/50 overflow-hidden p-0">
+                    <img [src]="'assets/mana/' + color + '.svg'" [alt]="getColorName(color)" class="w-full h-full" />
                   </button>
-                  <span class="text-white/60 font-bold uppercase tracking-widest text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
-                    {{ getColorName(color) }}
-                  </span>
-                </div>
-              }
+                }
+              </div>
             </div>
           </div>
         }
@@ -506,42 +528,57 @@
 
       <!-- PREMIUM PAYMENT OVERLAY -->
       @if (gameState.pendingPayment; as payment) {
-        <div class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl animate-fade-in">
-          <div class="text-primary font-black text-xs uppercase tracking-[0.4em] mb-2 animate-slide-up">Pago de Hechizo</div>
-          <div class="text-white font-black text-3xl uppercase tracking-[0.2em] mb-12 animate-scale-in">
-            Paga {{ payment.remainingGeneric }} maná genérico
-          </div>
-          
-          <div class="flex gap-6 mb-16 animate-scale-in">
-            @for (mana of [
-              { key: 'white', code: 'W' },
-              { key: 'blue', code: 'U' },
-              { key: 'black', code: 'B' },
-              { key: 'red', code: 'R' },
-              { key: 'green', code: 'G' },
-              { key: 'colorless', code: 'C' }
-            ]; track mana.key) {
-              @if (me.manaPool && me.manaPool[mana.key] > 0) {
-                <div class="flex flex-col items-center gap-3 group">
-                  <button (click)="engine.payGenericMana($any(mana.key))"
-                          class="w-20 h-20 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/20 hover:border-white/50 overflow-hidden p-0">
-                    <img [src]="'https://svgs.scryfall.io/card-symbols/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
-                  </button>
-                  <span class="text-white font-black text-xl">{{ me.manaPool[mana.key] }}</span>
-                </div>
-              }
-            }
-          </div>
+        <div class="fixed inset-0 z-[350] flex flex-col items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl animate-fade-in">
+          <div class="relative max-w-lg w-full mx-auto px-8">
+            <div class="absolute inset-0 bg-primary/5 blur-[100px] rounded-full"></div>
+            
+            <div class="relative text-center">
+              <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                <span class="text-primary font-black text-[10px] uppercase tracking-[0.3em]">Pago Requerido</span>
+              </div>
+              
+              <div class="text-white font-black text-5xl tracking-tight mb-2 animate-scale-in">
+                <span class="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">{{ payment.remainingGeneric }}</span>
+                <span class="text-2xl text-white/40 ml-2">restante</span>
+              </div>
+              <div class="text-zinc-500 text-xs uppercase tracking-[0.2em] font-bold mb-10">Selecciona maná para pagar</div>
+              
+              <div class="flex justify-center gap-6 mb-10 animate-scale-in flex-wrap">
+                @for (mana of [
+                  { key: 'white', code: 'W' },
+                  { key: 'blue', code: 'U' },
+                  { key: 'black', code: 'B' },
+                  { key: 'red', code: 'R' },
+                  { key: 'green', code: 'G' },
+                  { key: 'colorless', code: 'C' }
+                ]; track mana.key) {
+                  @if (me.manaPool && me.manaPool[mana.key] > 0) {
+                    <div class="flex flex-col items-center gap-2 group">
+                      <button (click)="engine.payGenericMana($any(mana.key))"
+                              class="w-20 h-20 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-2xl border-2 border-white/20 hover:border-white/50 overflow-hidden p-0">
+                        <img [src]="'assets/mana/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
+                      </button>
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full" [style.background-color]="getColorCode(mana.key)"></span>
+                        <span class="text-white font-black text-sm">{{ me.manaPool[mana.key] }}</span>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
 
-          <div class="flex gap-4 animate-slide-up">
-            <button (click)="engine.cancelPayment()" 
-                    class="px-8 py-4 rounded-xl border border-white/10 text-white/40 font-black uppercase tracking-widest hover:bg-white/5 transition-all">
-              Cancelar
-            </button>
-            <button (click)="engine.autoPayGeneric()" 
-                    class="arcane-gradient px-12 py-4 rounded-xl text-white font-black uppercase tracking-widest shadow-lg hover:brightness-110 transition-all">
-              Pago Automático
-            </button>
+              <div class="flex items-center justify-center gap-3">
+                <button (click)="engine.cancelPayment()" 
+                        class="px-6 py-3 rounded-xl border border-white/10 text-zinc-500 font-bold text-xs uppercase tracking-[0.2em] hover:bg-white/5 hover:text-zinc-300 transition-all">
+                  Cancelar
+                </button>
+                <button (click)="engine.autoPayGeneric()" 
+                        class="px-8 py-3 rounded-xl bg-primary/20 border border-primary/30 text-primary font-bold text-xs uppercase tracking-[0.2em] hover:bg-primary/30 transition-all shadow-lg">
+                  Pago Automático
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       }
@@ -564,7 +601,7 @@
               <div class="mana-icon-wrapper flex flex-col items-center opacity-40 transition-opacity" [class.active]="me.manaPool && me.manaPool[mana.key] > 0">
                 <span class="mana-count mb-0.5">{{ me.manaPool ? me.manaPool[mana.key] : 0 }}</span>
                 <div class="mana-circle">
-                  <img [src]="'https://svgs.scryfall.io/card-symbols/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
+                  <img [src]="'assets/mana/' + mana.code + '.svg'" [alt]="mana.key" class="w-full h-full" />
                 </div>
               </div>
             }
@@ -573,7 +610,8 @@
           <!-- PLAYER DECK & GRAVEYARD -->
           <div class="flex gap-4 pointer-events-auto mr-4">
             <div class="flex flex-col items-center group">
-              <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-primary/40 group-hover:-translate-y-1">
+              <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-zinc-500/40 group-hover:-translate-y-1 cursor-pointer"
+                   (click)="showGrave = !showGrave">
                 <span class="text-[9px] text-zinc-500 uppercase font-black">C</span>
                 <span class="text-xs text-white font-black leading-none mt-1">{{ me.graveyard?.length || 0 }}</span>
               </div>
@@ -582,6 +620,13 @@
               <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-primary/40 group-hover:-translate-y-1">
                 <span class="text-[9px] text-zinc-500 uppercase font-black">M</span>
                 <span class="text-xs text-white font-black leading-none mt-1">{{ me.libraryCount }}</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-center group">
+              <div class="w-12 h-12 bg-zinc-900/90 rounded-2xl border border-white/10 flex flex-col items-center justify-center shadow-xl transition-all group-hover:border-purple-500/40 group-hover:-translate-y-1 cursor-pointer"
+                   (click)="showExile = !showExile">
+                <span class="text-[9px] text-purple-400 uppercase font-black">E</span>
+                <span class="text-xs text-white font-black leading-none mt-1">{{ me.exileCount || 0 }}</span>
               </div>
             </div>
           </div>
@@ -622,9 +667,50 @@
         </div>
       </div>
 
-      <button (click)="onConcede()" class="absolute bottom-8 left-8 text-white/30 hover:text-red-500 font-black uppercase text-[10px] tracking-[0.4em] transition-colors pointer-events-auto">
+      <!-- CONCEDE BUTTON (text) -->
+      <button (click)="onConcede()" class="absolute bottom-8 left-8 text-white/30 hover:text-red-500 font-black uppercase text-[10px] tracking-[0.4em] transition-colors pointer-events-auto z-20">
         Conceder Batalla
       </button>
+
+      <!-- BATTLE LOG DRAWER -->
+      <div class="fixed top-20 bottom-0 z-40 flex transition-all duration-300 ease-in-out"
+           [style.left]="showLog ? '0px' : '-288px'">
+        <!-- Panel -->
+        <div class="w-72 bg-zinc-900/90 backdrop-blur-xl border-r border-white/5 flex flex-col overflow-hidden shadow-2xl">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <span class="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">history</span> Historial
+            </span>
+            <button (click)="showLog = false" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+              <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin">
+            @for (entry of actionLog; track $index) {
+              <div class="text-[12px] leading-relaxed text-zinc-300 font-mono border-l-[3px] border-zinc-700/60 pl-3 py-1 hover:bg-white/[0.03] hover:border-primary/40 transition-all rounded-r">
+                {{ entry }}
+              </div>
+            }
+            @if (actionLog.length === 0) {
+              <div class="text-zinc-600 text-xs text-center pt-10">
+                <span class="material-symbols-outlined text-2xl block mb-2">history</span>
+                Aún no hay eventos.
+              </div>
+            }
+          </div>
+          <div class="px-5 py-3 border-t border-white/5 bg-black/20">
+            <div class="text-[10px] text-zinc-600 font-mono uppercase tracking-wider flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
+              {{ actionLog.length }} evento{{ actionLog.length !== 1 ? 's' : '' }}
+            </div>
+          </div>
+        </div>
+        <!-- Tab handle -->
+        <button (click)="toggleLog()" 
+                class="w-8 h-20 mt-8 bg-zinc-900/60 hover:bg-zinc-800/80 border-y border-r border-white/5 rounded-r-lg flex items-center justify-center transition-all hover:border-primary/30 flex-shrink-0 backdrop-blur-xl">
+          <span class="material-symbols-outlined text-zinc-400 text-base" [class.rotate-180]="showLog">chevron_right</span>
+        </button>
+      </div>
 
       <!-- MAGNIFIED PREVIEW OVERLAY -->
       @if (hoveredCard) {
@@ -640,27 +726,434 @@
   </main>
 }
 
-<!-- Victory Modal -->
-@if (showVictoryModal) {
-  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+<!-- Adventure Choice Modal -->
+@if (gameState?.pendingAdventureChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
     <div class="max-w-md w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
-        <div class="text-primary font-black font-headline text-5xl tracking-tighter mb-2 italic">VICTORIA</div>
-        <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-8">Duelo Finalizado</div>
-        
-        <div class="bg-black/40 rounded-xl p-6 mb-8 flex justify-between items-center border border-white/5">
-            <div class="text-left">
-                <div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Puntos ganados</div>
-                <div class="text-2xl font-black font-headline text-white">+24</div>
-            </div>
-            <div class="text-right">
-                <div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Rango</div>
-                <div class="text-xl font-bold font-headline text-white text-primary">Diamante</div>
-            </div>
-        </div>
+      <div class="text-primary font-black font-headline text-2xl tracking-tighter mb-2 italic">Aventura</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-8">Elige cómo lanzar esta carta</div>
 
-        <button (click)="showVictoryModal = false" class="w-full arcane-gradient text-white py-4 rounded-xl font-black uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all">
-            Volver al Menú
+      <div class="flex gap-4 mb-6">
+        <button (click)="engine.handleAdventureChoice(gameState!.pendingAdventureChoice!.cardId, false)"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 text-left transition-all hover:border-primary/50">
+          <div class="text-white font-black text-sm mb-1">Criatura</div>
+          <div class="text-white/50 text-[10px] font-mono">{{ gameState!.pendingAdventureChoice!.creatureCost.join(' ') }}</div>
         </button>
+        <button (click)="engine.handleAdventureChoice(gameState!.pendingAdventureChoice!.cardId, true)"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-primary/30 rounded-xl p-4 text-left transition-all hover:border-primary">
+          <div class="text-accent font-black text-sm mb-1">{{ gameState!.pendingAdventureChoice!.adventureName }}</div>
+          <div class="text-white/50 text-[10px] font-mono">{{ gameState!.pendingAdventureChoice!.adventureCost.join(' ') }}</div>
+        </button>
+      </div>
+
+      <button (click)="engine.cancelCardPlay()"
+              class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">
+        Cancelar
+      </button>
     </div>
   </div>
 }
+
+<!-- MDFC Choice Modal -->
+@if (gameState?.pendingMdfcChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-md w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-primary font-black font-headline text-2xl tracking-tighter mb-6 italic">Elige cara</div>
+      <div class="flex gap-4 mb-6">
+        <button (click)="engine.handleMdfcChoice(gameState!.pendingMdfcChoice!.cardId, 0)"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 transition-all hover:border-primary/50">
+          <div class="text-white font-black text-sm">{{ gameState!.pendingMdfcChoice!.face0Name }}</div>
+        </button>
+        <button (click)="engine.handleMdfcChoice(gameState!.pendingMdfcChoice!.cardId, 1)"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 transition-all hover:border-primary/50">
+          <div class="text-white font-black text-sm">{{ gameState!.pendingMdfcChoice!.face1Name }}</div>
+        </button>
+      </div>
+      <button (click)="engine.cancelCardPlay()"
+              class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">
+        Cancelar
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Animate Land Selection -->
+@if (gameState?.pendingAnimateChoice && $any(gameState).pendingAnimateChoice.playerId === me?.id) {
+  <div class="fixed inset-0 z-[300] flex items-start justify-center bg-black/60 backdrop-blur-sm px-4 pt-24">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-emerald-500/30 shadow-2xl p-6 text-center animate-fade-in">
+      <div class="text-emerald-400 font-black font-headline text-xl tracking-tighter mb-1 italic">Animar Tierra</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-4">
+        Selecciona {{ gameState!.pendingAnimateChoice!.count }} tierra(s) en tu campo
+      </div>
+      <div class="text-zinc-500 text-xs">
+        {{ gameState!.pendingAnimateChoice!.selectedLandIds.length }}/{{ gameState!.pendingAnimateChoice!.count }} seleccionadas
+      </div>
+    </div>
+  </div>
+}
+
+<!-- X Cost Choice Modal -->
+@if (gameState?.pendingXChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+        <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        <span class="text-primary font-black text-[10px] uppercase tracking-[0.3em]">Coste Variable X</span>
+      </div>
+
+      <div class="text-white font-black text-5xl tracking-tight mb-1">
+        <span class="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">{{ xInput.value || '0' }}</span>
+      </div>
+      <div class="text-zinc-500 text-xs uppercase tracking-[0.2em] font-bold mb-2">Valor de X</div>
+
+      <div class="flex justify-center mb-6">
+        <div class="w-full max-w-[200px] flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-2">
+          <span class="text-zinc-400 text-sm font-bold uppercase tracking-wider">X =</span>
+          <input #xInput type="number" min="0" [max]="engine.getMaxXValue()" value="0"
+                 class="x-input flex-1 bg-transparent text-center text-white font-bold text-2xl outline-none">
+          <span class="text-zinc-500 text-xs">/ {{ engine.getMaxXValue() }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-2 mb-8">
+        @if (engine.getMaxXValue() > 0) {
+          <button (click)="engine.handleXChoice(gameState!.pendingXChoice!.cardId, engine.getMaxXValue())" 
+                  class="px-5 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary font-bold text-xs uppercase tracking-[0.1em] hover:bg-primary/30 transition-all">
+            Max ({{ engine.getMaxXValue() }})
+          </button>
+        }
+      </div>
+
+      <button (click)="engine.handleXChoice(gameState!.pendingXChoice!.cardId, +xInput.value)"
+              class="w-full bg-primary/20 hover:bg-primary/30 border border-primary/30 rounded-xl py-3 text-white font-bold text-sm tracking-wide transition-all mb-4">
+        Pagar X = {{ xInput.value || '0' }}
+      </button>
+
+      <button (click)="engine.cancelCardPlay()" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- Pay Life Choice Modal (Temple Garden) -->
+@if (gameState?.pendingPayLifeChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-primary font-black font-headline text-2xl tracking-tighter mb-2 italic">Tierra</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-6">{{ gameState!.pendingPayLifeChoice!.description }}</div>
+      <div class="flex gap-4 mb-6">
+        <button (click)="engine.handlePayLifeChoice(gameState!.pendingPayLifeChoice!.cardId, true)" class="flex-1 bg-green-900/30 hover:bg-green-900/50 border border-green-500/30 rounded-xl p-4 transition-all">
+          <div class="text-green-400 font-black text-sm">Pagar 2 vidas</div>
+          <div class="text-white/50 text-[10px]">Entra enderezada</div>
+        </button>
+        <button (click)="engine.handlePayLifeChoice(gameState!.pendingPayLifeChoice!.cardId, false)" class="flex-1 bg-red-900/30 hover:bg-red-900/50 border border-red-500/30 rounded-xl p-4 transition-all">
+          <div class="text-red-400 font-black text-sm">No pagar</div>
+          <div class="text-white/50 text-[10px]">Entra girada</div>
+        </button>
+      </div>
+      <button (click)="engine.cancelPayment()" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancelar (no jugar tierra)</button>
+    </div>
+  </div>
+}
+
+<!-- Warp Choice Modal -->
+@if (gameState?.pendingWarpChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-md w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-purple-400 font-black font-headline text-2xl tracking-tighter mb-2 italic">Warp</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-8">Elige como lanzar esta carta</div>
+      <div class="flex gap-4 mb-6">
+        <button (click)="engine.handleWarpChoice(gameState!.pendingWarpChoice!.cardId, false)" class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 text-left transition-all hover:border-primary/50">
+          <div class="text-white font-black text-sm mb-1">Coste normal</div>
+          <div class="text-white/50 text-[10px] font-mono">{{ gameState!.pendingWarpChoice!.normalCost.join(' ') }}</div>
+        </button>
+        <button (click)="engine.handleWarpChoice(gameState!.pendingWarpChoice!.cardId, true)" class="flex-1 bg-black/40 hover:bg-black/60 border border-purple-500/30 rounded-xl p-4 text-left transition-all hover:border-purple-500">
+          <div class="text-purple-400 font-black text-sm mb-1">Warp</div>
+          <div class="text-white/50 text-[10px] font-mono">{{ gameState!.pendingWarpChoice!.warpCost.join(' ') }}</div>
+        </button>
+      </div>
+      <button (click)="engine.cancelCardPlay()" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- Kicker Choice Modal -->
+@if (gameState?.pendingKickerChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-yellow-400 font-black font-headline text-2xl tracking-tighter mb-2 italic">Estimulo</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-6">Pagar el coste de estimulo?</div>
+      <div class="flex gap-4 mb-6">
+        <button (click)="engine.handleKickerChoice(gameState!.pendingKickerChoice!.cardId, true)" class="flex-1 bg-yellow-900/30 hover:bg-yellow-900/50 border border-yellow-500/30 rounded-xl p-4 transition-all">
+          <div class="text-yellow-400 font-black text-sm">Si</div>
+          <div class="text-white/50 text-[10px] font-mono">{{ gameState!.pendingKickerChoice!.kickerCost.join(' ') }}</div>
+        </button>
+        <button (click)="engine.handleKickerChoice(gameState!.pendingKickerChoice!.cardId, false)" class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 transition-all">
+          <div class="text-white font-black text-sm">No</div>
+        </button>
+      </div>
+      <button (click)="engine.cancelCardPlay()" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- Modal Choice Modal -->
+@if (gameState?.pendingModalChoice && $any(gameState).pendingModalChoice.playerId === me?.id) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-primary font-black font-headline text-2xl tracking-tighter mb-2 italic">Elige uno</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-6">Selecciona un modo</div>
+      <div class="flex flex-col gap-3 mb-6">
+        @for (mode of gameState!.pendingModalChoice!.modes; track $index) {
+          <button (click)="engine.handleModalChoice([$index])"
+                  class="bg-black/40 hover:bg-primary/30 border border-white/10 hover:border-primary/50 rounded-xl p-4 text-left transition-all">
+            <div class="text-white text-sm">{{ mode.text }}</div>
+          </button>
+        }
+      </div>
+      <button (click)="engine.handleModalChoice([])"
+              class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- Spree Choice Modal -->
+@if (gameState?.pendingSpreeChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-orange-400 font-black font-headline text-2xl tracking-tighter mb-2 italic">Spree</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-6">Elige opciones adicionales</div>
+      <div class="flex flex-col gap-3 mb-6">
+        @for (opt of gameState!.pendingSpreeChoice!.spreeOptions; track $index) {
+          <button (click)="engine.handleSpreeChoice(gameState!.pendingSpreeChoice!.cardId, [$index])"
+                  class="bg-black/40 hover:bg-orange-500/30 border border-white/10 hover:border-orange-500/50 rounded-xl p-4 text-left transition-all">
+            <div class="text-white text-sm">{{ opt.text }}</div>
+            <div class="text-white/50 text-[10px] font-mono">{{ opt.cost.join(' ') }}</div>
+          </button>
+        }
+      </div>
+      <button (click)="engine.handleSpreeChoice(gameState!.pendingSpreeChoice!.cardId, [])"
+              class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancel</button>
+    </div>
+  </div>
+}
+
+<!-- Bargain Choice Modal -->
+@if (gameState?.pendingBargainChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-amber-400 font-black font-headline text-2xl tracking-tighter mb-2 italic">Bargain</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-6">Sacrificar un artefacto, encantamiento o ficha?</div>
+      <div class="flex gap-4 mb-6">
+      <button (click)="engine.handleBargainChoice(gameState!.pendingBargainChoice!.cardId, 'auto')"
+              class="flex-1 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-500/30 rounded-xl p-4 transition-all">
+          <div class="text-amber-400 font-black text-sm">Sacrificar</div>
+          <div class="text-white/50 text-[10px]">Artefacto/encantamiento/ficha</div>
+        </button>
+        <button (click)="engine.handleBargainChoice(gameState!.pendingBargainChoice!.cardId, null)"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 transition-all">
+          <div class="text-white font-black text-sm">No</div>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Gift Choice Modal -->
+@if (gameState?.pendingGiftChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="text-pink-400 font-black font-headline text-2xl tracking-tighter mb-2 italic">Regalo</div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-6">Prometer un regalo al oponente?</div>
+      <div class="flex gap-4 mb-6">
+        <button (click)="engine.handleGiftChoice(gameState!.pendingGiftChoice!.cardId, true)"
+                class="flex-1 bg-pink-900/30 hover:bg-pink-900/50 border border-pink-500/30 rounded-xl p-4 transition-all">
+          <div class="text-pink-400 font-black text-sm">Dar regalo</div>
+          <div class="text-white/50 text-[10px]">Oponente crea ficha Food</div>
+        </button>
+        <button (click)="engine.handleGiftChoice(gameState!.pendingGiftChoice!.cardId, false)"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl p-4 transition-all">
+          <div class="text-white font-black text-sm">No</div>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Scry / Surveil Modal -->
+@if (gameState?.pendingScrySurveilChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-6 text-center animate-fade-in">
+      <div class="text-cyan-400 font-black font-headline text-xl tracking-tighter mb-1 italic">
+        {{ gameState!.pendingScrySurveilChoice!.type === 'SCRY' ? 'Scry' : 'Surveil' }} {{ gameState!.pendingScrySurveilChoice!.value }}
+      </div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-4">Ordena las cartas (arriba = primeras)</div>
+      <div class="flex flex-col gap-2 mb-4 max-h-40 overflow-y-auto">
+        @for (card of gameState!.pendingScrySurveilChoice!.cards; track card.id; let i = $index) {
+          <div class="flex items-center gap-2 bg-black/40 rounded-lg p-2">
+            <span class="text-zinc-500 text-xs w-4">{{ i + 1 }}</span>
+            <span class="text-white text-sm flex-1 truncate">{{ card.name }}</span>
+          </div>
+        }
+      </div>
+      <div class="flex gap-2">
+        <button (click)="engine.handleScrySurveilChoice(gameState!.pendingScrySurveilChoice!.playerId, gameState!.pendingScrySurveilChoice!.cards.map(c => c.id))"
+                class="flex-1 bg-cyan-900/30 hover:bg-cyan-900/50 border border-cyan-500/30 rounded-xl py-3 text-cyan-400 font-bold text-sm transition-all">
+          Mantener orden
+        </button>
+        <button (click)="engine.handleScrySurveilChoice(gameState!.pendingScrySurveilChoice!.playerId, gameState!.pendingScrySurveilChoice!.cards.map(c => c.id).reverse())"
+                class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl py-3 text-white text-sm transition-all">
+          Invertir
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Crew Choice Modal -->
+@if (gameState?.pendingCrewChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+        <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+        <span class="text-yellow-400 font-black text-[10px] uppercase tracking-[0.3em]">Tripular</span>
+      </div>
+      <div class="text-white font-black text-2xl mb-1">{{ gameState!.pendingCrewChoice!.requiredPower }}</div>
+      <div class="text-zinc-500 text-xs uppercase tracking-[0.2em] font-bold mb-6">poder necesario</div>
+      <button (click)="engine.handleCrewAction(gameState!.pendingCrewChoice!.vehicleId, gameState!.pendingCrewChoice!.tappedCreatureIds)"
+              class="w-full bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 rounded-xl py-3 text-yellow-400 font-bold text-sm tracking-wide transition-all mb-4">
+        Tripular automáticamente
+      </button>
+      <button (click)="engine.cancelCardPlay()" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- Activated Ability Menu -->
+@if (gameState && $any(gameState)._pendingAbilityMenu) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+        <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        <span class="text-primary font-black text-[10px] uppercase tracking-[0.3em]">Habilidad Activada</span>
+      </div>
+      <div class="text-zinc-400 font-label tracking-widest uppercase text-xs mb-8">Selecciona una habilidad para activar</div>
+      <div class="flex flex-col gap-3 mb-6">
+        @for (ability of $any(gameState)._pendingAbilityMenu.abilities; track ability.index) {
+          <button (click)="engine.selectAbility(ability.index)"
+                  class="bg-black/40 hover:bg-primary/20 border border-white/10 hover:border-primary/50 rounded-xl p-4 text-left transition-all">
+            <div class="text-white font-bold text-sm mb-1">{{ ability.costLabel }}</div>
+            <div class="text-zinc-400 text-xs leading-relaxed">{{ ability.effectLabel }}</div>
+          </button>
+        }
+      </div>
+      <button (click)="engine.cancelAbilityMenu()"
+              class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">
+        Cancelar
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Graveyard Popup -->
+@if (showGrave && me?.graveyard?.length) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4" (click)="showGrave = false">
+    <div class="max-w-lg w-full bg-zinc-900 rounded-2xl border border-zinc-500/30 shadow-2xl p-6 animate-fade-in" (click)="$event.stopPropagation()">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-4">
+        <span class="w-2 h-2 rounded-full bg-zinc-400 animate-pulse"></span>
+        <span class="text-zinc-400 font-black text-[10px] uppercase tracking-[0.3em]">Cementerio</span>
+      </div>
+      <div class="text-zinc-400 text-xs mb-4">Tus cartas en el cementerio ({{ me.graveyard.length }})</div>
+      <div class="flex flex-wrap gap-3 max-h-60 overflow-y-auto mb-4">
+        @for (graveCard of me.graveyard; track graveCard.id) {
+          <div class="relative w-20 h-28 bg-zinc-800 rounded-lg border border-white/10 overflow-hidden flex-shrink-0"
+               [class.cursor-pointer]="graveCard.oracleText?.toLowerCase().includes('flashback') || graveCard.oracleText?.toLowerCase().includes('escape') || ((graveCard.type || '').toLowerCase().includes('land') || (graveCard.type || '').toLowerCase().includes('tierra'))"
+               [class.hover:border-primary/50]="graveCard.oracleText?.toLowerCase().includes('flashback') || graveCard.oracleText?.toLowerCase().includes('escape') || ((graveCard.type || '').toLowerCase().includes('land') || (graveCard.type || '').toLowerCase().includes('tierra'))"
+               (mouseenter)="onHoverCard(graveCard)" (mouseleave)="onClearHover()"
+               (click)="onPlayCard(graveCard.id)">
+            <img [src]="graveCard.imageUrl" class="w-full h-full object-cover">
+            @if (graveCard.oracleText?.toLowerCase().includes('flashback')) {
+              <div class="absolute bottom-0 inset-x-0 bg-orange-500/80 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider">Flashback</div>
+            }
+            @if ((graveCard.type || '').toLowerCase().includes('land') || (graveCard.type || '').toLowerCase().includes('tierra')) {
+              <div class="absolute bottom-0 inset-x-0 bg-emerald-500/80 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider">Tierra</div>
+            }
+          </div>
+        }
+      </div>
+      <button (click)="showGrave = false" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cerrar</button>
+    </div>
+  </div>
+}
+
+<!-- Exile Zone Popup -->
+@if (showExile && me?.exile?.length) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4" (click)="showExile = false">
+    <div class="max-w-lg w-full bg-zinc-900 rounded-2xl border border-purple-500/30 shadow-2xl p-6 animate-fade-in" (click)="$event.stopPropagation()">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-4">
+        <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+        <span class="text-purple-400 font-black text-[10px] uppercase tracking-[0.3em]">Exilio</span>
+      </div>
+      <div class="text-zinc-400 text-xs mb-4">Tus cartas exiliadas ({{ me.exile.length }})</div>
+      <div class="flex flex-wrap gap-3 max-h-60 overflow-y-auto mb-4">
+        @for (exiledCard of me.exile; track exiledCard.id) {
+          <div class="relative w-20 h-28 bg-zinc-800 rounded-lg border border-white/10 overflow-hidden cursor-pointer hover:border-purple-500/50 transition-all flex-shrink-0"
+               (mouseenter)="onHoverCard(exiledCard)" (mouseleave)="onClearHover()"
+               (click)="($any(exiledCard).warpedFromExile || $any(exiledCard).playableUntilEndOfNextTurn || exiledCard.isPlotted) ? onPlayCard(exiledCard.id) : null">
+            <img [src]="exiledCard.imageUrl" class="w-full h-full object-cover">
+            @if ($any(exiledCard).warpedFromExile) {
+              <div class="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider">Warp</div>
+            }
+            @if ($any(exiledCard).playableUntilEndOfNextTurn) {
+              <div class="absolute bottom-0 inset-x-0 bg-amber-500/80 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider">Jugar</div>
+            }
+            @if (exiledCard.isPlotted) {
+              <div class="absolute bottom-0 inset-x-0 bg-sky-500/80 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider">Trama</div>
+            }
+          </div>
+        }
+      </div>
+      <button (click)="showExile = false" class="text-zinc-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Cerrar</button>
+    </div>
+  </div>
+}
+
+<!-- Basic Land Choice Modal -->
+@if (gameState && $any(gameState)._pendingBasicLandChoice && $any(gameState)._pendingBasicLandChoice.playerId === me?.id) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4" (click)="engine.cancelCardPlay()">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in" (click)="$event.stopPropagation()">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em]">Elige Tierra</span>
+      </div>
+      <div class="text-zinc-400 text-xs mb-6">Selecciona qué tierra básica buscar</div>
+      <div class="flex flex-col gap-3 mb-6">
+        @for (landName of $any(gameState)._pendingBasicLandChoice.names; track landName) {
+          <button (click)="engine.handleBasicLandChoice(landName)"
+                  class="bg-black/40 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/50 rounded-xl p-4 text-center transition-all">
+            <span class="text-white font-bold text-sm">{{ landName }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Dyadrine Choice Modal -->
+@if (gameState && $any(gameState)._pendingDyadrineChoice) {
+  <div class="fixed inset-0 z-[300] flex items-center justify-center bg-gradient-to-b from-black/90 via-black/80 to-black/90 backdrop-blur-2xl px-4">
+    <div class="max-w-sm w-full bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl p-8 text-center animate-fade-in">
+      <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+        <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        <span class="text-primary font-black text-[10px] uppercase tracking-[0.3em]">Dyadrine</span>
+      </div>
+      <div class="text-white font-black text-lg mb-2">¿Remover contadores +1/+1?</div>
+      <div class="text-zinc-400 text-xs mb-6">Roba una carta y crea un Robot 2/2</div>
+      <div class="flex gap-4">
+        <button (click)="engine.handleDyadrineChoice(true)" class="flex-1 bg-primary/20 hover:bg-primary/30 border border-primary/30 rounded-xl py-3 text-white font-bold text-sm transition-all">Sí</button>
+        <button (click)="engine.handleDyadrineChoice(false)" class="flex-1 bg-black/40 hover:bg-black/60 border border-white/10 rounded-xl py-3 text-zinc-400 font-bold text-sm transition-all">No</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Victory/Defeat is handled by the winnerId overlay above -->
