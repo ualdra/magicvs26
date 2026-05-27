@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Profile;
+
 @Component
+@Profile("backend")
 @Order(2)
 public class AchievementInitializer implements CommandLineRunner {
 

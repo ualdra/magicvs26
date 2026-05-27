@@ -63,7 +63,15 @@ public class MatchService {
         
         List<Match> matches = matchRepository.findActiveMatchesByFriendIds(friendIds);
         return matches.stream()
-                .map(m -> mapToDto(m, userId))
+                .map(m -> {
+                    MatchHistoryDto dto = mapToDto(m, userId);
+                    if (friendIds.contains(m.getPlayer1().getId())) {
+                        dto.setSpectateFriendId(m.getPlayer1().getId());
+                    } else if (m.getPlayer2() != null && friendIds.contains(m.getPlayer2().getId())) {
+                        dto.setSpectateFriendId(m.getPlayer2().getId());
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -73,11 +81,13 @@ public class MatchService {
         dto.setId(match.getId());
 
         dto.setPlayer1(new MatchHistoryDto.PlayerDto(
+                match.getPlayer1().getId(),
                 match.getPlayer1().getUsername(),
                 match.getPlayer1().getAvatarUrl()));
 
         if (match.getPlayer2() != null) {
             dto.setPlayer2(new MatchHistoryDto.PlayerDto(
+                    match.getPlayer2().getId(),
                     match.getPlayer2().getUsername(),
                     match.getPlayer2().getAvatarUrl()));
         }

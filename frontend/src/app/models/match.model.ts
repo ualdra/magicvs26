@@ -9,6 +9,7 @@ export interface DeckSummary {
 }
 
 export interface MatchPlayer {
+  id?: string;
   username: string;
   elo: number;
   avatarUrl?: string;
@@ -27,4 +28,5 @@ export interface Match {
   timestamp?: string;
   deck1?: DeckSummary;
   deck2?: DeckSummary;
+  spectateFriendId?: number;
 }

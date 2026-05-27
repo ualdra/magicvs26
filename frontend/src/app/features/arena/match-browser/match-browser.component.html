@@ -55,7 +55,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     @for (match of liveMatches; track match.id) {
                         <article class="glass-panel group relative overflow-hidden rounded-xl border border-white/5 hover:border-primary/20 transition-all duration-500">
-                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                             
                             <!-- Header -->
                             <div class="p-4 flex justify-between items-center bg-white/5">
@@ -72,7 +72,7 @@
                                     <app-avatar [username]="match.player1.username" size="md" class="mx-auto"></app-avatar>
                                     <p class="text-xs font-bold truncate">{{match.player1.username}}</p>
                                     <div class="flex justify-center gap-1">
-                                        @for (color of match.player1.deckSummary?.colors; track color) {
+                                        @for (color of (match.player1.deckSummary?.colors || match.deck1?.colors); track color) {
                                             <span class="w-2 h-2 rounded-full" [ngClass]="getColorClass(color)"></span>
                                         }
                                     </div>
@@ -82,7 +82,7 @@
                                     <app-avatar [username]="match.player2?.username || 'Unknown'" size="md" class="mx-auto"></app-avatar>
                                     <p class="text-xs font-bold truncate">{{match.player2?.username}}</p>
                                     <div class="flex justify-center gap-1">
-                                        @for (color of match.player2?.deckSummary?.colors; track color) {
+                                        @for (color of (match.player2?.deckSummary?.colors || match.deck2?.colors); track color) {
                                             <span class="w-2 h-2 rounded-full" [ngClass]="getColorClass(color)"></span>
                                         }
                                     </div>
@@ -91,9 +91,9 @@
 
                             <!-- Action -->
                             <div class="p-4">
-                                <button [routerLink]="['/battle', match.id]" class="w-full bg-white/5 border border-white/10 hover:bg-secondary hover:text-zinc-900 py-3 rounded-lg text-xs font-bold uppercase tracking-widest transition-all">
+                                <a [routerLink]="['/spectator', match.id]" [queryParams]="{friendId: match.spectateFriendId}" class="block text-center cursor-pointer w-full bg-white/5 border border-white/10 hover:bg-secondary hover:text-zinc-900 py-3 rounded-lg text-xs font-bold uppercase tracking-widest transition-all">
                                     Entrar como Espectador
-                                </button>
+                                </a>
                             </div>
                         </article>
                     }

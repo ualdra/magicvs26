@@ -13,12 +13,15 @@ public class MatchHistoryDto {
     private String timestamp;
     private DeckSummaryDto deck1;
     private DeckSummaryDto deck2;
+    private Long spectateFriendId;
 
     public static class PlayerDto {
+        public Long id;
         public String username;
         public String avatarUrl;
 
-        public PlayerDto(String username, String avatarUrl) {
+        public PlayerDto(Long id, String username, String avatarUrl) {
+            this.id = id;
             this.username = username;
             this.avatarUrl = avatarUrl;
         }
@@ -64,4 +67,6 @@ public class MatchHistoryDto {
     public void setDeck1(DeckSummaryDto deck1) { this.deck1 = deck1; }
     public DeckSummaryDto getDeck2() { return deck2; }
     public void setDeck2(DeckSummaryDto deck2) { this.deck2 = deck2; }
+    public Long getSpectateFriendId() { return spectateFriendId; }
+    public void setSpectateFriendId(Long spectateFriendId) { this.spectateFriendId = spectateFriendId; }
 }

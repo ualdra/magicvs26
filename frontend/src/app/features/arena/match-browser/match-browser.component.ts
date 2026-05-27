@@ -41,7 +41,7 @@ export class MatchBrowserComponent implements OnInit {
     this.isLoading = true;
     
     forkJoin({
-      live: this.matchService.getLiveMatches(),
+      live: this.matchService.getActiveFriendsMatches(),
       history: this.matchService.getMatchHistory(),
       profile: this.profileService.getMyProfile()
     }).subscribe({
