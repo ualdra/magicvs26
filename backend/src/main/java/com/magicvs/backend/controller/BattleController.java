@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/battle")
 @RequiredArgsConstructor
 public class BattleController {
@@ -24,18 +23,23 @@ public class BattleController {
     }
 
     @PostMapping("/{matchId}/state")
-    public ResponseEntity<Void> updateBattleState(@PathVariable Long matchId, @RequestBody Object state) {
+    public ResponseEntity<Void> updateBattleState(@PathVariable Long matchId, @RequestBody(required = false) Object state) {
+        if (state == null) {
+            return ResponseEntity.badRequest().build();
+        }
         battleService.updateGameState(matchId, state);
         return ResponseEntity.ok().build();
     }
 
-    // NUEVO ENDPOINT: Este es el que quita el "mensaje genérico"
     @PostMapping("/{matchId}/finish")
     public ResponseEntity<MatchResultDTO> finishMatch(
             @PathVariable Long matchId, 
             @RequestParam Long winnerId) {
         
         MatchResultDTO result = battleService.finishMatch(matchId, winnerId);
+        if (result == null) {
+            return ResponseEntity.status(409).build();
+        }
         return ResponseEntity.ok(result);
     }
 }

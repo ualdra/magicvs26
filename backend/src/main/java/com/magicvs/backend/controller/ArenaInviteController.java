@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/arena")
 @RequiredArgsConstructor
 public class ArenaInviteController {

@@ -27,10 +27,19 @@ public class MatchHistoryDto {
     public static class DeckSummaryDto {
         public String archetype;
         public List<String> colors;
+        public List<String> cardNames;
+        public String mainImageUrl;
 
         public DeckSummaryDto(String archetype, List<String> colors) {
             this.archetype = archetype;
             this.colors = colors;
+        }
+
+        public DeckSummaryDto(String archetype, List<String> colors, List<String> cardNames, String mainImageUrl) {
+            this.archetype = archetype;
+            this.colors = colors;
+            this.cardNames = cardNames;
+            this.mainImageUrl = mainImageUrl;
         }
     }
 

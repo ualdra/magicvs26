@@ -23,18 +23,18 @@ public class MatchmakingService {
     private final BattleService battleService;
     private final CopyOnWriteArrayList<QueuedPlayer> queue = new CopyOnWriteArrayList<>();
 
-    public void joinQueue(Long userId, int elo, Long deckId) {
+    public synchronized void joinQueue(Long userId, int elo, Long deckId) {
         queue.removeIf(p -> p.getUserId().equals(userId));
         queue.add(new QueuedPlayer(userId, elo, deckId));
         log.info("Matchmaking: Usuario {} (ELO: {}) en cola con mazo {}", userId, elo, deckId);
     }
 
-    public void leaveQueue(Long userId) {
+    public synchronized void leaveQueue(Long userId) {
         queue.removeIf(p -> p.getUserId().equals(userId));
     }
 
     @Scheduled(fixedDelay = 2000)
-    public void runMatchmaking() {
+    public synchronized void runMatchmaking() {
         if (queue.size() < 2) return;
 
         for (int i = 0; i < queue.size(); i++) {

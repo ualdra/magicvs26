@@ -21,11 +21,12 @@ export class BattleService {
   }
 
   pushState(matchId: string, state: GameState): Observable<void> {
-    console.log('📤 Pushing state to server:', {
-      phase: state.currentPhase,
-      pendingOrders: state.pendingBlockerOrders?.length || 0,
-    });
     return this.http.post<void>(`${this.apiUrl}/${matchId}/state`, state);
+  }
+
+  finishMatch(matchId: string, winnerId: string): Observable<any> {
+    console.log('📤 finishMatch:', { matchId, winnerId, url: `${this.apiUrl}/${matchId}/finish?winnerId=${winnerId}` });
+    return this.http.post(`${this.apiUrl}/${matchId}/finish?winnerId=${winnerId}`, {});
   }
 
   processAction(matchId: string, action: any): Observable<GameState> {
@@ -111,7 +112,26 @@ export class BattleService {
       tempToughnessModifier: c.tempToughnessModifier ?? 0,
       crewed: c.crewed ?? false,
       hasSummoningSickness: c.hasSummoningSickness ?? false,
-      exileOnResolution: c.exileOnResolution ?? false
+      exileOnResolution: c.exileOnResolution ?? false,
+
+      // Adventure
+      isAdventure: c.isAdventure ?? false,
+      adventureName: c.adventureName,
+      adventureManaCost: c.adventureManaCost || [],
+      adventureType: c.adventureType,
+      adventureOracleText: c.adventureOracleText,
+      adventureExiled: c.adventureExiled ?? false,
+
+      // Warp
+      castAsWarped: (c as any).castAsWarped ?? false,
+      warpedFromExile: (c as any).warpedFromExile ?? false,
+
+      // Plot / Foretell
+      isPlotted: c.isPlotted ?? false,
+      isForetold: c.isForetold ?? false,
+
+      // Animation
+      isAnimated: c.isAnimated ?? false,
     };
   }
 }

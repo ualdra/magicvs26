@@ -5,6 +5,8 @@ import com.magicvs.backend.model.Match;
 import com.magicvs.backend.model.MatchStatus;
 import com.magicvs.backend.model.User;
 import com.magicvs.backend.model.UserDailyStats;
+import com.magicvs.backend.model.DeckCard;
+import com.magicvs.backend.repository.DeckCardRepository;
 import com.magicvs.backend.repository.MatchRepository;
 import com.magicvs.backend.repository.RegistroRepository;
 import com.magicvs.backend.repository.UserDailyStatsRepository;
@@ -23,13 +25,16 @@ public class MatchService {
     private final RegistroRepository userRepository;
     private final UserDailyStatsRepository dailyStatsRepository;
     private final AchievementService achievementService;
+    private final DeckCardRepository deckCardRepository;
 
     public MatchService(MatchRepository matchRepository, RegistroRepository userRepository,
-                        UserDailyStatsRepository dailyStatsRepository, AchievementService achievementService) {
+                        UserDailyStatsRepository dailyStatsRepository, AchievementService achievementService,
+                        DeckCardRepository deckCardRepository) {
         this.matchRepository = matchRepository;
         this.userRepository = userRepository;
         this.dailyStatsRepository = dailyStatsRepository;
         this.achievementService = achievementService;
+        this.deckCardRepository = deckCardRepository;
     }
 
     public List<MatchHistoryDto> getHistoryForUser(Long userId) {
@@ -71,14 +76,44 @@ public class MatchService {
         dto.setFormat(match.getFormat());
         dto.setTimestamp(match.getFinishedAt() != null ? match.getFinishedAt().toString() : match.getCreatedAt().toString());
 
+        List<String> cards1 = List.of();
+        String img1 = null;
+        if (match.getDeck1Id() != null) {
+            var deckCards1 = deckCardRepository.findByDeckId(match.getDeck1Id());
+            cards1 = deckCards1.stream()
+                .map(dc -> dc.getCard().getName())
+                .distinct()
+                .collect(Collectors.toList());
+            img1 = deckCards1.stream()
+                .map(dc -> dc.getCard().getNormalImageUri())
+                .filter(java.util.Objects::nonNull)
+                .findFirst().orElse(null);
+        }
         dto.setDeck1(new MatchHistoryDto.DeckSummaryDto(
                 match.getDeckArchetype1(),
-                match.getDeckColors1() != null ? Arrays.asList(match.getDeckColors1().split(",")) : List.of()
+                match.getDeckColors1() != null ? Arrays.asList(match.getDeckColors1().split(",")) : List.of(),
+                cards1,
+                img1
         ));
 
+        List<String> cards2 = List.of();
+        String img2 = null;
+        if (match.getDeck2Id() != null) {
+            var deckCards2 = deckCardRepository.findByDeckId(match.getDeck2Id());
+            cards2 = deckCards2.stream()
+                .map(dc -> dc.getCard().getName())
+                .distinct()
+                .collect(Collectors.toList());
+            img2 = deckCards2.stream()
+                .map(dc -> dc.getCard().getNormalImageUri())
+                .filter(java.util.Objects::nonNull)
+                .findFirst().orElse(null);
+        }
         dto.setDeck2(new MatchHistoryDto.DeckSummaryDto(
                 match.getDeckArchetype2(),
-                match.getDeckColors2() != null ? Arrays.asList(match.getDeckColors2().split(",")) : List.of()
+                match.getDeckColors2() != null ? Arrays.asList(match.getDeckColors2().split(",")) : List.of(),
+                cards2,
+                img2
         ));
 
         return dto;

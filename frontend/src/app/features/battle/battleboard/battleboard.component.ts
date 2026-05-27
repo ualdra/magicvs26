@@ -19,106 +19,23 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   gameState: GameState | null = null;
   private subscription: Subscription | null = null;
   protected readonly Math = Math;
-  public showHistory = false;
-  showVictoryModal = false;
+  showLog = false;
+  showExile = false;
+  showOpponentExile = false;
+  showGrave = false;
+  localWinnerId: string | null = null;
   matchId: string | null = null;
   me: any = null;
   opponent: any = null;
   hoveredCard: any = null;
-  viewingExilePlayer: any = null;
-  viewingGraveyardPlayer: any = null;
-
-  viewExile(player: any): void {
-    this.viewingExilePlayer = player;
-  }
-
-  closeExile(): void {
-    this.viewingExilePlayer = null;
-  }
-
-  viewGraveyard(player: any): void {
-    this.viewingGraveyardPlayer = player;
-  }
-
-  closeGraveyard(): void {
-    this.viewingGraveyardPlayer = null;
-  }
-
-  onPlayCardFromGraveyard(cardId: string): void {
-    this.onClearHover();
-    this.engine.playCardFromGraveyard(cardId);
-    this.closeGraveyard();
-  }
-
-  onCycleCard(cardId: string): void {
-    this.onClearHover();
-    this.engine.cycleCard(cardId);
-  }
-
-  onDiscardCard(cardId: string): void {
-    this.engine.discardCard(cardId);
-  }
-
-  onChooseKicker(payKicker: boolean): void {
-    this.engine.chooseKicker(payKicker);
-  }
-
-  onChooseWard(payWard: boolean): void {
-    this.engine.chooseWard(payWard);
-  }
-
-  scryDestinations: Record<string, 'top' | 'bottom' | 'graveyard'> = {};
-
-  selectScryDestination(cardId: string, dest: 'top' | 'bottom' | 'graveyard'): void {
-    this.scryDestinations[cardId] = dest;
-  }
-
-  getScryDestination(cardId: string, defaultDest: 'top' | 'bottom' | 'graveyard'): 'top' | 'bottom' | 'graveyard' {
-    return this.scryDestinations[cardId] || defaultDest;
-  }
-
-  onConfirmScrySurveil(choice: any): void {
-    const cards = choice.cards || [];
-    const defaultDest = 'top';
-    
-    const topCardIds = cards.filter((c: any) => this.getScryDestination(c.id, defaultDest) === 'top').map((c: any) => c.id);
-    const bottomCardIds = cards.filter((c: any) => this.getScryDestination(c.id, defaultDest) === 'bottom').map((c: any) => c.id);
-    const graveyardCardIds = cards.filter((c: any) => this.getScryDestination(c.id, defaultDest) === 'graveyard').map((c: any) => c.id);
-
-    this.engine.resolveScrySurveil(choice.playerId, topCardIds, bottomCardIds, graveyardCardIds);
-    this.scryDestinations = {};
-  }
-
-  onConfirmCrew(choice: any): void {
-    this.engine.crewVehicle(choice.vehicleId, choice.tappedCreatureIds);
-  }
-
-  onCancelCrew(): void {
-    this.engine.cancelCrewChoice();
-  }
-
-  onSelectGraveyardCard(cardId: string): void {
-    this.engine.resolveGraveyardSelection(cardId);
-    this.closeGraveyard();
-  }
-
-  getPendingCrewSelectedPower(choice: any, fieldCards: any[]): number {
-    if (!choice || !choice.tappedCreatureIds || !fieldCards) return 0;
-    let total = 0;
-    choice.tappedCreatureIds.forEach((id: string) => {
-      const creature = fieldCards.find(c => c.id === id);
-      if (creature) {
-        total += this.engine.getModifiedPower(creature, this.engine.me() || {} as any);
-      }
-    });
-    return total;
-  }
   
   // Animation states
   private prevDamageMap = new Map<string, number>();
   private prevFieldIds = new Set<string>();
+  private processedAnimEvents = new Set<string>();
   hittingCards = new Set<string>();
   dyingCards: any[] = [];
+  animatingCards = new Map<string, string>();
   lastDamageTaken = new Map<string, number>();
 
   onHoverCard(card: any): void {
@@ -142,7 +59,14 @@ export class BattleboardComponent implements OnInit, OnDestroy {
 
   getNonLands(cards: any[]): any[] {
     const lands = this.getLands(cards);
-    return cards?.filter(c => !lands.find(l => l.id === c.id)) || [];
+    return cards?.filter(c => {
+      if (lands.find(l => l.id === c.id)) {
+        const isAnim = (c.isAnimated) || ((c.type || '').toLowerCase().includes('creature') && (c.type || '').toLowerCase().includes('land'));
+        if (isAnim) return true;
+        return false;
+      }
+      return true;
+    }) || [];
   }
 
   constructor(
@@ -164,7 +88,10 @@ export class BattleboardComponent implements OnInit, OnDestroy {
             this.me = this.engine.me();
             this.opponent = this.engine.opponent();
             
-            // Restore selection from synced state if we are the observer
+            if (state?.winnerId && !this.localWinnerId) {
+              this.localWinnerId = state.winnerId;
+            }
+            
             if (state?.pendingBlockerOrders?.length && (state.pendingBlockerOrders[0] as any).currentSelection) {
                this.selectedBlockerIds = [...(state.pendingBlockerOrders[0] as any).currentSelection];
             }
@@ -185,7 +112,7 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   onPlayCard(cardId: string): void {
     this.onClearHover();
     const me = this.engine.me();
-    if (this.gameState?.currentPhase === GamePhase.MULLIGAN) {
+    if (this.gameState?.currentPhase === GamePhase.MULLIGAN || (me && (me as any)._dropping)) {
       this.engine.dropCardToBottom(cardId);
     } else if (this.gameState?.currentPhase === GamePhase.END && me && me.hand.length > 7) {
       this.engine.discardCard(cardId);
@@ -202,71 +129,8 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     this.engine.keepHand();
   }
 
-  activeAttackerId: string | null = null;
-
-  getPotentialAttackTargets(): { id: string; name: string; type: string }[] {
-    const targets: { id: string; name: string; type: string }[] = [];
-    if (!this.gameState) return targets;
-
-    const opp = this.opponent;
-    // 1. Defending player
-    targets.push({ id: opp.id, name: opp.username, type: 'PLAYER' });
-
-    // 2. Opponent Planeswalkers
-    opp.field.forEach((c: any) => {
-      if (c.isPlaneswalker) {
-        targets.push({ id: c.id, name: c.name, type: 'PLANESWALKER' });
-      }
-    });
-
-    // 3. Battles protected by the opponent
-    this.me.field.forEach((c: any) => {
-      if (c.isBattle && c.battleProtectorId === opp.id) {
-        targets.push({ id: c.id, name: c.name, type: 'BATTLE' });
-      }
-    });
-    this.opponent.field.forEach((c: any) => {
-      if (c.isBattle && c.battleProtectorId === opp.id) {
-        targets.push({ id: c.id, name: c.name, type: 'BATTLE' });
-      }
-    });
-
-    return targets;
-  }
-
   onTapCard(cardId: string): void {
-    if (!this.gameState) return;
-    
-    // Check if it is combat phase, and the card clicked belongs to active player (me)
-    const card = this.me.field.find((c: any) => c.id === cardId);
-    if (this.gameState.currentPhase === GamePhase.COMBAT && card && !card.type?.toLowerCase().includes('land')) {
-      if (card.isAttacking) {
-        this.engine.attackWithCard(card);
-        return;
-      }
-      
-      const potentialTargets = this.getPotentialAttackTargets();
-      if (potentialTargets.length > 1) {
-        this.activeAttackerId = cardId;
-        return;
-      }
-    }
-    
     this.engine.tapCard(cardId);
-  }
-
-  onDeclareAttackTarget(targetId: string): void {
-    if (this.activeAttackerId && this.gameState) {
-      const card = this.me.field.find((c: any) => c.id === this.activeAttackerId);
-      if (card) {
-        this.engine.attackWithCard(card, targetId);
-      }
-      this.activeAttackerId = null;
-    }
-  }
-
-  onCancelAttackTarget(): void {
-    this.activeAttackerId = null;
   }
 
   ngOnDestroy(): void {
@@ -275,9 +139,15 @@ export class BattleboardComponent implements OnInit, OnDestroy {
   }
 
   onConcede(): void {
-    if (confirm('¿Estás seguro de que quieres conceder la batalla?')) {
-      this.engine.concede();
-    }
+    this.engine.handleConcede();
+  }
+
+  toggleLog(): void {
+    this.showLog = !this.showLog;
+  }
+
+  get actionLog(): string[] {
+    return this.gameState?.actionLog || [];
   }
 
   getColorCode(color: string): string {
@@ -339,14 +209,14 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     return map[color.toUpperCase()] || 'Desconocido';
   }
 
-  getRemainingToughness(card: any, player: any): number {
+  getRemainingToughness(card: any, player: any): string {
     const t = this.engine.getModifiedToughness(card, player);
-    const d = card.damageTaken || 0;
-    return t - d;
+    const d = typeof card.damageTaken === 'number' ? card.damageTaken : 0;
+    return String(t - d);
   }
 
   goToMenu(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/arena']);
   }
 
   private processStateChanges(state: GameState | null): void {
@@ -355,7 +225,21 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     const currentField = [...(state.player1?.field || []), ...(state.player2?.field || [])];
     const currentIds = new Set(currentField.map(c => c.id));
 
-    // 1. Detect Hits
+    // 1. Process animation events from engine
+    if (state.animationEvents) {
+      for (const evt of state.animationEvents) {
+        if (!this.processedAnimEvents.has(evt.id)) {
+          this.processedAnimEvents.add(evt.id);
+          this.animatingCards.set(evt.cardId, evt.type);
+          setTimeout(() => {
+            this.animatingCards.delete(evt.cardId);
+            this.cdr.detectChanges();
+          }, evt.duration);
+        }
+      }
+    }
+
+    // 2. Detect Hits
     currentField.forEach(card => {
       const currentDamage = card.damageTaken || 0;
       const prevDamage = this.prevDamageMap.get(card.id) || 0;
@@ -365,7 +249,7 @@ export class BattleboardComponent implements OnInit, OnDestroy {
       this.prevDamageMap.set(card.id, currentDamage);
     });
 
-    // 2. Detect Deaths (was in field, now is in graveyard)
+    // 3. Detect Deaths (was in field, now is in graveyard)
     const p1GraveIds = new Set((state.player1?.graveyard || []).map(c => c.id));
     const p2GraveIds = new Set((state.player2?.graveyard || []).map(c => c.id));
 
@@ -404,68 +288,53 @@ export class BattleboardComponent implements OnInit, OnDestroy {
     }, 850);
   }
 
-  onActivatePlaneswalkerAbility(planeswalkerId: string, abilityIndex: number): void {
-    this.engine.activatePlaneswalkerAbility(planeswalkerId, abilityIndex);
-    this.onCancelPlaneswalkerChoice();
+  isAnimating(cardId: string, type: string): boolean {
+    return this.animatingCards.get(cardId) === type;
   }
 
-  onCancelPlaneswalkerChoice(): void {
-    if (this.gameState) {
-      this.gameState.pendingPlaneswalkerChoice = undefined;
+  getCardClasses(card: any): string {
+    let cls = 'card-battle-mode';
+    if (card.isTapped) cls += ' tapped';
+    if (card.isAttacking) cls += ' attacking';
+    if (card.isBlocking) cls += ' blocking';
+    if (this.isHitting(card.id)) cls += ' animate-hit';
+    if (card.isAttacking && !card.blockingTargetId) cls += ' ring-4';
+    const pt = this.gameState?.pendingTarget;
+    if (pt) {
+      const isMyCard = this.me && this.me.field?.some((c: any) => c.id === card.id);
+      if (pt.validTargets === 'CREATURE' || pt.validTargets === 'ANY' || (pt.validTargets === 'MY_CREATURE' && isMyCard)) {
+        cls += ' targetable-glow';
+      }
     }
+
+    const animType = this.animatingCards.get(card.id);
+    if (animType) cls += ' animate-' + animType;
+    if (card.isAttacking) cls += ' ring-primary';
+    return cls;
   }
 
   isHitting(cardId: string): boolean {
     return this.hittingCards.has(cardId);
   }
 
+  getEloChange(): number | null {
+    const r = this.engine.lastMatchResult;
+    if (!r) return null;
+    const myId = this.engine.me()?.id;
+    const myIdStr = myId?.toString();
+    const isWinner = r.winnerId?.toString() === myIdStr;
+    if (r.player1Id?.toString() === myIdStr) {
+      const raw = r.eloAfterP1 - r.eloBeforeP1;
+      return isWinner ? Math.abs(raw) : -Math.abs(raw);
+    }
+    if (r.player2Id?.toString() === myIdStr) {
+      const raw = r.eloAfterP2 - r.eloBeforeP2;
+      return isWinner ? Math.abs(raw) : -Math.abs(raw);
+    }
+    return null;
+  }
+
   getRecentDamage(cardId: string): number {
     return this.lastDamageTaken.get(cardId) || 0;
-  }
-
-  onResolveAdventureChoice(castAsAdventure: boolean): void {
-    this.engine.resolveAdventureChoice(castAsAdventure);
-  }
-
-  onCancelAdventureChoice(): void {
-    this.engine.cancelAdventureChoice();
-  }
-
-  onResolveBestowChoice(castAsBestow: boolean): void {
-    this.engine.resolveBestowChoice(castAsBestow);
-  }
-
-  onCancelBestowChoice(): void {
-    this.engine.cancelBestowChoice();
-  }
-
-  onResolveMdfcChoice(faceIndex: number): void {
-    this.engine.resolveMdfcChoice(faceIndex);
-  }
-
-  onResolveDiscoverChoice(castFree: boolean): void {
-    this.engine.resolveDiscoverChoice(castFree);
-  }
-
-  onCancelMdfcChoice(): void {
-    this.engine.cancelMdfcChoice();
-  }
-
-  onPlayCardFromExile(cardId: string): void {
-    this.engine.playCardFromExile(cardId);
-  }
-
-  onTransformIncubator(cardId: string): void {
-    this.engine.transformIncubator(cardId);
-  }
-
-  onActivateBoast(cardId: string): void {
-    this.engine.activateBoast(cardId);
-  }
-
-  formatManaCost(cost: any): string {
-    if (!cost) return '';
-    if (Array.isArray(cost)) return cost.join('');
-    return cost;
   }
 }

@@ -8,7 +8,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/password")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;

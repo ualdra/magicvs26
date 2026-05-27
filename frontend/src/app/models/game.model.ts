@@ -85,6 +85,39 @@ export interface GameCard {
 
   // Bestow (Concesión)
   castAsBestow?: boolean;
+
+  // Foretell & Plot
+  isForetold?: boolean;
+  isPlotted?: boolean;
+  foretellTurn?: number;
+  castAsForetold?: boolean;
+  castAsPlot?: boolean;
+  isBloodToken?: boolean;
+  
+  // Disguise, Cloak & Suspect
+  isFaceDown?: boolean;
+  isDisguised?: boolean;
+  isCloaked?: boolean;
+  disguiseCost?: string[];
+  isSuspected?: boolean;
+  originalCardData?: any;
+
+  // Warp
+  castAsWarped?: boolean;
+  warpedFromExile?: boolean;
+
+  // Exhaust — habilidades que solo se usan 1 vez
+  exhaustUsed?: boolean;
+
+  // Mobilize — puede atacar como con prisa mientras dura el efecto
+  mobilizeActive?: boolean;
+
+  // Saddle — como Crew para Mounts
+  isSaddled?: boolean;
+
+  // Animated Land
+  isAnimated?: boolean;
+  originalLandType?: string;
 }
 
 export interface ManaPool {
@@ -114,6 +147,10 @@ export interface PlayerGameState {
   isReady: boolean;
   manaPool: ManaPool;
   poisonCounters?: number; // Contadores de veneno (Sprint 12)
+  speed?: number; // Start your engines! — 0..4
+  maxSpeedReached?: boolean;
+  dealtDamageThisTurn?: boolean; // Daño infligido este turno
+  dealtDamageLastTurn?: boolean; // Daño infligido el turno anterior (velocidad)
 }
 
 export interface StackItem {
@@ -128,6 +165,15 @@ export interface StackItem {
   targetType?: 'CREATURE' | 'PLAYER' | 'SPELL_ON_STACK';
   effect?: any;
   kicked?: boolean; // Indica si se pagó Estímulo
+}
+
+export interface AnimationEvent {
+  id: string;
+  cardId: string;
+  type: 'landfall' | 'death' | 'flicker' | 'reanimate' | 'fight' | 'counter_plus1' | 'stun' | 'speed_up' | 'token_create' | 'aura_equip' | 'bargain_sac' | 'gift' | 'plot' | 'cycling' | 'activate_ability' | 'sparkle' | 'blink' | 'portal' | 'ascend' | 'disintegrate';
+  duration: number;
+  sourceCardId?: string;
+  message?: string;
 }
 
 export interface GameState {
@@ -154,6 +200,10 @@ export interface GameState {
     specificPaid: boolean;
     convokeActive?: boolean;
     tappedConvokeCreatureIds?: string[];
+    remainingColored?: { white: number; blue: number; black: number; red: number; green: number };
+    delveActive?: boolean;
+    exilingForDelveCount?: number;
+    manaSnapshot?: ManaPool;
   };
   pendingChannelChoice?: {
     cardId: string;
@@ -161,8 +211,8 @@ export interface GameState {
   };
   pendingTarget?: {
     sourceCardId: string;
-    validTargets: 'CREATURE' | 'PLAYER' | 'ANY' | 'SPELL_ON_STACK';
-    effect: 'DAMAGE' | 'DESTROY' | 'BUFF' | 'DEBUFF' | 'BOUNCE' | 'COUNTER_SPELL' | 'COPY_SPELL';
+    validTargets: 'CREATURE' | 'PLAYER' | 'ANY' | 'SPELL_ON_STACK' | 'MY_CREATURE';
+    effect: string;
     value?: number;
   };
   pendingKickerChoice?: {
@@ -205,6 +255,7 @@ export interface GameState {
     count: number;
     validTypes: 'CREATURE' | 'PERMANENT';
     sourceCardId?: string;
+    isExploitSacrifice?: boolean;
   };
   pendingGraveyardSelection?: {
     playerId: string;
@@ -240,7 +291,105 @@ export interface GameState {
     bestowCost: string[];
     bestowName: string;
   };
+  pendingForetellChoice?: {
+    cardId: string;
+    normalCost: string[];
+    foretellCost: string[];
+  };
+  pendingPlotChoice?: {
+    cardId: string;
+    normalCost: string[];
+    plotCost: string[];
+  };
+  pendingExploitChoice?: {
+    cardId: string;
+    creatureName: string;
+  };
+  pendingDisguiseChoice?: {
+    cardId: string;
+    normalCost: string[];
+    disguiseCost: string[];
+  };
+  pendingSpreeChoice?: {
+    cardId: string;
+    spreeOptions: { cost: string[], text: string }[];
+  };
+  pendingSquadChoice?: {
+    cardId: string;
+    squadCost: string[];
+  };
+  pendingOffspringChoice?: {
+    cardId: string;
+    offspringCost: string[];
+  };
+  pendingEnlistChoice?: {
+    attackerId: string;
+    validEnlisters: string[];
+  };
+  pendingBargainChoice?: {
+    cardId: string;
+    bargainEffect: string;
+  };
+  pendingGiftChoice?: {
+    cardId: string;
+    giftDescription: string;
+  };
+  pendingImpendingChoice?: {
+    cardId: string;
+    impendingCount: number;
+    normalCost: string[];
+    impendingCost: string[];
+    impendingEffect: string;
+  };
+  pendingWarpChoice?: {
+    cardId: string;
+    normalCost: string[];
+    warpCost: string[];
+  };
+  pendingOptionalPayChoice?: {
+    cardId: string;
+    cost: string[];
+    description: string;
+    onPay: { effectType: 'TAP_STUN'; validTargets: 'CREATURE' };
+    onDecline: string;
+  };
+  pendingPayLifeChoice?: {
+    cardId: string;
+    lifeCost: number;
+    description: string;
+  };
+  pendingAnimateChoice?: {
+    sourceCardId: string;
+    count: number;
+    selectedLandIds: string[];
+    playerId?: string;
+  };
+  pendingXChoice?: {
+    cardId: string;
+    baseCost: string[];
+  };
+  pendingFightChoice?: {
+    sourceCardId: string;
+    myCreatureId?: string;
+  };
+  pendingActivatedAbility?: {
+    cardId: string;
+    abilityIndex: number;
+    costMana: string[];
+    needsTap: boolean;
+    needsSacrifice: boolean;
+    effectType: 'SEARCH_LAND' | 'ANIMATE_LAND' | 'EXILE_GY' | 'UNBLOCKABLE' | 'SEARCH_LAND_UNTAP' | 'GIVE_INDESTRUCTIBLE';
+    targetCount?: number;
+  };
+  pendingModalChoice?: {
+    cardId: string;
+    modeCount: number;
+    modes: { text: string; effect: string }[];
+    playerId?: string;
+  };
+  combatStep?: 'BEGIN' | 'ATTACKERS' | 'BLOCKERS' | 'FIRST_STRIKE_DAMAGE' | 'NORMAL_DAMAGE' | 'END';
   actionLog?: string[];
+  animationEvents?: AnimationEvent[];
   
   // Daybound/Nightbound Cycle
   timeCycle?: 'NONE' | 'DAY' | 'NIGHT';

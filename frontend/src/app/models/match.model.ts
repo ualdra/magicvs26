@@ -2,8 +2,10 @@ export type MatchStatus = 'LIVE' | 'WAITING' | 'FINISHED';
 
 export interface DeckSummary {
   archetype: string;
-  colors: string[]; // e.g. ['W', 'U']
+  colors: string[];
   name?: string;
+  cardNames?: string[];
+  mainImageUrl?: string;
 }
 
 export interface MatchPlayer {
@@ -21,6 +23,8 @@ export interface Match {
   player2?: MatchPlayer;
   winner?: string;
   score?: string;
-  eloChange?: number; // For History section
-  timestamp?: string; // For sorting history
+  eloChange?: number;
+  timestamp?: string;
+  deck1?: DeckSummary;
+  deck2?: DeckSummary;
 }

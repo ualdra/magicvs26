@@ -27,6 +27,11 @@ export class MatchBrowserComponent implements OnInit {
   isMatchmakingModalOpen = false;
 
   expandedMatchId: string | null = null;
+  expandedDeck: string | null = null;
+
+  toggleExpandedDeck(deck: string): void {
+    this.expandedDeck = this.expandedDeck === deck ? null : deck;
+  }
 
   ngOnInit(): void {
     this.loadMatches();
@@ -55,8 +60,9 @@ export class MatchBrowserComponent implements OnInit {
     });
   }
 
-  get winRate(): number {
-    if (!this.userProfile || this.userProfile.gamesPlayed === 0) return 0;
+  get winRate(): number | null {
+    if (!this.userProfile) return null;
+    if (this.userProfile.gamesPlayed === 0) return 0;
     return Math.round((this.userProfile.gamesWon / this.userProfile.gamesPlayed) * 100);
   }
 
@@ -70,12 +76,22 @@ export class MatchBrowserComponent implements OnInit {
 
   getColorClass(colorCode: string): string {
     const map: { [key: string]: string } = {
-      'W': 'bg-zinc-100 text-zinc-900',
-      'U': 'bg-blue-500 text-white',
-      'B': 'bg-zinc-800 text-zinc-100',
-      'R': 'bg-rose-500 text-white',
-      'G': 'bg-emerald-500 text-white'
+      'W': 'bg-zinc-100',
+      'U': 'bg-blue-500',
+      'B': 'bg-zinc-800',
+      'R': 'bg-rose-500',
+      'G': 'bg-emerald-500'
     };
     return map[colorCode] || 'bg-zinc-500';
+  }
+
+  isWinner(match: Match): boolean {
+    return match.winner === 'Current_User';
+  }
+
+  getEloDisplay(match: Match): string {
+    if (match.eloChange === null || match.eloChange === undefined) return '';
+    const val = this.isWinner(match) ? Math.abs(match.eloChange) : -Math.abs(match.eloChange);
+    return (val > 0 ? '+' : '') + val + ' ELO';
   }
 }

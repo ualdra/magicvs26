@@ -15,7 +15,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 public class ChatController {
 
     private final ChatService chatService;
