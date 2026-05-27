@@ -132,7 +132,7 @@
                   <div class="mb-2 text-xs uppercase tracking-[0.14em] text-on-surface/65">Identidad de color</div>
                   <div class="flex flex-wrap gap-2">
                     @for (color of deckColors(); track color) {
-                      <img [src]="'https://svgs.scryfall.io/card-symbols/' + colorNameToCode(color) + '.svg'"
+                      <img [src]="'assets/mana/' + colorNameToCode(color) + '.svg'"
                            [alt]="color" [title]="color | titlecase"
                            class="w-6 h-6" />
                     }
@@ -186,7 +186,7 @@
                                 <div class="flex flex-wrap gap-0.5 items-center min-h-[1rem]">
                                   @if (card.manaCost) {
                                     @for (sym of (card.manaCost | manaCost); track $index) {
-                                      <img [src]="'https://svgs.scryfall.io/card-symbols/' + sym + '.svg'" [alt]="sym" class="w-4 h-4" />
+                                      <img [src]="'assets/mana/' + sym + '.svg'" [alt]="sym" class="w-4 h-4" />
                                     }
                                   } @else {
                                     <span class="text-[11px] text-on-surface/60">Sin coste</span>
