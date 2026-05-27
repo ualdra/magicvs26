@@ -33,7 +33,7 @@ export class CardService {
     );
   }
 
-  searchCards(query = '', color = '', type = '', rarity = '', page = 0, size = 20, favoritesOnly = false): Observable<CardPage> {
+  searchCards(query = '', color = '', type = '', rarity = '', page = 0, size = 20, favoritesOnly = false, collectionOnly = false): Observable<CardPage> {
     const params: Record<string, string> = {
       name: query,
       color,
@@ -41,11 +41,12 @@ export class CardService {
       rarity,
       page: String(page),
       size: String(size),
-      favoritesOnly: String(favoritesOnly)
+      favoritesOnly: String(favoritesOnly),
+      collectionOnly: String(collectionOnly)
     };
     
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const headers = token && favoritesOnly ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+    const headers = token && (favoritesOnly || collectionOnly) ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
 
     return this.http.get<any>(`${this.apiUrl}/search`, { params, headers }).pipe(
       map(response => this.mapSearchResponseToCardPage(response, page, size))

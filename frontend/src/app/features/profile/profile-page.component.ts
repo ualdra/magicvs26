@@ -5,8 +5,10 @@ import { forkJoin, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfileDeckListComponent } from './profile-deck-list.component';
 import { ProfileHeaderComponent } from './profile-header.component';
+import { ProfileCollectionComponent } from './profile-collection.component';
 import { ProfileResponse, ProfileService, ProfileDeckSummary } from './profile.service';
 import { UserService } from '../../core/services/user.service';
+import { UserCard } from '../../models/user-card.model';
 import { AchievementService } from '../../core/services/achievement.service';
 import { UserAchievement } from '../../models/achievement.model';
 
@@ -23,7 +25,7 @@ interface StoredUser {
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProfileHeaderComponent, ProfileDeckListComponent],
+  imports: [CommonModule, RouterLink, ProfileHeaderComponent, ProfileDeckListComponent, ProfileCollectionComponent],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.scss',
 })
@@ -37,6 +39,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   readonly profile = signal<ProfileResponse | null>(null);
   readonly decks = signal<ProfileDeckSummary[]>([]);
+  readonly collection = signal<UserCard[]>([]);
   readonly achievements = signal<UserAchievement[]>([]);
   readonly unlockedAchievementTitles = computed(() => this.achievements()
     .filter((achievement) => achievement.unlocked)
@@ -44,7 +47,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   readonly totalAchievements = signal(0);
   readonly achievementsLoading = signal(false);
   readonly loading = signal(true);
+  readonly collectionLoading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly collectionError = signal<string | null>(null);
   readonly currentTarget = signal<string>('me');
   readonly storedUser = signal<StoredUser | null>(this.readStoredUser());
 
@@ -89,8 +94,10 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.activeRequest?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
+    this.collectionError.set(null);
     this.profile.set(null);
     this.decks.set([]);
+    this.collection.set([]);
 
     if (target === 'me' && !localStorage.getItem('token')) {
       this.loading.set(false);
@@ -109,16 +116,20 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.activeRequest = forkJoin({
       profile: this.profileService.getProfile(target),
       decks: this.profileService.getDecks(target),
+      collection: this.profileService.getCollection(target),
     }).subscribe({
-      next: ({ profile, decks }) => {
+      next: ({ profile, decks, collection }) => {
         this.profile.set(profile);
         this.decks.set(decks);
+        this.collection.set(collection);
         this.loading.set(false);
+        this.collectionLoading.set(false);
         this.syncStoredUser(profile);
         this.loadAchievements(target, profile.id);
       },
       error: (err) => {
         this.loading.set(false);
+        this.collectionLoading.set(false);
         this.error.set(this.resolveErrorMessage(err?.status));
       },
     });

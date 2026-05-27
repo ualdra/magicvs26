@@ -33,4 +33,8 @@ export class ProfileService {
   getUserProfile(userId: number): Observable<UserProfile> {
     return this.http.get<UserProfile>(`${this.apiUrl}/${userId}`, { headers: this.getHeaders() });
   }
+
+  getMyCollection(): Observable<import('../../models/user-card.model').UserCard[]> {
+    return this.http.get<import('../../models/user-card.model').UserCard[]>(`${this.apiUrl}/me/collection`, { headers: this.getHeaders() });
+  }
 }

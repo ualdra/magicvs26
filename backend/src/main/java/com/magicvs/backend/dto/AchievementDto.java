@@ -18,7 +18,7 @@ public record AchievementDto(
     public static AchievementDto fromEntity(Achievement a) {
         return new AchievementDto(
             a.getId(),
-            a.getKey(),
+            a.getAchievementKey(),
             a.getName(),
             a.getDescription(),
             a.getCategory(),

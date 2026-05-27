@@ -139,6 +139,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                 :favoritesOnly = FALSE
                 OR c.id IN (SELECT fc.card.id FROM FavoriteCard fc WHERE fc.user.id = :userId)
                )
+           AND (
+                :collectionOnly = FALSE
+                OR c.id IN (SELECT uc.card.id FROM UserCard uc WHERE uc.user.id = :userId)
+               )
         """)
     Page<CardSearchProjection> searchProjectedByNameAndFilters(
         @Param("name") String name,
@@ -152,6 +156,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
         @Param("typeFilter") String typeFilter,
         @Param("rarityFilter") String rarityFilter,
         @Param("favoritesOnly") boolean favoritesOnly,
+        @Param("collectionOnly") boolean collectionOnly,
         @Param("userId") Long userId,
         Pageable pageable
     );
@@ -164,4 +169,13 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     Optional<Card> findFirstByNameIgnoreCaseAndLang(String name, String lang);
 
     boolean existsByScryfallId(UUID scryfallId);
+
+    @Query(value = "SELECT * FROM cards WHERE LOWER(rarity) = 'common' ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
+    List<Card> findRandomCommons(@Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM cards WHERE LOWER(rarity) = 'uncommon' ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
+    List<Card> findRandomUncommons(@Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM cards WHERE LOWER(rarity) IN ('rare', 'mythic') ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
+    List<Card> findRandomRaresOrMythics(@Param("limit") int limit);
 }

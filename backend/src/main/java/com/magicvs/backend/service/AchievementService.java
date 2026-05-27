@@ -35,12 +35,8 @@ public class AchievementService {
      */
     @Transactional
     public void increment(User user, String achievementKey) {
-        Achievement achievement = achievementRepository.findByKey(achievementKey)
-                .orElse(null);
-
-        if (achievement == null) {
-            return;
-        }
+        Achievement achievement = achievementRepository.findByAchievementKey(achievementKey)
+                .orElseThrow(() -> new IllegalArgumentException("Logro no encontrado: " + achievementKey));
 
         UserAchievement userAchievement = userAchievementRepository
                 .findByUserAndAchievement(user, achievement)
@@ -83,7 +79,8 @@ public class AchievementService {
                 user.getId(),
                 NotificationType.ACHIEVEMENT_UNLOCKED,
                 Map.of(
-                        "achievementKey", achievement.getKey(),
+                        "userId", user.getId().toString(),
+                        "achievementKey", achievement.getAchievementKey(),
                         "achievementName", achievement.getName(),
                         "achievementDescription", achievement.getDescription(),
                         "points", achievement.getPoints()

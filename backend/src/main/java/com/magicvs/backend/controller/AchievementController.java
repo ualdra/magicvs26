@@ -72,7 +72,7 @@ public class AchievementController {
         User user = extractUser(authorization);
         achievementService.increment(user, key);
         return achievementService.getUserAchievements(user).stream()
-                .filter(ua -> ua.getAchievement().getKey().equals(key))
+                .filter(ua -> ua.getAchievement().getAchievementKey().equals(key))
                 .findFirst()
                 .map(ua -> ResponseEntity.ok(UserAchievementDto.fromEntity(ua)))
                 .orElse(ResponseEntity.notFound().build());

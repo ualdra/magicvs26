@@ -37,11 +37,11 @@ public class AchievementInitializer implements CommandLineRunner {
         logger.info("Sincronizando catálogo de logros...");
         List<Achievement> templates = buildAchievements();
         Set<String> templateKeys = templates.stream()
-            .map(Achievement::getKey)
+            .map(Achievement::getAchievementKey)
             .collect(Collectors.toSet());
 
         for (Achievement template : templates) {
-            achievementRepository.findByKey(template.getKey()).ifPresentOrElse(
+            achievementRepository.findByAchievementKey(template.getAchievementKey()).ifPresentOrElse(
                 existing -> {
                     existing.setName(template.getName());
                     existing.setDescription(template.getDescription());
@@ -57,7 +57,7 @@ public class AchievementInitializer implements CommandLineRunner {
         }
 
         for (Achievement existing : achievementRepository.findAll()) {
-            if (!templateKeys.contains(existing.getKey())) {
+            if (!templateKeys.contains(existing.getAchievementKey())) {
                 userAchievementRepository.deleteByAchievement(existing);
                 achievementRepository.delete(existing);
             }
@@ -135,7 +135,7 @@ public class AchievementInitializer implements CommandLineRunner {
                                     AchievementCategory category, int targetValue, int points,
                                     AchievementRank rango) {
         Achievement a = new Achievement();
-        a.setKey(key);
+        a.setAchievementKey(key);
         a.setName(name);
         a.setDescription(description);
         a.setCategory(category);

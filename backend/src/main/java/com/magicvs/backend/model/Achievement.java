@@ -13,7 +13,7 @@ public class Achievement {
     private Long id;
 
     @Column(name = "achievement_key", nullable = false, unique = true, length = 60)
-    private String key;
+    private String achievementKey;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -60,12 +60,12 @@ public class Achievement {
         return id;
     }
 
-    public String getKey() {
-        return key;
+    public String getAchievementKey() {
+        return achievementKey;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setAchievementKey(String achievementKey) {
+        this.achievementKey = achievementKey;
     }
 
     public String getName() {

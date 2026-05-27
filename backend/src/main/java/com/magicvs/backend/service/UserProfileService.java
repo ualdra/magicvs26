@@ -9,7 +9,9 @@ import com.magicvs.backend.model.DeckCard;
 import com.magicvs.backend.model.User;
 import com.magicvs.backend.repository.RegistroRepository;
 import com.magicvs.backend.repository.DeckRepository;
+import com.magicvs.backend.repository.UserCardRepository;
 import com.magicvs.backend.util.ValidationUtils;
+import com.magicvs.backend.dto.UserCardDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,12 +32,16 @@ public class UserProfileService {
     private final DeckRepository deckRepository;
     private final AuthService authService;
     private final AchievementService achievementService;
+    private final UserCardRepository userCardRepository;
+    private final CardService cardService;
 
-    public UserProfileService(RegistroRepository registroRepository, DeckRepository deckRepository, AuthService authService, AchievementService achievementService) {
+    public UserProfileService(RegistroRepository registroRepository, DeckRepository deckRepository, AuthService authService, AchievementService achievementService, UserCardRepository userCardRepository, CardService cardService) {
         this.registroRepository = registroRepository;
         this.deckRepository = deckRepository;
         this.authService = authService;
         this.achievementService = achievementService;
+        this.userCardRepository = userCardRepository;
+        this.cardService = cardService;
     }
 
     public ProfileResponseDto getProfileByUserId(Long userId) {
@@ -147,6 +153,38 @@ public class UserProfileService {
         return getDecksByUserId(userId);
     }
 
+    public List<UserCardDto> getCollectionOfAuthenticatedUser(String authorization) {
+        Long userId = extractUserIdFromAuthorization(authorization);
+        if (!registroRepository.existsById(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        }
+        return userCardRepository.findByUserId(userId).stream()
+                .map(userCard -> new UserCardDto(
+                        userCard.getCard().getId(),
+                        userCard.getCard().getScryfallId(),
+                        cardService.resolveDisplayName(userCard.getCard().getName(), userCard.getCard().getRawJson()),
+                        cardService.resolveDisplayType(userCard.getCard().getTypeLine(), userCard.getCard().getRawJson()),
+                        resolveImageUrl(userCard.getCard()),
+                        userCard.getCard().getRarity(),
+                        userCard.getQuantity()
+                ))
+                .toList();
+    }
+
+    private String resolveImageUrl(com.magicvs.backend.model.Card card) {
+        if (card.getNormalImageUri() != null && !card.getNormalImageUri().isBlank()) {
+            return card.getNormalImageUri();
+        }
+        if (card.getSmallImageUri() != null && !card.getSmallImageUri().isBlank()) {
+            return card.getSmallImageUri();
+        }
+        if (card.getFaces() != null && !card.getFaces().isEmpty()) {
+            String faceUrl = card.getFaces().get(0).getNormalImageUri();
+            if (faceUrl != null && !faceUrl.isBlank()) return faceUrl;
+        }
+        return "https://placehold.co/488x680/111827/e5e7eb?text=MagicVS";
+    }
+
     private Long extractUserIdFromAuthorization(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing token");
@@ -201,7 +239,7 @@ public class UserProfileService {
                     .toList();
             
             java.util.Set<String> unlockedKeys = achievementService.getUnlockedAchievements(user).stream()
-                    .map(achievement -> achievement.getAchievement().getKey())
+                    .map(achievement -> achievement.getAchievement().getAchievementKey())
                     .collect(java.util.stream.Collectors.toSet());
             
             for (String key : requestedKeys) {

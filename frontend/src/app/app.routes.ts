@@ -21,6 +21,7 @@ import { TournamentDetailComponent } from './features/tournaments/tournament-det
 import { MatchBrowserComponent } from './features/arena/match-browser/match-browser.component';
 import { BattleboardComponent } from './features/battle/battleboard/battleboard.component';
 import { AchievementsPageComponent } from './features/achievements/achievements-page.component';
+import { BoosterComponent } from './features/booster/booster.component';
 
 export const routes: Routes = [
   {
@@ -51,7 +52,8 @@ export const routes: Routes = [
       { path: 'battle/:id', component: BattleboardComponent, canActivate: [authGuard] },
       { path: 'spectator/:id', loadComponent: () => import('./features/spectator/spectator.component').then(m => m.SpectatorComponent), canActivate: [authGuard] },
       { path: 'reset-password/:token', component: ResetPassword },
-      { path: 'logros', component: AchievementsPageComponent }
+      { path: 'logros', component: AchievementsPageComponent },
+      { path: 'booster', component: BoosterComponent, canActivate: [authGuard] }
     ]
   }
 ];

@@ -493,7 +493,7 @@ public class CardService {
         return (localized != null && !localized.isBlank()) ? localized : defaultName;
     }
 
-    private String resolveDisplayType(String defaultTypeLine, String rawJson) {
+    public String resolveDisplayType(String defaultTypeLine, String rawJson) {
         String localized = extractStringFromRawJson(rawJson, "printed_type_line");
         if (localized != null && !localized.isBlank()) {
             return localized;

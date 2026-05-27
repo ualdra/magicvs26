@@ -139,12 +139,13 @@ public class CardController {
             @RequestParam(defaultValue = "") String type,
             @RequestParam(defaultValue = "") String rarity,
             @RequestParam(defaultValue = "false") boolean favoritesOnly,
+            @RequestParam(defaultValue = "false") boolean collectionOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestHeader(name = "Authorization", required = false) String authorization) {
 
         Long userId = null;
-        if (favoritesOnly) {
+        if (favoritesOnly || collectionOnly) {
             if (authorization == null || !authorization.startsWith("Bearer ")) {
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
@@ -172,7 +173,7 @@ public class CardController {
 
         Pageable pageable = PageRequest.of(safePage, safeSize);
         Page<CardSearchResponse> mappedPage = cardRepository
-            .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, favoritesOnly, userId, pageable)
+            .searchProjectedByNameAndFilters(normalizedName, noColorFilter, needsW, needsU, needsB, needsR, needsG, needsC, normalizedType, normalizedRarity, favoritesOnly, collectionOnly, userId, pageable)
                 .map(card -> new CardSearchResponse(
                         card.getId(),
                         card.getScryfallId(),

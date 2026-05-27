@@ -58,6 +58,13 @@ public class UserProfileController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/me/collection")
+    public ResponseEntity<List<com.magicvs.backend.dto.UserCardDto>> getMyCollection(
+            @RequestHeader(name = "Authorization") String authorization
+    ) {
+        return ResponseEntity.ok(userProfileService.getCollectionOfAuthenticatedUser(authorization));
+    }
+
 	@GetMapping("/{userId}/decks")
 	public ResponseEntity<List<UserDeckSummaryDto>> getUserDecks(@PathVariable Long userId) {
 		return ResponseEntity.ok(userProfileService.getDecksByUserId(userId));

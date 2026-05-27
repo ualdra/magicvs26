@@ -1,0 +1,52 @@
+<div class="container mx-auto p-4 md:p-8 min-h-screen text-white pt-32 lg:pt-40">
+  <div class="flex flex-col md:flex-row items-center justify-center relative mb-12 w-full">
+    <div class="w-full flex justify-center md:absolute md:left-4 lg:left-8 md:w-auto md:top-1/2 md:-translate-y-1/2 mb-6 md:mb-0">
+      <a routerLink="/profile" class="inline-flex items-center gap-2 px-4 py-2 bg-surface-container border border-outline-variant rounded-xl hover:border-primary transition-colors shadow-lg group">
+        <span class="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">arrow_back</span>
+        <span>Volver al perfil</span>
+      </a>
+    </div>
+    
+    <div class="text-center">
+      <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 mb-4">
+        Abrir Sobre de Magic
+      </h1>
+      <p class="text-gray-400 text-lg">Obtén 14 cartas para añadir a tu colección personal.</p>
+    </div>
+  </div>
+  
+  <div class="text-center mb-12">
+    <button 
+      (click)="openBooster()" 
+      [disabled]="isOpening"
+      class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full font-bold text-xl hover:from-blue-500 hover:to-indigo-500 transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(79,70,229,0.5)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+      {{ isOpening ? 'Abriendo...' : 'Abrir Sobre' }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-lg text-center max-w-2xl mx-auto mb-8">
+    {{ error }}
+  </div>
+
+  <div *ngIf="openedCards.length > 0" class="mt-8 animate-fade-in-up">
+    <h2 class="text-2xl font-bold text-center mb-8">¡Cartas Obtenidas!</h2>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+      <div *ngFor="let card of openedCards; let i = index" 
+           class="relative group aspect-[2.5/3.5] bg-gray-800 rounded-xl overflow-hidden shadow-lg animate-fade-in transition-transform transform hover:scale-110 hover:z-10"
+           [style.animation-delay]="(i * 100) + 'ms'">
+        
+        <img [src]="card.imageUrl" [alt]="card.name" class="w-full h-full object-cover">
+        
+        <!-- Overlay on hover -->
+        <div class="absolute inset-0 bg-black bg-opacity-70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+          <p class="font-bold text-sm truncate">{{ card.name }}</p>
+          <p class="text-xs text-gray-300 truncate">{{ card.typeLine }}</p>
+          <p class="text-xs uppercase tracking-wider mt-1" [ngClass]="getRarityClass(card.rarity)">
+            {{ translateRarity(card.rarity) }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

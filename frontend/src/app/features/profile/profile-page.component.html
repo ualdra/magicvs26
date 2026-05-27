@@ -65,6 +65,13 @@
           [error]="error()"
           [isOwnProfile]="showPrivateDetails()"
         />
+
+        <app-profile-collection
+          [collection]="collection()"
+          [loading]="collectionLoading()"
+          [error]="collectionError()"
+          [isOwnProfile]="showPrivateDetails()"
+        />
       </div>
     }
   </div>

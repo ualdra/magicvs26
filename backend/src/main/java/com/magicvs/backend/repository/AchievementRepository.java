@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
 
-    Optional<Achievement> findByKey(String key);
+    Optional<Achievement> findByAchievementKey(String achievementKey);
 
-    boolean existsByKey(String key);
+    boolean existsByAchievementKey(String achievementKey);
 }

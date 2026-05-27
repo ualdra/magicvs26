@@ -80,6 +80,11 @@ export class ProfileService {
       .pipe(map((decks) => decks.map((deck) => this.normalizeDeck(deck))));
   }
 
+  getCollection(userId: string = 'me'): Observable<import('../../models/user-card.model').UserCard[]> {
+    return this.http
+      .get<import('../../models/user-card.model').UserCard[]>(`${this.buildUrl(userId)}/collection`, { headers: this.authHeaders() });
+  }
+
   updateProfile(data: Partial<ProfileResponse>): Observable<ProfileResponse> {
     return this.http
       .patch<ProfileResponse>(`${this.apiUrl}/me`, data, { headers: this.authHeaders() })

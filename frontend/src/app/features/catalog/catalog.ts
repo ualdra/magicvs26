@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CardService, CardPage } from '../../core/services/card.service';
+import { ProfileService } from '../../core/services/profile.service';
 import { Subject, BehaviorSubject, takeUntil } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 
@@ -13,6 +14,7 @@ interface FilterState {
   rarity: string;
   page: number;
   favoritesOnly: boolean;
+  collectionOnly: boolean;
 }
 
 @Component({
@@ -24,6 +26,7 @@ interface FilterState {
 })
 export class CatalogComponent implements OnInit, OnDestroy {
   private cardService = inject(CardService);
+  private profileService = inject(ProfileService);
   private destroy$ = new Subject<void>();
   private filterState$ = new BehaviorSubject<FilterState>({
     query: '',
@@ -32,6 +35,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
     rarity: '',
     page: 0,
     favoritesOnly: false,
+    collectionOnly: false,
   });
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -46,6 +50,9 @@ export class CatalogComponent implements OnInit, OnDestroy {
   activeRarity = signal('Rareza');
   searchQuery = signal('');
   favoritesOnly = signal(false);
+  collectionOnly = signal(false);
+  
+  collectionQuantities = signal<Record<string, number>>({});
 
   get favoritesFillStyle(): string {
     return this.favoritesOnly() ? "'FILL' 1" : "'FILL' 0";
@@ -115,15 +122,31 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const isFavOnly = this.route.snapshot.queryParamMap.get('favoritesOnly') === 'true';
-    if (isFavOnly) {
-      this.favoritesOnly.set(true);
+    const isCollectionOnly = this.route.snapshot.queryParamMap.get('collectionOnly') === 'true';
+    
+    if (isFavOnly || isCollectionOnly) {
+      if (isFavOnly) this.favoritesOnly.set(true);
+      if (isCollectionOnly) {
+        this.collectionOnly.set(true);
+        // Fetch quantities for the collection
+        this.profileService.getMyCollection().subscribe({
+          next: (collection: any[]) => {
+            const quantities: Record<string, number> = {};
+            collection.forEach(item => {
+              quantities[item.id || item.card?.id] = item.quantity;
+            });
+            this.collectionQuantities.set(quantities);
+          }
+        });
+      }
+      
       const initial = this.filterState$.getValue();
-      this.filterState$.next({ ...initial, favoritesOnly: true });
+      this.filterState$.next({ ...initial, favoritesOnly: isFavOnly, collectionOnly: isCollectionOnly });
 
       // Remove the query param from the URL history so 'Back' navigation returns to normal view
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { favoritesOnly: null },
+        queryParams: { favoritesOnly: null, collectionOnly: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -142,6 +165,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
             state.page,
             20,
             state.favoritesOnly,
+            state.collectionOnly
           );
         }),
         takeUntil(this.destroy$),
@@ -170,6 +194,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
       rarity: this.rarityApiMap[this.activeRarity()] ?? '',
       page,
       favoritesOnly: this.favoritesOnly(),
+      collectionOnly: this.collectionOnly(),
     };
   }
 
