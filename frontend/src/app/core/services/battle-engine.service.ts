@@ -1266,7 +1266,7 @@ export class BattleEngineService {
     } else if (effect === 'DESTROY') {
       this.moveToGraveyard(targetCard.id, ownerId);
       const destroyedOwner = ownerId === state.player1.id ? state.player1 : state.player2;
-      if (item.card && (item.card.oracleText || '').toLowerCase().includes('its controller may search')) {
+      if (item.card && ((item.card.oracleText || '').toLowerCase().includes('its controller may search') || (item.card.oracleText || '').toLowerCase().includes('su controlador puede buscar'))) {
         const basicLands = destroyedOwner.library.filter(lc => {
           const lt = (lc.type || '').toLowerCase();
           return lt.includes('basic') || ['Forest','Plains','Island','Swamp','Mountain','Bosque','Llanura','Isla','Pantano','Montaña'].includes(lc.name);
@@ -2562,7 +2562,7 @@ export class BattleEngineService {
             const sourceId = state.pendingTarget?.sourceCardId;
             if (sourceId) {
               const sourceCard = [...state.player1.hand, ...state.player1.field, ...state.player2.hand, ...state.player2.field].find(c => c.id === sourceId);
-              if (sourceCard && (sourceCard.oracleText || '').toLowerCase().includes('its controller may search')) {
+              if (sourceCard && ((sourceCard.oracleText || '').toLowerCase().includes('its controller may search') || (sourceCard.oracleText || '').toLowerCase().includes('su controlador puede buscar'))) {
                 const basicLands = destroyedOwner.library.filter(lc => {
                   const lt = (lc.type || '').toLowerCase();
                   return lt.includes('basic') || ['Forest','Plains','Island','Swamp','Mountain','Bosque','Llanura','Isla','Pantano','Montaña'].includes(lc.name);
@@ -4237,6 +4237,7 @@ export class BattleEngineService {
           chosen.isTapped = true;
           p.field.push(chosen);
           p.libraryCount = p.library.length;
+          this.triggerLandfall(p, state);
           this.addLogEntry(`${p.username} busca ${chosen.name} (Corroer).`);
         }
       } else if (mt.includes('search') || mt.includes('busca')) {
