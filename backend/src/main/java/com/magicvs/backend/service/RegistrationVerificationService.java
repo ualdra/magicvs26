@@ -130,7 +130,7 @@ public class RegistrationVerificationService {
                     "</body></html>";
 
             helper.setText(htmlContent, true);
-            helper.addInline("logo", new ClassPathResource("static/images/icono.webp"));
+            helper.addInline("logo", new ClassPathResource("static/images/logo_email.png"), "image/png");
             mailSender.send(mimeMessage);
 
         } catch (Exception ex) {
@@ -192,7 +192,7 @@ public class RegistrationVerificationService {
                     "</div></body></html>";
 
             helper.setText(welcomeHtml, true);
-            helper.addInline("logo", new ClassPathResource("static/images/icono.webp"));
+            helper.addInline("logo", new ClassPathResource("static/images/logo_email.png"), "image/png");
             mailSender.send(mimeMessage);
         } catch (Exception e) {
             logger.warn("Error enviando bienvenida a {}", savedUser.getEmail());

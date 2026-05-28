@@ -1266,20 +1266,24 @@ export class BattleEngineService {
     } else if (effect === 'DESTROY') {
       this.moveToGraveyard(targetCard.id, ownerId);
       const destroyedOwner = ownerId === state.player1.id ? state.player1 : state.player2;
-      if (item.card && (item.card.oracleText || '').toLowerCase().includes('its controller may search')) {
+      if (item.card && ((item.card.oracleText || '').toLowerCase().includes('its controller may search') || (item.card.oracleText || '').toLowerCase().includes('su controlador puede buscar'))) {
         const basicLands = destroyedOwner.library.filter(lc => {
           const lt = (lc.type || '').toLowerCase();
           return lt.includes('basic') || ['Forest','Plains','Island','Swamp','Mountain','Bosque','Llanura','Isla','Pantano','Montaña'].includes(lc.name);
         });
         if (basicLands.length > 0) {
-          const chosen = basicLands[0];
-          const idx = destroyedOwner.library.indexOf(chosen);
-          if (idx !== -1) destroyedOwner.library.splice(idx, 1);
-          chosen.isTapped = true;
-          destroyedOwner.field.push(chosen);
-          destroyedOwner.libraryCount = destroyedOwner.library.length;
-          this.addLogEntry(`${destroyedOwner.username} busca ${chosen.name} (Corroer).`);
-          this.notificationService.showToast('Corroer', `${destroyedOwner.username} busca una tierra básica.`, 'INFO');
+          state.pendingModalChoice = {
+            cardId: item.sourceCardId,
+            modeCount: 1,
+            modes: [
+              { text: 'Buscar una tierra básica y ponerla girada en el campo.', effect: 'ERODE_SEARCH' },
+              { text: 'No buscar nada.', effect: '' }
+            ],
+            playerId: destroyedOwner.id
+          };
+          this.gameStateSubject.next({ ...state });
+          this.isProcessing = false;
+          return;
         } else {
           this.addLogEntry(`${destroyedOwner.username} no tiene tierras básicas en la biblioteca.`);
         }
@@ -2558,19 +2562,24 @@ export class BattleEngineService {
             const sourceId = state.pendingTarget?.sourceCardId;
             if (sourceId) {
               const sourceCard = [...state.player1.hand, ...state.player1.field, ...state.player2.hand, ...state.player2.field].find(c => c.id === sourceId);
-              if (sourceCard && (sourceCard.oracleText || '').toLowerCase().includes('its controller may search')) {
+              if (sourceCard && ((sourceCard.oracleText || '').toLowerCase().includes('its controller may search') || (sourceCard.oracleText || '').toLowerCase().includes('su controlador puede buscar'))) {
                 const basicLands = destroyedOwner.library.filter(lc => {
                   const lt = (lc.type || '').toLowerCase();
                   return lt.includes('basic') || ['Forest','Plains','Island','Swamp','Mountain','Bosque','Llanura','Isla','Pantano','Montaña'].includes(lc.name);
                 });
                 if (basicLands.length > 0) {
-                  const chosen = basicLands[0];
-                  const idx = destroyedOwner.library.indexOf(chosen);
-                  if (idx !== -1) destroyedOwner.library.splice(idx, 1);
-                  chosen.isTapped = true;
-                  destroyedOwner.field.push(chosen);
-                  destroyedOwner.libraryCount = destroyedOwner.library.length;
-                  this.addLogEntry(`${destroyedOwner.username} busca ${chosen.name} (Corroer).`);
+                  state.pendingModalChoice = {
+                    cardId: sourceId,
+                    modeCount: 1,
+                    modes: [
+                      { text: 'Buscar una tierra básica y ponerla girada en el campo.', effect: 'ERODE_SEARCH' },
+                      { text: 'No buscar nada.', effect: '' }
+                    ],
+                    playerId: destroyedOwner.id
+                  };
+                  this.gameStateSubject.next({ ...state });
+                  this.isProcessing = false;
+                  return;
                 }
               }
             }
@@ -4213,9 +4222,25 @@ export class BattleEngineService {
     if (!p) return;
 
     for (const modeObj of selected) {
+      const modeEffect = (modeObj as any)?.effect || '';
       const modeText = typeof modeObj === 'string' ? modeObj : (modeObj?.text || '');
       const mt = modeText.toLowerCase();
-      if (mt.includes('search') || mt.includes('busca')) {
+      if (modeEffect === 'ERODE_SEARCH') {
+        const basicLands = p.library.filter(c => {
+          const type = (c.type || '').toLowerCase();
+          return type.includes('basic') || ['Forest','Plains','Island','Swamp','Mountain','Bosque','Llanura','Isla','Pantano','Montaña'].includes(c.name);
+        });
+        if (basicLands.length > 0) {
+          const chosen = basicLands[0];
+          const idx = p.library.indexOf(chosen);
+          if (idx !== -1) p.library.splice(idx, 1);
+          chosen.isTapped = true;
+          p.field.push(chosen);
+          p.libraryCount = p.library.length;
+          this.triggerLandfall(p, state);
+          this.addLogEntry(`${p.username} busca ${chosen.name} (Corroer).`);
+        }
+      } else if (mt.includes('search') || mt.includes('busca')) {
         const basicLands = p.library.filter(c => {
           const type = (c.type || '').toLowerCase();
           return type.includes('basic') || ['Forest','Plains','Island','Swamp','Mountain','Bosque','Llanura','Isla','Pantano','Montaña'].includes(c.name);
