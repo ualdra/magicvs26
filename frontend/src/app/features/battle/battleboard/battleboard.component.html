@@ -91,10 +91,12 @@
                   class="bg-red-500/20 hover:bg-red-500/40 text-red-400 w-20 py-2 rounded-xl text-[7px] font-black uppercase tracking-widest transition-all">
             Fuerza Bruta
           </button>
+          @if (false) { 
           <button (click)="engine.resetLives()" 
                   class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 w-20 py-2 rounded-xl text-[7px] font-black uppercase tracking-widest transition-all mt-2">
             Reset HP
           </button>
+          }
         }
         <button (click)="onPassPriority()" 
                 [disabled]="gameState.priorityPlayerId !== me.id || engine.getIsProcessing()"
