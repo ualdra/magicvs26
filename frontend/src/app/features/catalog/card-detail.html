@@ -60,7 +60,7 @@
           <div class="flex items-center gap-4">
             <div class="flex gap-2">
               @for (cost of displayFace.manaCost; track $index) {
-                <img [src]="'assets/mana/' + cost + '.svg'"
+                <img [src]="'assets/mana/' + cost.replace(/[{}]/g,'').replace('/','') + '.svg'"
                      [alt]="cost"
                      class="w-10 h-10" />
               }
